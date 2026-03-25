@@ -10,7 +10,7 @@ import WhyMotoPark from "@/components/WhyMotoPark/WhyMotoPark";
 import BrandShowcase from "@/components/BrandShowcase/BrandShowcase";
 
 import ScrollReveal from "@/components/ScrollReveal/ScrollReveal";
-
+import { API } from "@/config/api"; // ✅ ADD THIS
 import "./Home.css";
 
 /* Map backend section key -> component */
@@ -26,6 +26,7 @@ const componentMap = {
     WhyMotoPark: () => <WhyMotoPark />,
     BrandShowcase: () => <BrandShowcase />
 };
+const HOME_LAYOUT_API = `${API}/api/home-layout`;
 
 function Home() {
 
@@ -33,7 +34,7 @@ function Home() {
 
     useEffect(() => {
 
-        fetch("http://localhost:5000/api/home-layout")
+        fetch(HOME_LAYOUT_API)
             .then(res => res.json())
             .then(data => {
 

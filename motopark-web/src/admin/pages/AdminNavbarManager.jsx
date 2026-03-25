@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./AdminNavbarManager.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}` });
 

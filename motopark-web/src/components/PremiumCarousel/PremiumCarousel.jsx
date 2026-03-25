@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 import "./PremiumCarousel.css";
 
-import slide1 from "@/assets/carousel/carousel-1.svg";
-import slide2 from "@/assets/carousel/carousel-2.svg";
-import slide3 from "@/assets/carousel/carousel-3.svg";
+const slide1 = "/assets/carousel/carousel-1.svg";
+const slide2 = "/assets/carousel/carousel-2.svg";
+const slide3 = "/assets/carousel/carousel-3.svg";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 const fallbackSlides = [
     {

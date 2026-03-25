@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import "./OffersAdmin.css";
 
-const API = "http://localhost:5000/api/offers";
+// const API = "http://localhost:5000/api/offers";
+
+import { API } from "@/config/api"; // ✅ ADD THIS
+
+// ✅ Correct endpoint
+const OFFERS_API = `${API}/api/offers`;
+
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });
 
@@ -25,7 +31,7 @@ export default function OffersAdmin() {
 
   const load = async () => {
     try {
-      const res = await fetch(API);
+      const res = await fetch(OFFERS_API);
       const data = await res.json();
       setOffers(Array.isArray(data) ? data : []);
     } catch (e) { console.error(e); }
@@ -38,14 +44,14 @@ export default function OffersAdmin() {
     if (!text.trim()) return;
     setSaving(true);
     try {
-      await fetch(API, { method: "POST", headers: AUTH(), body: JSON.stringify({ text }) });
+      await fetch(OFFERS_API, { method: "POST", headers: AUTH(), body: JSON.stringify({ text }) });
       setText(""); load();
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
   };
 
   const del = async (id) => {
-    await fetch(`${API}/${id}`, { method: "DELETE", headers: AUTH() });
+    await fetch(`${OFFERS_API}/${id}`, { method: "DELETE", headers: AUTH() });
     load();
   };
 

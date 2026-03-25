@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import "./ImagePickerModal.css";
 
-const API = "http://localhost:5000/api/media";
+// const API = "http://localhost:5000/api/media";
 
+import { API } from "@/config/api";
+
+const FILTER_API = `${API}/api/media`;
 export default function ImagePickerModal({ onSelect, onClose }) {
 
     const [media, setMedia] = useState([]);
 
     useEffect(() => {
 
-        fetch(API)
+        fetch(FILTER_API)
             .then(res => res.json())
             .then(data => setMedia(data));
 

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-const API = "http://localhost:5000/api/home-layout";
+// const API = "http://localhost:5000/api/home-layout";
+import { API } from "@/config/api"; // ✅ ADD THIS
+
+// ✅ Correct endpoint
+const HOME_LAYOUT_API = `${API}/api/home-layout`;
 
 export default function AdminHomeLayout() {
 
@@ -11,7 +15,7 @@ export default function AdminHomeLayout() {
 
     useEffect(() => {
 
-        fetch(API)
+        fetch(HOME_LAYOUT_API)
             .then(res => res.json())
             .then(data => {
 
@@ -62,7 +66,7 @@ export default function AdminHomeLayout() {
 
     const saveLayout = async () => {
 
-        await fetch(API, {
+        await fetch(HOME_LAYOUT_API, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"

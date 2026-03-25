@@ -8,7 +8,7 @@
    - Already full URL: "http://..."                → returned as-is
    ================================================ */
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /**
  * Resolve any image path to a displayable URL.

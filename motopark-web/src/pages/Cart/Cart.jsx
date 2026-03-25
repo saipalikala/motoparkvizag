@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import "./Cart.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const TrashIcon = () => (

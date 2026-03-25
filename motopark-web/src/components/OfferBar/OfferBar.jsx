@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import "./OfferBar.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 const ChevronLeft = () => (
   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">

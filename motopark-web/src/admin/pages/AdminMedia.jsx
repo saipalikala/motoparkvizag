@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import "./AdminMedia.css";
 
-const API = "http://localhost:5000/api/media";
-const BASE = "http://localhost:5000";
+// const API = "http://localhost:5000/api/media";
+// const BASE = "http://localhost:5000";
+import { API } from "@/config/api"; // ✅ ADD THIS
+
+// ✅ FIXED
+const MEDIA_API = `${API}/api/media`;
+const BASE = API;
+
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}` });
 
@@ -28,7 +34,7 @@ export default function AdminMedia() {
 
   const load = async () => {
     try {
-      const res = await fetch(API);
+      const res = await fetch(MEDIA_API);
       const data = await res.json();
       setMedia(Array.isArray(data) ? data : []);
     } catch (e) { console.error(e); }
@@ -49,7 +55,7 @@ export default function AdminMedia() {
     const fd = new FormData();
     fd.append("file", file);
     try {
-      await fetch(API, { method: "POST", headers: AUTH(), body: fd });
+      await fetch(MEDIA_API, { method: "POST", headers: AUTH(), body: fd });
       setFile(null); setPreview(null); load();
     } catch (e) { console.error(e); }
     finally { setUploading(false); }
@@ -57,7 +63,7 @@ export default function AdminMedia() {
 
   const del = async (id) => {
     if (!confirm("Delete this image?")) return;
-    await fetch(`${API}/${id}`, { method: "DELETE", headers: AUTH() });
+    await fetch(`${MEDIA_API}/${id}`, { method: "DELETE", headers: AUTH() });
     load();
   };
 

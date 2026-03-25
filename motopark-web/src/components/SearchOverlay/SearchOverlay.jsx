@@ -3,7 +3,7 @@ import { useProducts } from "@/context/ProductContext";
 import { useNavigate } from "react-router-dom";
 import "./SearchOverlay.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const SearchIcon = () => (

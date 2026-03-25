@@ -1,10 +1,19 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
+// const ProductContext = createContext();
+
+// export const useProducts = () => useContext(ProductContext);
+
+// const API = "http://localhost:5000/api/products";
+
+import { API } from "@/config/api"; // ✅ ADD THIS
+
 const ProductContext = createContext();
 
 export const useProducts = () => useContext(ProductContext);
 
-const API = "http://localhost:5000/api/products";
+// ✅ Correct endpoint
+const PRODUCTS_API = `${API}/api/products`;
 
 export const ProductProvider = ({ children }) => {
 
@@ -15,7 +24,7 @@ export const ProductProvider = ({ children }) => {
   const fetchProducts = useCallback(async () => {
 
     try {
-      const res = await fetch(API);
+      const res = await fetch(PRODUCTS_API);
 
       if (!res.ok) throw new Error("Failed to fetch");
 

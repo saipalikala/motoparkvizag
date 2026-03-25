@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import "./ProductFilters.css";
 
-const API = "http://localhost:5000/api/products/filters";
+// const API = "http://localhost:5000/api/products/filters";
+import { API } from "@/config/api"; // ✅ ADDED
 
+// ✅ Correct API URL
+const FILTER_API = `${API}/api/products/filters`;
 const ChevronIcon = ({ open }) => (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
         style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>
@@ -52,7 +55,7 @@ const ProductFilters = ({ onChange, category }) => {
         if (!category) return;
         setLoading(true);
         setSelected({ brand: [], size: [], color: [], minPrice: "", maxPrice: "" });
-        fetch(`${API}?category=${encodeURIComponent(category)}`)
+        fetch(`${FILTER_API}?category=${encodeURIComponent(category)}`)
             .then(r => r.json())
             .then(data => setFilters({
                 brands: data.brands || [],

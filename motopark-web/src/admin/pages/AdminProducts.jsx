@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./AdminProducts.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 const PROD_URL = `${API}/api/products`;
 const CAT_URL = `${API}/api/categories`;
 const TOKEN = () => localStorage.getItem("adminToken");

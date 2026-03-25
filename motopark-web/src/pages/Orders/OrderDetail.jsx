@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import PageTransition from "../../components/PageTransition/PageTransition";
 import "./OrderDetail.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const BackIcon = () => (

@@ -1,6 +1,9 @@
+import { API } from "@/config/api";
+const NAVBAR_API = `${API}/api/navbar`;
+
 const updateNavbar = async ()=>{
 
-await fetch("http://localhost:5000/api/navbar",{
+await fetch(NAVBAR_API,{
 method:"PUT",
 headers:{ "Content-Type":"application/json" },
 body: JSON.stringify(navbarData)

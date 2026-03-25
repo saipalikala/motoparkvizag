@@ -4,7 +4,13 @@ import SectionCard from "@/admin/components/HomeBuilder/SectionCard";
 import SectionSettingsModal from "@/admin/components/HomeBuilder/SectionSettingsModal";
 import "./HomeBuilder.css";
 
-const API = "http://localhost:5000/api/home-layout";
+// const API = "http://localhost:5000/api/home-layout";
+
+import { API } from "@/config/api"; // ✅ ADD
+
+// ✅ Correct endpoint
+const HOME_LAYOUT_API = `${API}/api/home-layout`;
+
 
 const SaveIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
 const CheckIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>;
@@ -17,7 +23,7 @@ export default function HomeBuilder() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(API)
+        fetch(HOME_LAYOUT_API)
             .then(r => r.json())
             .then(data => {
                 const sorted = (data.sections || []).sort((a, b) => a.order - b.order);
@@ -51,7 +57,7 @@ export default function HomeBuilder() {
     const saveLayout = async () => {
         setSaving(true);
         try {
-            await fetch(API, {
+            await fetch(HOME_LAYOUT_API, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sections }),

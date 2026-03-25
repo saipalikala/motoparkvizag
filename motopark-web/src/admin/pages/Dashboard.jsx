@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./Dashboard.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 const TOKEN = () => localStorage.getItem("adminToken");
 
 const RevenueIcon = () => (

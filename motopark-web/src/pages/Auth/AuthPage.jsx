@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
 import "./AuthPage.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const MotoParkLogo = () => (

@@ -5,7 +5,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useNavigate } from "react-router-dom";
 import "./TrendingProducts.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (

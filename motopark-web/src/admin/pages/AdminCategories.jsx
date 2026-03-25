@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AdminCategories.css";
 
-const API = "http://localhost:5000/api/categories";
+// const API = "http://localhost:5000/api/categories";
+import { API } from "@/config/api"; // ✅ ADDED
+
+// ✅ Correct endpoint
+const CATEGORY_API = `${API}/api/categories`;
+
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });
 
@@ -23,7 +28,7 @@ const AdminCategories = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const res = await fetch(API);
+            const res = await fetch(CATEGORY_API);
             const data = await res.json();
             setCategories(data.categories || data || []);
         } catch (e) { console.error(e); }
@@ -39,7 +44,7 @@ const AdminCategories = () => {
         if (!n) return;
         setSaving(true);
         try {
-            const res = await fetch(API, {
+            const res = await fetch(CATEGORY_API, {
                 method: "POST",
                 headers: AUTH(),
                 body: JSON.stringify({ name: n }),
@@ -56,7 +61,7 @@ const AdminCategories = () => {
     const handleDelete = async (id, name) => {
         if (!confirm(`Delete "${name}"? Products in this category will lose their category.`)) return;
         try {
-            await fetch(`${API}/${id}`, { method: "DELETE", headers: AUTH() });
+            await fetch(`${CATEGORY_API}/${id}`, { method: "DELETE", headers: AUTH() });
             load();
             flash(`"${name}" deleted`);
         } catch (e) { flash("Error deleting"); }

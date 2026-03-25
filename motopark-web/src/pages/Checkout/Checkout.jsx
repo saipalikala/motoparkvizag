@@ -5,35 +5,35 @@ import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import "./Checkout.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 /* ─── ICONS ─── */
 const CheckIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
+        <polyline points="20 6 9 17 4 12" />
     </svg>
 );
 const LockIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
 );
 const TruckIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="3" width="15" height="13" rx="1"/>
-        <path d="M16 8h4l3 5v4h-7V8z"/>
-        <circle cx="5.5" cy="18.5" r="2.5"/>
-        <circle cx="18.5" cy="18.5" r="2.5"/>
+        <rect x="1" y="3" width="15" height="13" rx="1" />
+        <path d="M16 8h4l3 5v4h-7V8z" />
+        <circle cx="5.5" cy="18.5" r="2.5" />
+        <circle cx="18.5" cy="18.5" r="2.5" />
     </svg>
 );
 const ChevronRight = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 18l6-6-6-6"/>
+        <path d="M9 18l6-6-6-6" />
     </svg>
 );
 
@@ -41,54 +41,54 @@ const ChevronRight = () => (
 const UPIIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2"/>
-        <path d="M12 9v6M9 12h6"/>
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M12 9v6M9 12h6" />
     </svg>
 );
 const CardIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-        <line x1="1" y1="10" x2="23" y2="10"/>
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+        <line x1="1" y1="10" x2="23" y2="10" />
     </svg>
 );
 const CODIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 6v6l4 2"/>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
     </svg>
 );
 
 const PAYMENT_METHODS = [
-    { id: "upi",  label: "UPI",            sub: "PhonePe, GPay, Paytm",  Icon: UPIIcon  },
-    { id: "card", label: "Card",           sub: "Debit / Credit / EMI",  Icon: CardIcon },
-    { id: "cod",  label: "Cash on Delivery", sub: "Pay at doorstep",     Icon: CODIcon  },
+    { id: "upi", label: "UPI", sub: "PhonePe, GPay, Paytm", Icon: UPIIcon },
+    { id: "card", label: "Card", sub: "Debit / Credit / EMI", Icon: CardIcon },
+    { id: "cod", label: "Cash on Delivery", sub: "Pay at doorstep", Icon: CODIcon },
 ];
 
 const INDIAN_STATES = [
-    "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
-    "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
-    "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
-    "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
-    "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
-    "Delhi","Jammu & Kashmir","Ladakh","Puducherry",
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+    "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+    "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Delhi", "Jammu & Kashmir", "Ladakh", "Puducherry",
 ];
 
 const Checkout = () => {
-    const navigate  = useNavigate();
+    const navigate = useNavigate();
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, token } = useUser();
 
-    const [step,    setStep]    = useState(1);
+    const [step, setStep] = useState(1);
     const [payment, setPayment] = useState("upi");
     const [placing, setPlacing] = useState(false);
     const [success, setSuccess] = useState(false);
 
     const [form, setForm] = useState({
-        name:    user?.name  || "",
-        phone:   user?.phone || "",
-        email:   user?.email || "",
+        name: user?.name || "",
+        phone: user?.phone || "",
+        email: user?.email || "",
         address: "", city: "", state: "", pincode: "",
     });
 
@@ -107,11 +107,11 @@ const Checkout = () => {
 
     const validateStep1 = () => {
         const e = {};
-        if (!form.name.trim())    e.name    = "Required";
+        if (!form.name.trim()) e.name = "Required";
         if (!form.phone.trim() || !/^\d{10}$/.test(form.phone.trim())) e.phone = "Enter valid 10-digit number";
         if (!form.address.trim()) e.address = "Required";
-        if (!form.city.trim())    e.city    = "Required";
-        if (!form.state)          e.state   = "Select a state";
+        if (!form.city.trim()) e.city = "Required";
+        if (!form.state) e.state = "Select a state";
         if (!form.pincode.trim() || !/^\d{6}$/.test(form.pincode.trim())) e.pincode = "Enter valid 6-digit pincode";
         setErrors(e);
         return Object.keys(e).length === 0;
@@ -129,21 +129,21 @@ const Checkout = () => {
             const headers = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
-            const res  = await fetch(`${API}/api/orders`, {
+            const res = await fetch(`${API}/api/orders`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
                     items: cartItems.map(i => ({
-                        product:       i._id,
-                        name:          i.name,
-                        price:         i.price,
-                        quantity:      i.quantity,
+                        product: i._id,
+                        name: i.name,
+                        price: i.price,
+                        quantity: i.quantity,
                         selectedColor: i.selectedColor,
-                        selectedSize:  i.selectedSize,
+                        selectedSize: i.selectedSize,
                     })),
                     shippingAddress: form,
-                    paymentMethod:   payment,
-                    total:           cartTotal,
+                    paymentMethod: payment,
+                    total: cartTotal,
                 }),
             });
             const data = await res.json();
@@ -223,13 +223,13 @@ const Checkout = () => {
                                         <div className="co-field">
                                             <label>Full Name *</label>
                                             <input value={form.name} onChange={e => set("name", e.target.value)}
-                                                placeholder="Sai Arvind" className={errors.name ? "co-input--error" : ""}/>
+                                                placeholder="Sai Arvind" className={errors.name ? "co-input--error" : ""} />
                                             {errors.name && <span className="co-error">{errors.name}</span>}
                                         </div>
                                         <div className="co-field">
                                             <label>Phone Number *</label>
                                             <input value={form.phone} onChange={e => set("phone", e.target.value)}
-                                                placeholder="10-digit mobile" maxLength={10} className={errors.phone ? "co-input--error" : ""}/>
+                                                placeholder="10-digit mobile" maxLength={10} className={errors.phone ? "co-input--error" : ""} />
                                             {errors.phone && <span className="co-error">{errors.phone}</span>}
                                         </div>
                                     </div>
@@ -237,14 +237,14 @@ const Checkout = () => {
                                     <div className="co-field">
                                         <label>Email (optional)</label>
                                         <input type="email" value={form.email} onChange={e => set("email", e.target.value)}
-                                            placeholder="for order updates"/>
+                                            placeholder="for order updates" />
                                     </div>
 
                                     <div className="co-field">
                                         <label>Address *</label>
                                         <textarea value={form.address} onChange={e => set("address", e.target.value)}
                                             placeholder="House no, Street, Area, Landmark"
-                                            rows={3} className={errors.address ? "co-input--error" : ""}/>
+                                            rows={3} className={errors.address ? "co-input--error" : ""} />
                                         {errors.address && <span className="co-error">{errors.address}</span>}
                                     </div>
 
@@ -252,13 +252,13 @@ const Checkout = () => {
                                         <div className="co-field">
                                             <label>City *</label>
                                             <input value={form.city} onChange={e => set("city", e.target.value)}
-                                                placeholder="Visakhapatnam" className={errors.city ? "co-input--error" : ""}/>
+                                                placeholder="Visakhapatnam" className={errors.city ? "co-input--error" : ""} />
                                             {errors.city && <span className="co-error">{errors.city}</span>}
                                         </div>
                                         <div className="co-field">
                                             <label>Pincode *</label>
                                             <input value={form.pincode} onChange={e => set("pincode", e.target.value)}
-                                                placeholder="530016" maxLength={6} className={errors.pincode ? "co-input--error" : ""}/>
+                                                placeholder="530016" maxLength={6} className={errors.pincode ? "co-input--error" : ""} />
                                             {errors.pincode && <span className="co-error">{errors.pincode}</span>}
                                         </div>
                                     </div>
@@ -371,7 +371,7 @@ const Checkout = () => {
                                                     </div>
                                                     <div className="co-review-item-info">
                                                         <span className="co-review-item-name">{item.name}</span>
-                                                        {item.selectedSize  && <span className="co-review-item-meta">Size: {item.selectedSize}</span>}
+                                                        {item.selectedSize && <span className="co-review-item-meta">Size: {item.selectedSize}</span>}
                                                         {item.selectedColor && <span className="co-review-item-meta">Color: {item.selectedColor}</span>}
                                                         <span className="co-review-item-meta">Qty: {item.quantity}</span>
                                                     </div>

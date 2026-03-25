@@ -2,7 +2,12 @@ import { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CategoryShowcase.css";
 
-const API = "http://localhost:5000/api/categories";
+// const API = "http://localhost:5000/api/categories";
+
+import { API } from "@/config/api"; // ✅ ADD THIS
+
+// ✅ Correct endpoint
+const CATEGORY_API = `${API}/api/categories`;
 
 const CategoryShowcase = () => {
 
@@ -13,7 +18,7 @@ const CategoryShowcase = () => {
 
     useEffect(() => {
 
-        fetch(API)
+        fetch(CATEGORY_API)
             .then(res => res.json())
             .then(data => setCategories(data));
 

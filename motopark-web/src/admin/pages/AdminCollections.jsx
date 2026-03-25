@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "./AdminCollections.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 const COLL_URL = `${API}/api/collections`;
 const PROD_URL = `${API}/api/products`;
 const TOKEN = () => localStorage.getItem("adminToken");

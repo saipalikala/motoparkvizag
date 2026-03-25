@@ -5,7 +5,7 @@ import MobileMenu from "./MobileMenu";
 import SearchOverlay from "../SearchOverlay/SearchOverlay";
 import "./Navbar.css";
 
-const API = "http://localhost:5000";
+import { API } from "@/config/api";
 
 const Navbar = () => {
   const [navbar, setNavbar] = useState(null);
