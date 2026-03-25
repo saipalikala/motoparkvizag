@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./VideoShowcase.css";
-import Video from "@/Videos/rider.mp4";
+import Video from "@/videos/rider.mp4";
 
 function VideoShowcase() {
 
