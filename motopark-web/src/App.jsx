@@ -40,8 +40,15 @@ function App() {
 
 
     const isAdmin = location.pathname.startsWith("/admin");
+
     useEffect(() => {
-        window.scrollTo(0, 0);
+        if ("scrollRestoration" in window.history) {
+            window.history.scrollRestoration = "manual";
+        }
+
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+        }, 0);
     }, [location.pathname]);
     return (
 
