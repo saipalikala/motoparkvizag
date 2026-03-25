@@ -1,0 +1,652 @@
+/* ================================
+   MOTO PARK — ORDER DETAIL
+   ================================ */
+
+.od-page {
+    background: #f5f5f7;
+    min-height: 100vh;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+/* ─── LOADING / ERROR ─── */
+.od-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+    font-size: 14px;
+    color: #6e6e73;
+}
+
+.od-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(255, 107, 61, .2);
+    border-top-color: #ff6b3d;
+    border-radius: 50%;
+    animation: odSpin .7s linear infinite;
+    display: block;
+}
+
+@keyframes odSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.od-error {
+    text-align: center;
+    padding: 80px 24px;
+    font-family: -apple-system, sans-serif;
+}
+
+.od-error h2 {
+    font-size: 22px;
+    color: #0b1d3a;
+    margin-bottom: 8px;
+}
+
+.od-error p {
+    font-size: 14px;
+    color: #6e6e73;
+    margin-bottom: 20px;
+}
+
+.od-error button {
+    background: #ff6b3d;
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    padding: 11px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* ─── HERO ─── */
+.od-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0b1d3a, #08162d);
+    padding: 44px 48px 40px;
+    overflow: hidden;
+}
+
+.od-hero--cancelled {
+    background: linear-gradient(135deg, #7f1d1d, #450a0a);
+}
+
+.od-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 55% 70% at 15% 55%, rgba(255, 107, 61, .08) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.od-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.od-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .5);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: color .2s;
+}
+
+.od-back:hover {
+    color: rgba(255, 255, 255, .85);
+}
+
+.od-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 8px;
+}
+
+.od-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: -.025em;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.od-date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, .38);
+}
+
+/* ─── CONTAINER ─── */
+.od-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ─── TIMELINE CARD ─── */
+.od-timeline-card {
+    background: #fff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.od-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.od-timeline-header h2 {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+}
+
+.od-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6e6e73;
+    background: #f5f5f7;
+    border: 1px solid rgba(11, 29, 58, .1);
+    padding: 6px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: color .2s, background .2s;
+}
+
+.od-refresh-btn:hover {
+    background: #e8e8ed;
+    color: #0b1d3a;
+}
+
+.od-refresh-btn--spin svg {
+    animation: odSpin .6s linear infinite;
+}
+
+/* ─── TIMELINE ─── */
+.od-timeline {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.od-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    gap: 10px;
+}
+
+.od-step:first-child {
+    flex: none;
+}
+
+/* CONNECTOR LINE */
+.od-connector {
+    position: absolute;
+    top: 18px;
+    right: calc(100% - 18px);
+    left: -50%;
+    height: 2px;
+    background: rgba(11, 29, 58, .1);
+    border-radius: 2px;
+    transition: background .4s ease;
+    z-index: 0;
+}
+
+.od-connector--done {
+    background: #ff6b3d;
+}
+
+/* STEP CIRCLE */
+.od-step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(11, 29, 58, .12);
+    background: #f5f5f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aeaeb2;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    transition: border-color .3s, background .3s, color .3s, box-shadow .3s;
+}
+
+.od-step--done .od-step-circle {
+    border-color: #ff6b3d;
+    background: #ff6b3d;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(255, 107, 61, .12);
+}
+
+.od-step--current .od-step-circle {
+    border-color: #ff6b3d;
+    background: #fff;
+    color: #ff6b3d;
+    box-shadow: 0 0 0 5px rgba(255, 107, 61, .12);
+    animation: odPulse 2s ease-in-out infinite;
+}
+
+@keyframes odPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 4px rgba(255, 107, 61, .12);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 107, 61, .06);
+    }
+}
+
+/* STEP LABEL */
+.od-step-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+    padding: 0 4px;
+}
+
+.od-step-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6e6e73;
+    letter-spacing: .01em;
+    transition: color .3s;
+}
+
+.od-step--done .od-step-name,
+.od-step--current .od-step-name {
+    color: #0b1d3a;
+}
+
+.od-step--current .od-step-name {
+    color: #ff6b3d;
+    font-weight: 700;
+}
+
+.od-step-sub {
+    font-size: 11px;
+    color: #aeaeb2;
+    display: block;
+}
+
+/* STATUS MESSAGES */
+.od-status-msg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(11, 29, 58, .04);
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #6e6e73;
+}
+
+.od-status-msg svg {
+    color: #ff6b3d;
+    flex-shrink: 0;
+}
+
+.od-delivered-msg {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(22, 163, 74, .08);
+    border: 1px solid rgba(22, 163, 74, .2);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #15803d;
+}
+
+/* CANCELLED CARD */
+.od-cancelled-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(220, 38, 38, .06);
+    border: 1px solid rgba(220, 38, 38, .2);
+    border-radius: 16px;
+    padding: 18px 20px;
+}
+
+.od-cancelled-card>span:first-child {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #dc2626;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.od-cancelled-card strong {
+    display: block;
+    font-size: 14px;
+    color: #7f1d1d;
+    margin-bottom: 3px;
+}
+
+.od-cancelled-card p {
+    font-size: 12px;
+    color: #b91c1c;
+}
+
+/* ─── TWO-COLUMN GRID ─── */
+.od-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 14px;
+    align-items: start;
+}
+
+/* ─── CARD ─── */
+.od-card {
+    background: #fff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 18px;
+    padding: 20px;
+}
+
+.od-card-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.od-card-title svg {
+    color: #ff6b3d;
+}
+
+.od-card-count {
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(255, 107, 61, .1);
+    color: #ff6b3d;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-family: -apple-system, sans-serif;
+}
+
+/* ITEMS */
+.od-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.od-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid rgba(11, 29, 58, .05);
+}
+
+.od-item:last-child {
+    border-bottom: none;
+}
+
+.od-item-img {
+    flex-shrink: 0;
+}
+
+.od-item-img-ph {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0b1d3a, #ff6b3d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.od-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.od-item-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0b1d3a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+
+.od-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.od-item-tag {
+    font-size: 11px;
+    font-weight: 600;
+    background: #f5f5f7;
+    color: #6e6e73;
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+.od-item-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0b1d3a;
+    flex-shrink: 0;
+}
+
+/* TOTAL */
+.od-total-row {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(11, 29, 58, .07);
+}
+
+.od-total-details {
+    margin-bottom: 10px;
+}
+
+.od-total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #6e6e73;
+    margin-bottom: 6px;
+}
+
+.od-free {
+    font-size: 11px;
+    font-weight: 600;
+    color: #16a34a;
+    background: rgba(22, 163, 74, .1);
+    padding: 2px 8px;
+    border-radius: 100px;
+}
+
+.od-grand-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 10px;
+    border-top: 1px solid rgba(11, 29, 58, .07);
+}
+
+.od-grand-total span:first-child {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0b1d3a;
+}
+
+.od-grand-total span:last-child {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+}
+
+/* RIGHT COLUMN */
+.od-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ADDRESS */
+.od-address-block {
+    font-size: 13px;
+    color: #0b1d3a;
+    line-height: 1.7;
+}
+
+.od-address-block strong {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.od-address-block p {
+    color: #6e6e73;
+    margin: 0;
+}
+
+/* PAYMENT */
+.od-payment-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.od-payment-method {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0b1d3a;
+}
+
+.od-payment-status {
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(22, 163, 74, .1);
+    color: #15803d;
+    padding: 4px 10px;
+    border-radius: 100px;
+}
+
+/* BACK BTN */
+.od-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0b1d3a;
+    background: #fff;
+    border: 1.5px solid rgba(11, 29, 58, .12);
+    padding: 11px 20px;
+    border-radius: 100px;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background .2s, border-color .2s;
+}
+
+.od-back-btn:hover {
+    background: #f5f5f7;
+    border-color: rgba(11, 29, 58, .2);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .od-hero {
+        padding: 36px 20px 32px;
+    }
+
+    .od-container {
+        padding: 20px 16px 60px;
+    }
+
+    .od-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .od-step-sub {
+        display: none;
+    }
+
+    .od-step-name {
+        font-size: 10px;
+    }
+
+    .od-step-circle {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .od-title {
+        font-size: 26px;
+    }
+
+    .od-connector {
+        display: none;
+    }
+
+    .od-timeline {
+        gap: 8px;
+    }
+}

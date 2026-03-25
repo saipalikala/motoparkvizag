@@ -1,0 +1,424 @@
+/* ================================
+   MOTO PARK — BENTO GRID
+   Brand: #0b1d3a / #08162d / #ff6b3d / #fff / #000
+   ================================ */
+
+/* ─── SECTION ─── */
+.bento-section {
+    background: #ffffff;
+    padding: 64px 28px 80px;
+}
+
+.bento-container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ─── HEADER ─── */
+.bento-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    gap: 20px;
+}
+
+.bento-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 10px;
+}
+
+.bento-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 54px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -0.02em;
+    line-height: 1.0;
+    margin-bottom: 10px;
+}
+
+.bento-subtitle {
+    font-size: 16px;
+    color: #6e6e73;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+.view-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 11px 22px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+}
+
+.view-all-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+/* ─── GRID LAYOUT ─── */
+.bento-grid {
+    display: grid;
+    grid-template-columns: 1.62fr 1fr;
+    gap: 10px;
+}
+
+.bento-hero {
+    border-radius: 22px;
+    overflow: hidden;
+    height: 580px;
+}
+
+.bento-small {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.bento-item {
+    border-radius: 22px;
+    overflow: hidden;
+    height: 285px;
+}
+
+/* ─── CARD BASE ─── */
+.bento-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: linear-gradient(135deg, #0b1d3a, #08162d);
+    border-radius: 22px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        box-shadow 0.4s ease;
+    outline: none;
+}
+
+.bento-card:focus-visible {
+    box-shadow: 0 0 0 3px #ff6b3d;
+}
+
+.bento-card:hover {
+    transform: scale(1.014);
+    box-shadow: 0 24px 56px rgba(11, 29, 58, 0.22);
+}
+
+.bento-card--small:hover {
+    transform: scale(1.02);
+}
+
+/* ─── ACCENT LINE (orange on hover) ─── */
+.card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: #ff6b3d;
+    z-index: 4;
+    border-radius: 22px 22px 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.bento-card:hover .card-accent {
+    opacity: 1;
+}
+
+/* ─── IMAGE ─── */
+.card-image {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 30%,
+            rgba(255, 107, 61, 0.1) 0%,
+            transparent 65%);
+    pointer-events: none;
+}
+
+.card-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.5s ease;
+}
+
+.bento-card:hover .card-photo {
+    transform: scale(1.04);
+}
+
+/* ─── BIKE SVG ─── */
+.bike-svg {
+    width: 68%;
+    height: 68%;
+    transition: transform 0.5s ease;
+}
+
+.hero-bike {
+    width: 75%;
+    height: 75%;
+}
+
+.bento-card:hover .bike-svg {
+    transform: scale(1.04) translateX(4px);
+}
+
+/* ─── GRADIENT OVERLAY ─── */
+.card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            transparent 28%,
+            rgba(8, 22, 45, 0.88) 100%);
+    z-index: 1;
+}
+
+/* ─── WISHLIST BUTTON ─── */
+.card-wishlist {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(11, 29, 58, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: rgba(255, 255, 255, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card-wishlist:hover {
+    background: rgba(255, 107, 61, 0.18);
+    border-color: rgba(255, 107, 61, 0.5);
+    transform: scale(1.1);
+}
+
+.card-wishlist--active {
+    background: rgba(255, 107, 61, 0.2);
+    border-color: rgba(255, 107, 61, 0.7);
+}
+
+.card-wishlist--active:hover {
+    background: rgba(255, 107, 61, 0.3);
+}
+
+/* ─── CORNER TAG (Featured / New) ─── */
+.corner-tag {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 100px;
+}
+
+.corner-tag--new {
+    background: #0b1d3a;
+    border: 1px solid rgba(255, 107, 61, 0.6);
+    color: #ff6b3d;
+}
+
+/* ─── CARD INFO ─── */
+.card-info {
+    position: relative;
+    z-index: 2;
+    padding: 16px 18px 18px;
+}
+
+.bento-card--hero .card-info {
+    padding: 20px 24px 24px;
+}
+
+.card-badge {
+    display: inline-block;
+    border: 1px solid rgba(255, 107, 61, 0.5);
+    color: #ff6b3d;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+    margin-bottom: 8px;
+}
+
+.card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bento-card--hero .card-name {
+    font-size: 26px;
+    white-space: normal;
+    margin-bottom: 12px;
+}
+
+/* ─── CARD FOOTER (price + cart btn) ─── */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.card-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+}
+
+.bento-card--hero .card-price {
+    font-size: 18px;
+}
+
+.price-original {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.35);
+    text-decoration: line-through;
+    font-weight: 400;
+}
+
+/* ─── ADD TO CART BUTTON ─── */
+.card-cart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 8px 14px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+}
+
+.card-cart-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.card-cart-btn:active {
+    transform: scale(0.96);
+}
+
+.card-cart-btn--added {
+    background: #0b1d3a;
+    border: 1px solid rgba(255, 107, 61, 0.5);
+    color: #ff6b3d;
+}
+
+.card-cart-btn--added:hover {
+    opacity: 1;
+    background: rgba(255, 107, 61, 0.12);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bento-hero {
+        height: 480px;
+    }
+}
+
+@media (max-width: 640px) {
+    .bento-section {
+        padding: 40px 16px 56px;
+    }
+
+    .bento-title {
+        font-size: 38px;
+    }
+
+    .bento-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .bento-hero {
+        height: 380px;
+    }
+
+    .bento-small {
+        grid-template-columns: 1fr;
+    }
+
+    .bento-item {
+        height: 260px;
+    }
+
+    .card-name {
+        font-size: 14px;
+    }
+
+    .bento-card--hero .card-name {
+        font-size: 20px;
+    }
+}

@@ -1,0 +1,303 @@
+/* ================================
+   MOTO PARK — OFFER BAR
+   Brand: #0b1d3a / #ff6b3d / #fff
+   ================================ */
+
+.offer-bar {
+  position: relative;
+  width: 100%;
+  height: 42px;
+  background: #0b1d3a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease;
+  z-index: 50;
+}
+
+.offer-bar--hide {
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.offer-bar--show {
+  height: 42px;
+  opacity: 1;
+}
+
+/* ─── LEFT ACCENT STRIP — dashed orange ─── */
+.offer-strip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: repeating-linear-gradient(to bottom,
+      #ff6b3d 0px,
+      #ff6b3d 6px,
+      transparent 6px,
+      transparent 11px);
+  flex-shrink: 0;
+}
+
+/* ─── PROGRESS BAR ─── */
+.offer-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #ff6b3d;
+  opacity: 0.5;
+  animation: offerProgress 4s linear infinite;
+  transform-origin: left;
+}
+
+@keyframes offerProgress {
+  from {
+    width: 0%;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+/* ─── INNER ─── */
+.offer-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 52px;
+  max-width: 960px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* ─── LIVE DOT ─── */
+.offer-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b3d;
+  flex-shrink: 0;
+  animation: offerPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes offerPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.4);
+  }
+}
+
+/* ─── LABEL ─── */
+.offer-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ff6b3d;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── SEPARATOR ─── */
+.offer-sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+/* ─── ARROWS ─── */
+.offer-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.offer-arrow:hover {
+  background: rgba(255, 107, 61, 0.2);
+  border-color: rgba(255, 107, 61, 0.5);
+  color: #ff6b3d;
+}
+
+/* ─── TEXT WRAP ─── */
+.offer-text-wrap {
+  flex: 1;
+  max-width: 500px;
+  min-width: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.offer-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.offer-text--in {
+  animation: offerSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.offer-text--out {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+
+@keyframes offerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── TAG INSIDE TEXT ─── */
+.offer-tag {
+  display: inline-block;
+  background: #ff6b3d;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+/* ─── DOTS ─── */
+.offer-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.offer-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  border: none;
+  cursor: pointer;
+  transition: background 0.22s ease, transform 0.22s ease;
+  padding: 0;
+}
+
+.offer-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.offer-dot--active {
+  background: #ff6b3d;
+  transform: scale(1.4);
+}
+
+/* ─── CLOSE ─── */
+.offer-close {
+  position: absolute;
+  right: 14px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.offer-close:hover {
+  background: rgba(255, 107, 61, 0.18);
+  border-color: rgba(255, 107, 61, 0.45);
+  color: #ff6b3d;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .offer-inner {
+    padding: 0 44px 0 16px;
+    gap: 8px;
+  }
+
+  .offer-text {
+    font-size: 12px;
+  }
+
+  .offer-label {
+    display: none;
+  }
+
+  .offer-sep {
+    display: none;
+  }
+
+  .offer-arrow {
+    display: none;
+  }
+
+  .offer-dots {
+    display: none;
+  }
+
+  .offer-text-wrap {
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .offer-bar {
+    height: 38px;
+  }
+
+  .offer-bar--show {
+    height: 38px;
+  }
+
+  .offer-text {
+    font-size: 11.5px;
+  }
+}

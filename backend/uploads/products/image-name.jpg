@@ -1,0 +1,8 @@
+<img
+  src={
+    product.images?.[0]
+      ? `http://localhost:5000${product.images[0]}`
+      : "/placeholder.png"
+  }
+  alt={product.name}
+/>

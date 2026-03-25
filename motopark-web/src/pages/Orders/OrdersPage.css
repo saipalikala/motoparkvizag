@@ -1,0 +1,540 @@
+/* ================================
+   MOTO PARK — ORDERS PAGE
+   ================================ */
+
+.op-page {
+    background: #f5f5f7;
+    min-height: 100vh;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+/* ─── HERO ─── */
+.op-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0b1d3a, #08162d);
+    padding: 56px 48px 48px;
+    overflow: hidden;
+}
+
+.op-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 55% 70% at 15% 55%, rgba(255, 107, 61, .08) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.op-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.op-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 10px;
+}
+
+.op-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: -.025em;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.op-hero-sub {
+    font-size: 15px;
+    color: rgba(255, 255, 255, .42);
+}
+
+/* ─── CONTAINER ─── */
+.op-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ─── LOOKUP CARD ─── */
+.op-lookup-card {
+    background: #fff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 20px;
+    padding: 32px 28px;
+    text-align: center;
+}
+
+.op-lookup-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255, 107, 61, .1);
+    color: #ff6b3d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 18px;
+}
+
+.op-lookup-card h2 {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+    margin-bottom: 6px;
+}
+
+.op-lookup-card p {
+    font-size: 14px;
+    color: #6e6e73;
+    margin-bottom: 24px;
+}
+
+/* ─── PHONE FORM ─── */
+.op-lookup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.op-phone-wrap {
+    display: flex;
+    align-items: center;
+    background: #f5f5f7;
+    border: 1.5px solid rgba(11, 29, 58, .1);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color .2s;
+}
+
+.op-phone-wrap:focus-within {
+    border-color: rgba(255, 107, 61, .5);
+    background: #fff;
+}
+
+.op-phone-wrap--error {
+    border-color: rgba(220, 38, 38, .4) !important;
+}
+
+.op-phone-prefix {
+    padding: 14px 10px 14px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6e6e73;
+    white-space: nowrap;
+    border-right: 1px solid rgba(11, 29, 58, .08);
+}
+
+.op-phone-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #0b1d3a;
+    font-family: inherit;
+    letter-spacing: .02em;
+}
+
+.op-phone-input::placeholder {
+    color: #aeaeb2;
+    font-weight: 400;
+}
+
+.op-error {
+    font-size: 12px;
+    color: #dc2626;
+    text-align: left;
+    font-weight: 500;
+    margin-top: -4px;
+}
+
+.op-lookup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 14px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+}
+
+.op-lookup-btn:hover:not(:disabled) {
+    opacity: .88;
+    transform: translateY(-1px);
+}
+
+.op-lookup-btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.op-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, .3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: opSpin .7s linear infinite;
+}
+
+@keyframes opSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─── RESULTS HEADER ─── */
+.op-results-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.op-results-header h2 {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+}
+
+.op-results-phone {
+    font-size: 13px;
+    color: #6e6e73;
+}
+
+/* ─── NO ORDERS ─── */
+.op-no-orders {
+    background: #fff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 20px;
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.op-no-orders svg {
+    margin: 0 auto 20px;
+    display: block;
+}
+
+.op-no-orders h3 {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+    margin-bottom: 8px;
+}
+
+.op-no-orders p {
+    font-size: 14px;
+    color: #6e6e73;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.op-browse-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity .2s;
+}
+
+.op-browse-btn:hover {
+    opacity: .88;
+}
+
+/* ─── ORDERS LIST ─── */
+.op-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ─── ORDER CARD ─── */
+.op-card {
+    background: #fff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 18px;
+    padding: 18px 20px 14px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0;
+    align-items: center;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .2s;
+    animation: opCardIn .35s ease both;
+}
+
+@keyframes opCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+}
+
+.op-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(11, 29, 58, .1);
+    border-color: rgba(255, 107, 61, .2);
+}
+
+/* ACCENT TOP LINE */
+.op-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: #ff6b3d;
+    border-radius: 18px 18px 0 0;
+    opacity: 0;
+    transition: opacity .25s;
+}
+
+.op-card:hover .op-card-accent {
+    opacity: 1;
+}
+
+/* LEFT */
+.op-card-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.op-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.op-order-id {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0b1d3a;
+    background: rgba(11, 29, 58, .06);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.op-order-date {
+    font-size: 12px;
+    color: #aeaeb2;
+}
+
+.op-items-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.op-item-pill {
+    font-size: 12px;
+    color: #0b1d3a;
+    font-weight: 500;
+    background: #f5f5f7;
+    padding: 3px 9px;
+    border-radius: 100px;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-item-more {
+    font-size: 12px;
+    color: #ff6b3d;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: rgba(255, 107, 61, .08);
+}
+
+.op-payment {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    color: #aeaeb2;
+    margin-top: 2px;
+}
+
+/* RIGHT */
+.op-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    flex-shrink: 0;
+    padding-left: 16px;
+}
+
+.op-total {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+}
+
+/* STATUS BADGES */
+.op-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+}
+
+.op-badge--amber {
+    background: rgba(251, 191, 36, .15);
+    color: #92400e;
+}
+
+.op-badge--blue {
+    background: rgba(59, 130, 246, .12);
+    color: #1d4ed8;
+}
+
+.op-badge--purple {
+    background: rgba(139, 92, 246, .12);
+    color: #6d28d9;
+}
+
+.op-badge--green {
+    background: rgba(22, 163, 74, .12);
+    color: #15803d;
+}
+
+.op-badge--red {
+    background: rgba(220, 38, 38, .1);
+    color: #b91c1c;
+}
+
+/* MINI TIMELINE */
+.op-mini-timeline {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(11, 29, 58, .05);
+}
+
+.op-timeline-dot {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.op-timeline-dot:first-child {
+    flex: none;
+}
+
+.op-timeline-line {
+    flex: 1;
+    height: 2px;
+    background: rgba(11, 29, 58, .08);
+    margin: 0 4px;
+    border-radius: 2px;
+    transition: background .3s;
+}
+
+.op-timeline-line--done {
+    background: #ff6b3d;
+}
+
+.op-timeline-circle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(11, 29, 58, .15);
+    background: #fff;
+    flex-shrink: 0;
+    transition: border-color .3s, background .3s;
+}
+
+.op-timeline-dot--done .op-timeline-circle {
+    border-color: #ff6b3d;
+    background: #ff6b3d;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .op-hero {
+        padding: 44px 20px 38px;
+    }
+
+    .op-container {
+        padding: 24px 16px 60px;
+    }
+
+    .op-lookup-card {
+        padding: 24px 20px;
+    }
+
+    .op-card {
+        padding: 16px;
+    }
+
+    .op-item-pill {
+        max-width: 130px;
+    }
+}
+
+@media (max-width: 480px) {
+    .op-title {
+        font-size: 34px;
+    }
+
+    .op-total {
+        font-size: 17px;
+    }
+
+    .op-card-right {
+        gap: 5px;
+    }
+}

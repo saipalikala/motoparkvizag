@@ -1,0 +1,169 @@
+.al-page {
+    min-height: 100vh;
+    background: #0b1d3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.al-bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 60% 60% at 30% 40%, rgba(255, 107, 61, 0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 75% 70%, rgba(11, 29, 58, 0.8) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.al-card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.al-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.al-logo-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #ff6b3d;
+    flex-shrink: 0;
+}
+
+.al-logo-name {
+    display: block;
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.al-logo-sub {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 2px;
+}
+
+.al-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+}
+
+.al-subtitle {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.42);
+    margin-bottom: 24px;
+}
+
+.al-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(220, 38, 38, 0.12);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #f87171;
+    margin-bottom: 16px;
+}
+
+.al-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.al-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.al-field input {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 13px 14px;
+    font-size: 14px;
+    color: #ffffff;
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+}
+
+.al-field input::placeholder {
+    color: rgba(255, 255, 255, 0.22);
+}
+
+.al-field input:focus {
+    border-color: rgba(255, 107, 61, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.al-btn {
+    width: 100%;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 14px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.al-btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.al-btn:active {
+    transform: scale(0.98);
+}
+
+.al-btn--loading {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.al-hint {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.18);
+    letter-spacing: 0.04em;
+}

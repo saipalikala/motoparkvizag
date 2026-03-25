@@ -1,0 +1,396 @@
+/* ================================
+   MOTO PARK — SEARCH OVERLAY
+   Brand: #0b1d3a / #08162d / #ff6b3d / #fff
+   ================================ */
+
+/* ─── OVERLAY (BLUR BACKGROUND) ─── */
+.so-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+
+    /* BLUR + brand navy tint */
+    background: rgba(8, 22, 45, 0.6);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 80px 20px 40px;
+
+    animation: soFadeIn 0.22s ease;
+}
+
+@keyframes soFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ─── MODAL ─── */
+.so-modal {
+    width: 100%;
+    max-width: 620px;
+    animation: soSlideDown 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes soSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ─── SEARCH BAR ─── */
+.so-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    padding: 12px 14px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
+    margin-bottom: 10px;
+    transition: border-color 0.2s ease;
+}
+
+.so-bar:focus-within {
+    border-color: rgba(255, 107, 61, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 107, 61, 0.12);
+}
+
+/* SEARCH ICON */
+.so-bar-icon {
+    color: rgba(255, 255, 255, 0.45);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* INPUT */
+.so-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    min-width: 0;
+}
+
+.so-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* CLEAR BTN */
+.so-clear {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+}
+
+.so-clear:hover {
+    background: rgba(255, 107, 61, 0.25);
+    color: #ff6b3d;
+}
+
+/* ESC BTN */
+.so-close-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 4px 8px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.so-close-btn span {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.so-close-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* ─── BODY PANEL ─── */
+.so-body {
+    background: rgba(11, 29, 58, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(255, 255, 255, 0.06) inset;
+}
+
+/* RESULTS LABEL */
+.so-results-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.28);
+    padding: 14px 14px 8px;
+}
+
+/* ─── RESULT ITEM ─── */
+.so-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.so-item:last-child {
+    border-bottom: none;
+}
+
+.so-item:hover,
+.so-item--focused {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.so-item--focused .so-item-right svg {
+    opacity: 1;
+}
+
+/* ITEM IMAGE */
+.so-item-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.so-item-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+}
+
+.so-item-img-ph {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ITEM INFO */
+.so-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.so-item-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+}
+
+.so-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.so-item-brand {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+.so-item-cat {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    background: rgba(255, 107, 61, 0.12);
+    padding: 2px 7px;
+    border-radius: 100px;
+}
+
+/* ITEM RIGHT */
+.so-item-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.so-item-price {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.so-item-right svg {
+    color: rgba(255, 255, 255, 0.25);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+.so-item:hover .so-item-right svg {
+    opacity: 1;
+}
+
+/* ─── EMPTY STATE ─── */
+.so-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    text-align: center;
+    gap: 8px;
+}
+
+.so-empty p {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.so-empty p strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.so-empty span {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── TRENDING ─── */
+.so-trending {}
+
+/* ─── KEYBOARD HINTS ─── */
+.so-hints {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.so-hints span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.22);
+}
+
+kbd {
+    font-size: 10px;
+    font-family: -apple-system, sans-serif;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    padding: 2px 5px;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.4;
+}
+
+/* ─── SCROLLBAR ─── */
+.so-body {
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.so-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.so-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.so-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .so-overlay {
+        padding: 72px 16px 32px;
+    }
+
+    .so-input {
+        font-size: 15px;
+    }
+
+    .so-hints {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .so-overlay {
+        padding: 64px 12px 24px;
+        align-items: flex-start;
+    }
+
+    .so-modal {
+        max-width: 100%;
+    }
+
+    .so-bar {
+        border-radius: 14px;
+    }
+
+    .so-body {
+        border-radius: 14px;
+    }
+
+    .so-close-btn {
+        display: none;
+    }
+}

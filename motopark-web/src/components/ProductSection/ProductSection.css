@@ -1,0 +1,61 @@
+/* ===== SECTION ===== */
+
+.product-section {
+    padding: 100px 0;
+    background: #ffffff;
+}
+
+/* ===== CONTAINER ===== */
+
+.section-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+/* ===== HEADER ===== */
+
+.section-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.section-header h2 {
+    font-size: 38px;
+    font-weight: 900;
+    color: #ff6b3d;
+}
+
+/* ===== GRID ===== */
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+}
+
+/* ===== INFINITE SCROLL LOADER ===== */
+
+.scroll-loader {
+    height: 40px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1200px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}

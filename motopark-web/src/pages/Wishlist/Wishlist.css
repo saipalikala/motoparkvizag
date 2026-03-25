@@ -1,0 +1,400 @@
+/* ================================
+   MOTO PARK — WISHLIST PAGE
+   ================================ */
+
+.wl-page {
+    background: #f5f5f7;
+    min-height: 100vh;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+}
+
+/* ─── EMPTY ─── */
+.wl-empty-page {
+    background: #f5f5f7;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wl-empty-inner {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.wl-empty-inner svg {
+    margin: 0 auto 24px;
+    display: block;
+}
+
+.wl-empty-inner h2 {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #0b1d3a;
+    letter-spacing: -.02em;
+    margin-bottom: 8px;
+}
+
+.wl-empty-inner p {
+    font-size: 14px;
+    color: #6e6e73;
+    margin-bottom: 28px;
+}
+
+.wl-empty-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 13px 24px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+}
+
+.wl-empty-cta:hover {
+    opacity: .88;
+    transform: translateY(-1px);
+}
+
+/* ─── HERO ─── */
+.wl-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0b1d3a, #08162d);
+    padding: 56px 48px 48px;
+    overflow: hidden;
+}
+
+.wl-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 55% 70% at 15% 55%, rgba(255, 107, 61, .08) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.wl-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.wl-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 10px;
+}
+
+.wl-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: -.025em;
+    line-height: 1.0;
+    margin-bottom: 8px;
+}
+
+.wl-hero-sub {
+    font-size: 15px;
+    color: rgba(255, 255, 255, .42);
+}
+
+/* ─── CONTAINER ─── */
+.wl-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 36px 48px 80px;
+}
+
+/* ─── GRID ─── */
+.wl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 36px;
+}
+
+/* ─── CARD ─── */
+.wl-card {
+    background: #ffffff;
+    border: 1px solid rgba(11, 29, 58, .07);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+
+    opacity: 0;
+    animation: wlFade .42s cubic-bezier(.4, 0, .2, 1) forwards;
+
+    transition: transform .32s cubic-bezier(.25, .46, .45, .94),
+        box-shadow .32s ease, border-color .25s ease;
+}
+
+@keyframes wlFade {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wl-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(11, 29, 58, .1);
+    border-color: rgba(255, 107, 61, .18);
+}
+
+/* ACCENT */
+.wl-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: #ff6b3d;
+    border-radius: 18px 18px 0 0;
+    opacity: 0;
+    transition: opacity .3s ease;
+    z-index: 2;
+}
+
+.wl-card:hover .wl-card-accent {
+    opacity: 1;
+}
+
+/* REMOVE BTN */
+.wl-remove-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid rgba(11, 29, 58, .1);
+    background: rgba(255, 255, 255, .9);
+    color: #aeaeb2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, color .2s, transform .2s;
+}
+
+.wl-remove-btn:hover {
+    background: #fff0eb;
+    border-color: rgba(255, 107, 61, .35);
+    color: #ff6b3d;
+    transform: scale(1.1);
+}
+
+/* IMAGE */
+.wl-img-wrap {
+    width: 100%;
+    height: 200px;
+    background: #f5f5f7;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wl-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 12px;
+    transition: transform .45s ease;
+}
+
+.wl-card:hover .wl-img {
+    transform: scale(1.06);
+}
+
+.wl-img-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e8e8ed, #d8d8dc);
+}
+
+/* INFO */
+.wl-card-info {
+    padding: 12px 14px 14px;
+    border-top: 1px solid rgba(11, 29, 58, .05);
+}
+
+.wl-brand {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 4px;
+}
+
+.wl-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+    letter-spacing: -.01em;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color .2s;
+}
+
+.wl-name:hover {
+    color: #ff6b3d;
+}
+
+.wl-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wl-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0b1d3a;
+    letter-spacing: -.01em;
+}
+
+/* CART BTN */
+.wl-cart-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #ff6b3d;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 7px 12px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: opacity .2s, transform .15s, background .2s;
+}
+
+.wl-cart-btn:hover {
+    opacity: .88;
+    transform: translateY(-1px);
+}
+
+.wl-cart-btn:active {
+    transform: scale(.96);
+}
+
+.wl-cart-btn--added {
+    background: transparent;
+    border: 1.5px solid rgba(255, 107, 61, .45);
+    color: #ff6b3d;
+}
+
+.wl-cart-btn--added:hover {
+    opacity: 1;
+    background: rgba(255, 107, 61, .07);
+}
+
+/* ─── BOTTOM ACTIONS ─── */
+.wl-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.wl-add-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ff6b3d;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    padding: 13px 24px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+}
+
+.wl-add-all-btn:hover {
+    opacity: .88;
+    transform: translateY(-1px);
+}
+
+.wl-store-btn {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: 1.5px solid rgba(11, 29, 58, .12);
+    color: #0b1d3a;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+}
+
+.wl-store-btn:hover {
+    background: rgba(11, 29, 58, .04);
+    border-color: rgba(11, 29, 58, .2);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+    .wl-container {
+        padding: 28px 28px 64px;
+    }
+}
+
+@media (max-width: 768px) {
+    .wl-hero {
+        padding: 44px 20px 38px;
+    }
+
+    .wl-container {
+        padding: 20px 20px 56px;
+    }
+
+    .wl-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+    }
+
+    .wl-img-wrap {
+        height: 160px;
+    }
+}
+
+@media (max-width: 480px) {
+    .wl-title {
+        font-size: 34px;
+    }
+
+    .wl-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

@@ -1,0 +1,39 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+
+import App from "./App";
+import { StoreConfigProvider } from "./context/StoreConfigContext";
+import { ProductProvider } from "@/context/ProductContext";
+import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import { UserProvider } from "@/context/UserContext";
+ReactDOM.createRoot(document.getElementById("root")).render(
+
+  <BrowserRouter>
+
+    <ProductProvider>
+
+      <CartProvider>
+
+        <WishlistProvider>
+
+          <StoreConfigProvider>
+
+            <UserProvider>
+
+              <App />
+
+            </UserProvider>
+
+          </StoreConfigProvider>
+
+        </WishlistProvider>
+
+      </CartProvider>
+
+    </ProductProvider>
+
+  </BrowserRouter>
+
+);

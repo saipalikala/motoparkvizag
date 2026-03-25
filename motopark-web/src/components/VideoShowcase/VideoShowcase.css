@@ -1,0 +1,259 @@
+/* ================================
+   MOTO PARK — VIDEO SHOWCASE
+   Brand: #0b1d3a / #08162d / #ff6b3d / #fff
+   ================================ */
+
+.video-showcase {
+    position: relative;
+    height: 92vh;
+    min-height: 560px;
+    overflow: hidden;
+}
+
+/* ─── VIDEO ─── */
+.video-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* ─── OVERLAY
+     Top: subtle dark for readability
+     Bottom: brand navy fade — ties into sections below
+─── */
+.video-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to bottom,
+            rgba(0, 0, 0, 0.25) 0%,
+            rgba(0, 0, 0, 0.15) 40%,
+            rgba(11, 29, 58, 0.70) 80%,
+            rgba(8, 22, 45, 0.95) 100%);
+    z-index: 1;
+}
+
+/* ─── CONTENT ─── */
+.video-content {
+    position: absolute;
+    bottom: 100px;
+    left: 72px;
+    z-index: 2;
+    color: #ffffff;
+    max-width: 520px;
+}
+
+/* TAG */
+.video-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #ff6b3d;
+    margin-bottom: 18px;
+}
+
+.video-tag::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 2px;
+    background: #ff6b3d;
+    border-radius: 2px;
+}
+
+/* TITLE */
+.video-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+/* DESC */
+.video-desc {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.65;
+    margin-bottom: 32px;
+    max-width: 380px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+/* ─── BUTTONS ─── */
+.video-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.explore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 13px 26px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease, background 0.25s ease;
+    white-space: nowrap;
+}
+
+/* PRIMARY — orange fill */
+.explore-btn--primary {
+    background: #ff6b3d;
+    color: #ffffff;
+}
+
+.explore-btn--primary:hover {
+    opacity: 0.88;
+    transform: translateY(-2px);
+}
+
+.explore-btn--primary:active {
+    transform: scale(0.97);
+}
+
+/* GHOST — frosted glass */
+.explore-btn--ghost {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.explore-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+}
+
+.explore-btn--ghost:active {
+    transform: scale(0.97);
+}
+
+/* ─── SCROLL INDICATOR ─── */
+.scroll-indicator {
+    position: absolute;
+    bottom: 36px;
+    right: 72px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.scroll-line {
+    width: 48px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+    border-radius: 1px;
+}
+
+.scroll-dot {
+    position: absolute;
+    top: 0;
+    left: -8px;
+    width: 8px;
+    height: 1px;
+    background: #ff6b3d;
+    border-radius: 1px;
+    animation: scrollTrack 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollTrack {
+    0% {
+        left: -8px;
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1024px) {
+    .video-content {
+        left: 48px;
+        bottom: 88px;
+    }
+
+    .video-title {
+        font-size: 58px;
+    }
+}
+
+@media (max-width: 768px) {
+    .video-showcase {
+        height: 85vh;
+    }
+
+    .video-content {
+        left: 20px;
+        right: 20px;
+        bottom: 72px;
+        max-width: 100%;
+    }
+
+    .video-title {
+        font-size: 44px;
+    }
+
+    .video-desc {
+        font-size: 15px;
+        max-width: 100%;
+    }
+
+    .scroll-indicator {
+        right: 20px;
+        bottom: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .video-title {
+        font-size: 36px;
+    }
+
+    .explore-btn {
+        padding: 12px 22px;
+        font-size: 12px;
+    }
+
+    .video-actions {
+        gap: 10px;
+    }
+}
