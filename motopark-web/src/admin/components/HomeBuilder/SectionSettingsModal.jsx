@@ -1,5 +1,5 @@
 import { GripVertical, Settings } from "lucide-react";
-import { sectionMeta } from "@/admin/pages/HomeBuilder/sectionMeta";
+import { sectionMeta } from "@/admin/pages/HomeBuilder/SectionMeta";
 
 export default function SectionCard({
     section,
