@@ -2,232 +2,278 @@
    File: backend/controllers/userController.js
    ================================================ */
 import jwt from "jsonwebtoken";
+import { Resend } from "resend";
 import User from "../models/userModel.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "motopark_user_secret";
-const OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-/* ── SMS HELPER ──────────────────────────────────────────────────
-   Automatically uses MSG91 if env vars are set.
-   Falls back to console.log for local development.
-   ──────────────────────────────────────────────────────────────── */
-const sendSms = async (phone, otp) => {
-    const authKey = process.env.MSG91_AUTH_KEY;
-    const templateId = process.env.MSG91_TEMPLATE_ID;
+/* ── HELPERS ── */
+const generateToken = (id) =>
+    jwt.sign({ id }, process.env.JWT_SECRET || "motopark_user_secret", { expiresIn: "30d" });
 
-    if (authKey && templateId) {
-        /* ── MSG91 (production) ── */
-        try {
-            const res = await fetch(
-                `https://api.msg91.com/api/v5/otp?template_id=${templateId}&mobile=91${phone}&otp=${otp}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "authkey": authKey,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-            const data = await res.json();
-            console.log(`📱 MSG91 response for +91${phone}:`, data);
-        } catch (err) {
-            console.error("MSG91 SMS error:", err.message);
-            // Don't throw — still return success so we don't expose internals
-        }
-    } else {
-        /* ── Console fallback (development only) ── */
-        console.log(`\n🔑 OTP for +91${phone}: ${otp}  (expires in 10 min)`);
-        console.log(`   Add MSG91_AUTH_KEY + MSG91_TEMPLATE_ID to .env to send real SMS\n`);
-    }
-};
+const generateOtp = () =>
+    Math.floor(100000 + Math.random() * 900000).toString();
 
-const makeToken = (id) => jwt.sign({ id }, JWT_SECRET, { expiresIn: "30d" });
+/* Use verified domain in production, Resend test address in development */
+const FROM =
+    process.env.NODE_ENV === "production" && process.env.FROM_EMAIL
+        ? `MotoPark <${process.env.FROM_EMAIL}>`
+        : "MotoPark <onboarding@resend.dev>";
 
-const safeUser = (u) => ({
-    _id: u._id,
-    name: u.name,
-    email: u.email,
-    phone: u.phone,
-    isVerified: u.isVerified,
-    savedAddresses: u.savedAddresses,
-    defaultAddress: u.defaultAddress,
-    createdAt: u.createdAt,
-});
-
-/* ── REGISTER (email + password) ── */
-export const register = async (req, res) => {
-    try {
-        const { name, email, phone, password } = req.body;
-
-        if (!name) return res.status(400).json({ message: "Name is required" });
-        if (!email && !phone) return res.status(400).json({ message: "Email or phone required" });
-        if (email && !password) return res.status(400).json({ message: "Password is required for email signup" });
-
-        // check duplicate
-        const exists = await User.findOne({
-            $or: [
-                ...(email ? [{ email }] : []),
-                ...(phone ? [{ phone }] : []),
-            ]
-        });
-
-        if (exists) {
-            const field = exists.email === email ? "email" : "phone";
-            return res.status(400).json({ message: `An account with this ${field} already exists` });
-        }
-
-        const user = await User.create({ name, email, phone, password, isVerified: !!phone });
-
-        res.status(201).json({
-            user: safeUser(user),
-            token: makeToken(user._id),
-        });
-    } catch (err) {
-        console.error("REGISTER ERROR:", err);
-        res.status(500).json({ message: err.message });
-    }
-};
-
-/* ── EMAIL LOGIN ── */
-export const loginEmail = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ message: "Email and password required" });
-
-        const user = await User.findOne({ email });
-        if (!user) return res.status(401).json({ message: "No account found with this email" });
-        if (!(await user.matchPassword(password))) return res.status(401).json({ message: "Incorrect password" });
-
-        res.json({
-            user: safeUser(user),
-            token: makeToken(user._id),
-        });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-/* ── SEND OTP (phone) ── */
+/* ════════════════════════════════
+   SEND OTP
+   POST /api/users/otp/send
+   Body: { email }
+════════════════════════════════ */
 export const sendOtp = async (req, res) => {
     try {
-        const { phone } = req.body;
-        if (!phone || !/^\d{10}$/.test(phone)) return res.status(400).json({ message: "Enter a valid 10-digit number" });
+        const { email } = req.body;
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiry = new Date(Date.now() + OTP_EXPIRY);
+        if (!email || !email.includes("@")) {
+            return res.status(400).json({ message: "Valid email is required" });
+        }
 
-        // Find existing user or create a temporary placeholder
-        let user = await User.findOne({ phone });
-        if (user) {
-            // existing user — just update OTP
-            user.otp = otp;
-            user.otpExpiry = expiry;
-            await user.save();
-        } else {
-            // new user — create with placeholder name (will be set in verifyOtp)
-            await User.create({
-                phone,
-                name: "MotoPark User", // placeholder, updated after name entry
-                otp,
-                otpExpiry: expiry,
+        const otp = generateOtp();
+        const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+        /* Find or create user */
+        let user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            user = new User({
+                name: email.split("@")[0], // temp name, updatable later
+                email: email.toLowerCase(),
                 isVerified: false,
             });
         }
 
-        // ─── SEND REAL SMS ───────────────────────────────────────
-        await sendSms(phone, otp);
-        // ─────────────────────────────────────────────────────────
+        user.otp = otp;
+        user.otpExpiry = expiry;
+        await user.save();
 
-        res.json({ message: "OTP sent", phone });
+        /* Send OTP email */
+        await resend.emails.send({
+            from: FROM,
+            to: email,
+            subject: `${otp} — Your MotoPark login code`,
+            html: `
+                <div style="font-family:-apple-system,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+
+                    <!-- HEADER -->
+                    <div style="background:linear-gradient(135deg,#0b1d3a,#08162d);border-radius:14px;padding:28px;text-align:center;margin-bottom:24px;">
+                        <p style="color:#ff6b3d;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 6px;">MotoPark</p>
+                        <h1 style="color:#ffffff;font-size:22px;font-weight:400;margin:0;letter-spacing:-0.02em;">Your login code</h1>
+                    </div>
+
+                    <p style="color:#6e6e73;font-size:14px;line-height:1.6;margin:0 0 20px;">
+                        Use this code to sign in to MotoPark. It expires in <strong>10 minutes</strong>.
+                    </p>
+
+                    <!-- OTP BOX -->
+                    <div style="background:#f5f5f7;border-radius:14px;padding:28px;text-align:center;margin-bottom:24px;">
+                        <span style="font-size:44px;font-weight:700;letter-spacing:14px;color:#0b1d3a;font-family:monospace;">
+                            ${otp}
+                        </span>
+                    </div>
+
+                    <p style="color:#aeaeb2;font-size:12px;line-height:1.6;margin:0;">
+                        If you didn't request this code, you can safely ignore this email.
+                        Someone may have entered your email by mistake.
+                    </p>
+
+                    <hr style="border:none;border-top:1px solid rgba(11,29,58,0.08);margin:24px 0;"/>
+                    <p style="color:#d1d1d6;font-size:11px;margin:0;text-align:center;">
+                        © ${new Date().getFullYear()} MotoPark · Visakhapatnam, India
+                    </p>
+                </div>
+            `,
+        });
+
+        console.log(`✅ OTP email sent to ${email}`);
+        res.json({ message: "OTP sent to your email" });
+
+    } catch (err) {
+        console.error("sendOtp error:", err);
+        res.status(500).json({ message: "Failed to send OTP", error: err.message });
+    }
+};
+
+/* ════════════════════════════════
+   VERIFY OTP
+   POST /api/users/otp/verify
+   Body: { email, otp }
+════════════════════════════════ */
+export const verifyOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user || !user.otp || !user.otpExpiry) {
+            return res.status(400).json({ message: "No OTP found. Please request a new one." });
+        }
+
+        if (user.otpExpiry < new Date()) {
+            user.otp = undefined;
+            user.otpExpiry = undefined;
+            await user.save();
+            return res.status(400).json({ message: "OTP expired. Please request a new one." });
+        }
+
+        if (user.otp !== otp.toString()) {
+            return res.status(400).json({ message: "Invalid OTP" });
+        }
+
+        /* Clear OTP, mark verified */
+        user.otp = undefined;
+        user.otpExpiry = undefined;
+        user.isVerified = true;
+        await user.save();
+
+        res.json({
+            message: "Login successful",
+            token: generateToken(user._id),
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                isVerified: user.isVerified,
+            },
+        });
+
+    } catch (err) {
+        console.error("verifyOtp error:", err);
+        res.status(500).json({ message: "OTP verification failed", error: err.message });
+    }
+};
+
+/* ════════════════════════════════
+   REGISTER — email + password
+   POST /api/users/register
+════════════════════════════════ */
+export const register = async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "Name, email and password are required" });
+        }
+
+        const exists = await User.findOne({ email: email.toLowerCase() });
+        if (exists) {
+            return res.status(400).json({ message: "Email already registered" });
+        }
+
+        const user = await User.create({ name, email: email.toLowerCase(), password });
+
+        res.status(201).json({
+            token: generateToken(user._id),
+            user: { _id: user._id, name: user.name, email: user.email },
+        });
+
+    } catch (err) {
+        console.error("register error:", err);
+        res.status(500).json({ message: "Registration failed", error: err.message });
+    }
+};
+
+/* ════════════════════════════════
+   LOGIN — email + password
+   POST /api/users/login/email
+════════════════════════════════ */
+export const loginEmail = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user || !(await user.matchPassword(password))) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        res.json({
+            token: generateToken(user._id),
+            user: { _id: user._id, name: user.name, email: user.email, phone: user.phone },
+        });
+
+    } catch (err) {
+        console.error("loginEmail error:", err);
+        res.status(500).json({ message: "Login failed", error: err.message });
+    }
+};
+
+/* ════════════════════════════════
+   GET PROFILE
+   GET /api/users/profile
+════════════════════════════════ */
+export const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password -otp -otpExpiry");
+        if (!user) return res.status(404).json({ message: "User not found" });
+        res.json({ user });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-/* ── VERIFY OTP ── */
-export const verifyOtp = async (req, res) => {
+/* ════════════════════════════════
+   UPDATE PROFILE
+   PUT /api/users/profile
+════════════════════════════════ */
+export const updateProfile = async (req, res) => {
     try {
-        const { phone, otp, name } = req.body;
-        if (!phone || !otp) return res.status(400).json({ message: "Phone and OTP required" });
+        const { name, phone } = req.body;
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-        const user = await User.findOne({ phone });
-        if (!user) return res.status(400).json({ message: "No OTP was sent to this number" });
-        if (user.otp !== otp) return res.status(400).json({ message: "Incorrect OTP" });
-        if (user.otpExpiry < new Date()) return res.status(400).json({ message: "OTP expired. Request a new one" });
-
-        // Mark verified, clear OTP, always update name if provided
-        user.isVerified = true;
-        user.otp = undefined;
-        user.otpExpiry = undefined;
-        if (name && name.trim()) user.name = name.trim(); // always overwrite placeholder
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
         await user.save();
 
         res.json({
-            user: safeUser(user),
-            token: makeToken(user._id),
+            user: { _id: user._id, name: user.name, email: user.email, phone: user.phone },
         });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-/* ── GET PROFILE ── */
-export const getProfile = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: "User not found" });
-        res.json({ user: safeUser(user) });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-/* ── UPDATE PROFILE ── */
-export const updateProfile = async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        if (name) user.name = name;
-        if (email) user.email = email;
-        if (password) user.password = password; // pre-save hook will hash
-
-        await user.save();
-        res.json({ user: safeUser(user) });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-/* ── ADD / UPDATE ADDRESS ── */
+/* ════════════════════════════════
+   SAVE ADDRESS
+   POST /api/users/addresses
+════════════════════════════════ */
 export const saveAddress = async (req, res) => {
     try {
-        const { label, name, phone, address, city, state, pincode, setDefault } = req.body;
         const user = await User.findById(req.user._id);
-
-        const newAddr = { label, name, phone, address, city, state, pincode };
-        user.savedAddresses.push(newAddr);
-
-        if (setDefault || user.savedAddresses.length === 1) {
-            const added = user.savedAddresses[user.savedAddresses.length - 1];
-            user.defaultAddress = added._id;
-        }
-
+        if (!user) return res.status(404).json({ message: "User not found" });
+        user.savedAddresses.push(req.body);
         await user.save();
-        res.json({ user: safeUser(user) });
+        res.status(201).json({ user: { savedAddresses: user.savedAddresses } });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-/* ── DELETE ADDRESS ── */
+/* ════════════════════════════════
+   DELETE ADDRESS
+   DELETE /api/users/addresses/:addressId
+════════════════════════════════ */
 export const deleteAddress = async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        user.savedAddresses = user.savedAddresses.filter(a => a._id.toString() !== req.params.addressId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+        user.savedAddresses = user.savedAddresses.filter(
+            (a) => a._id.toString() !== req.params.addressId
+        );
         await user.save();
-        res.json({ user: safeUser(user) });
+        res.json({ user: { savedAddresses: user.savedAddresses } });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

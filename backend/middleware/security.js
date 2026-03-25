@@ -7,7 +7,7 @@
    ================================================ */
 
 import rateLimit from "express-rate-limit";
-
+import helmet from "helmet";
 /* ════════════════════════════════════════════════
    1. RATE LIMITERS
 ════════════════════════════════════════════════ */
@@ -95,3 +95,4 @@ export const globalErrorHandler = (err, req, res, next) => {
 export const notFound = (req, res) => {
     res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 };
+export { helmet }; 

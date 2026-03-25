@@ -30,6 +30,7 @@ import {
    uploadLimiter,
    globalErrorHandler,
    notFound,
+   helmet,
 } from "./middleware/security.js";
 
 connectDB();
@@ -40,7 +41,7 @@ const app = express();
    MIDDLEWARE
 ════════════════════════════════ */
 app.use(cors());
-
+app.use(helmet());
 /* JSON body parser — only runs for application/json requests.
    multipart/form-data (file uploads) is handled exclusively by multer. */
 app.use(express.json({ limit: "10kb" }));
