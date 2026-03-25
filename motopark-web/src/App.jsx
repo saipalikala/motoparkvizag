@@ -1,6 +1,6 @@
 
 import { Routes, Route, useLocation } from "react-router-dom";
-
+import { useEffect } from "react";
 import OfferBar from "@/components/OfferBar/OfferBar";
 import Navbar from "@/components/Navbar/Navbar";
 
@@ -37,8 +37,12 @@ import "./App.css";
 function App() {
 
     const location = useLocation();
-    const isAdmin = location.pathname.startsWith("/admin");
 
+
+    const isAdmin = location.pathname.startsWith("/admin");
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [location.pathname]);
     return (
 
         <div className="app-container">
