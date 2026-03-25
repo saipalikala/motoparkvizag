@@ -714,8 +714,7 @@
         grid-template-columns: 1fr;
     }
 
-    sidebar becomes a drawer on mobile
-    .cat-sidebar {
+    sidebar becomes a drawer on mobile .cat-sidebar {
         position: fixed;
         top: 0;
         left: 0;
@@ -811,4 +810,352 @@
     background: rgba(0, 0, 0, 0.15);
     border-radius: 100px;
     margin: 12px auto 0;
+}
+
+/* ════════════════════════════════
+   FILTER PANEL — desktop + mobile
+════════════════════════════════ */
+.cf-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(11, 29, 58, 0.07);
+    overflow: hidden;
+}
+
+.cf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(11, 29, 58, 0.07);
+}
+
+.cf-header-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #0b1d3a;
+    letter-spacing: 0.1em;
+}
+
+.cf-reset-btn {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ff6b3d;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s;
+}
+
+.cf-reset-btn:hover {
+    opacity: 0.7;
+}
+
+.cf-no-filters {
+    font-size: 13px;
+    color: #aeaeb2;
+    padding: 16px 20px;
+}
+
+/* ─── ACCORDION ─── */
+.cf-section {
+    border-bottom: 1px solid rgba(11, 29, 58, 0.06);
+}
+
+.cf-section:last-child {
+    border-bottom: none;
+}
+
+.cf-section-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0b1d3a;
+    letter-spacing: 0.02em;
+    transition: background 0.15s ease;
+}
+
+.cf-section-toggle:hover {
+    background: rgba(11, 29, 58, 0.02);
+}
+
+.cf-section-body {
+    padding: 4px 20px 16px;
+}
+
+/* ─── CHECKBOXES ─── */
+.cf-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cf-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.cf-checkbox {
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    border: 1.5px solid rgba(11, 29, 58, 0.2);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    background: #fff;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cf-checkbox:checked {
+    background: #0b1d3a;
+    border-color: #0b1d3a;
+}
+
+.cf-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 2px;
+    width: 5px;
+    height: 8px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+.cf-check-label {
+    font-size: 13px;
+    color: #1d1d1f;
+}
+
+/* ─── SIZES ─── */
+.cf-size-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.cf-size-pill {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(11, 29, 58, 0.12);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0b1d3a;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.cf-size-pill:hover {
+    border-color: rgba(11, 29, 58, 0.3);
+    background: rgba(11, 29, 58, 0.04);
+}
+
+.cf-size-pill--active {
+    background: #0b1d3a;
+    color: #fff;
+    border-color: #0b1d3a;
+}
+
+/* ─── COLORS ─── */
+.cf-color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cf-color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    background-color: var(--swatch, #ccc);
+    cursor: pointer;
+    outline: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cf-color-swatch:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cf-color-swatch--active {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 5px #0b1d3a;
+    transform: scale(1.1);
+}
+
+/* ─── FILTER COUNT BADGE ─── */
+.cat-filter-count {
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* ════════════════════════════════
+   MOBILE DRAWER — Apple sheet style
+════════════════════════════════ */
+.cat-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    z-index: 98;
+    pointer-events: none;
+    transition: background 0.35s ease;
+}
+
+.cat-drawer-backdrop--visible {
+    background: rgba(0, 0, 0, 0.4);
+    pointer-events: all;
+}
+
+.cat-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.cat-drawer--open {
+    transform: translateY(0);
+}
+
+.cat-drawer-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 100px;
+    margin: 12px auto 0;
+}
+
+/* ─── MOBILE PANEL overrides ─── */
+.cf-panel--mobile {
+    border-radius: 0;
+    border: none;
+    background: transparent;
+}
+
+.cf-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid rgba(11, 29, 58, 0.08);
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 2;
+}
+
+.cf-mobile-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #0b1d3a;
+    letter-spacing: -0.01em;
+}
+
+.cf-mobile-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(11, 29, 58, 0.07);
+    color: #0b1d3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.cf-mobile-close:hover {
+    background: rgba(11, 29, 58, 0.12);
+}
+
+.cf-mobile-footer {
+    position: sticky;
+    bottom: 0;
+    padding: 16px 20px;
+    background: #fff;
+    border-top: 1px solid rgba(11, 29, 58, 0.08);
+    display: flex;
+    gap: 10px;
+}
+
+.cf-mobile-reset {
+    flex: 1;
+    padding: 13px;
+    border-radius: 100px;
+    border: 1.5px solid rgba(11, 29, 58, 0.15);
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0b1d3a;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.cf-mobile-reset:hover {
+    background: rgba(11, 29, 58, 0.04);
+}
+
+.cf-mobile-apply {
+    flex: 2;
+    padding: 13px;
+    border-radius: 100px;
+    border: none;
+    background: #ff6b3d;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.cf-mobile-apply:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.cf-mobile-apply:active {
+    transform: scale(0.97);
+}
+
+/* hide desktop sidebar on mobile */
+@media (max-width: 768px) {
+    .cat-sidebar {
+        display: none;
+    }
 }
