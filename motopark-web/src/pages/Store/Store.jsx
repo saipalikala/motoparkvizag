@@ -1,15 +1,12 @@
 import PageTransition from "../../components/PageTransition/PageTransition";
-import ProductFilters from "@/components/Filters/ProductFilters";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-
 import "./Store.css";
 
-const API_BASE = "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -68,8 +65,15 @@ const CheckIcon = () => (
         <polyline points="20 6 9 17 4 12" />
     </svg>
 );
+const ChevronIcon = ({ open }) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>
+        <polyline points="6 9 12 15 18 9" />
+    </svg>
+);
 
-/* ─── SKELETON CARD ─── */
+/* ─── SKELETON ─── */
 const SkeletonCard = () => (
     <div className="store-skeleton">
         <div className="sk-image" />
@@ -114,8 +118,7 @@ const StoreCard = ({ product, view, index }) => {
             <div className="store-card-list-img">
                 {image
                     ? <img src={image} alt={product.name} className="store-img" />
-                    : <div className="store-img-placeholder" />
-                }
+                    : <div className="store-img-placeholder" />}
             </div>
             <div className="store-card-list-body">
                 <div>
@@ -161,8 +164,7 @@ const StoreCard = ({ product, view, index }) => {
             <div className="store-img-wrap">
                 {image
                     ? <img src={image} alt={product.name} className="store-img" />
-                    : <div className="store-img-placeholder" />
-                }
+                    : <div className="store-img-placeholder" />}
             </div>
             <div className="store-card-info">
                 <h3 className="store-name">{product.name}</h3>
@@ -179,90 +181,263 @@ const StoreCard = ({ product, view, index }) => {
     );
 };
 
-/* ─── ACTIVE FILTER PILL ─── */
+/* ─── FILTER SECTION (accordion row) ─── */
+const FilterSection = ({ title, children, defaultOpen = true }) => {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <div className="sf-section">
+            <button className="sf-section-toggle" onClick={() => setOpen(o => !o)}>
+                <span>{title}</span>
+                <ChevronIcon open={open} />
+            </button>
+            {open && <div className="sf-section-body">{children}</div>}
+        </div>
+    );
+};
+
+/* ─── INLINE FILTER PANEL (built from products, no API call needed) ─── */
+const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
+    /* derive filter options directly from product data */
+    const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
+    const sizes = [...new Set(products.flatMap(p =>
+        p.variants?.flatMap(v => v.sizes?.map(s => s.size) || []) || []
+    ).filter(Boolean))].sort();
+    const colors = [...new Set(products.flatMap(p =>
+        p.variants?.map(v => ({ hex: v.color, name: v.colorName || v.color })) || []
+    ).filter(c => c.hex))];
+    /* dedupe by hex */
+    const uniqueColors = colors.filter((c, i, arr) => arr.findIndex(x => x.hex === c.hex) === i);
+
+    const toggle = (key, val) => {
+        onChange(prev => {
+            const cur = prev[key];
+            if (cur === val) {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+            }
+            return { ...prev, [key]: val };
+        });
+    };
+
+    const hasFilters = Object.keys(activeFilters).some(k => k !== "sort");
+
+    return (
+        <div className={`sf-panel ${isMobile ? "sf-panel--mobile" : ""}`}>
+            {isMobile && (
+                <div className="sf-mobile-header">
+                    <span className="sf-mobile-title">Filters</span>
+                    <button className="sf-mobile-close" onClick={onClose} aria-label="Close filters">
+                        <XIcon />
+                    </button>
+                </div>
+            )}
+
+            {!isMobile && (
+                <div className="sf-header">
+                    <span className="sf-header-title">FILTERS</span>
+                    {hasFilters && (
+                        <button className="sf-reset-btn" onClick={onReset}>Reset all</button>
+                    )}
+                </div>
+            )}
+
+            {!hasFilters && !isMobile && (
+                <p className="sf-no-filters">No filters applied</p>
+            )}
+
+            {brands.length > 0 && (
+                <FilterSection title="Brand">
+                    <div className="sf-check-list">
+                        {brands.map(b => (
+                            <label key={b} className="sf-check-row">
+                                <input
+                                    type="checkbox"
+                                    className="sf-checkbox"
+                                    checked={activeFilters.brand === b}
+                                    onChange={() => toggle("brand", b)}
+                                />
+                                <span className="sf-check-label">{b}</span>
+                            </label>
+                        ))}
+                    </div>
+                </FilterSection>
+            )}
+
+            {sizes.length > 0 && (
+                <FilterSection title="Size">
+                    <div className="sf-size-grid">
+                        {sizes.map(s => (
+                            <button
+                                key={s}
+                                className={`sf-size-pill ${activeFilters.size === s ? "sf-size-pill--active" : ""}`}
+                                onClick={() => toggle("size", s)}>
+                                {s}
+                            </button>
+                        ))}
+                    </div>
+                </FilterSection>
+            )}
+
+            {uniqueColors.length > 0 && (
+                <FilterSection title="Color">
+                    <div className="sf-color-grid">
+                        {uniqueColors.map(c => (
+                            <button
+                                key={c.hex}
+                                className={`sf-color-swatch ${activeFilters.color === c.hex ? "sf-color-swatch--active" : ""}`}
+                                style={{ "--swatch": c.hex }}
+                                onClick={() => toggle("color", c.hex)}
+                                title={c.name && c.name !== c.hex ? c.name : undefined}
+                                aria-label={c.name || c.hex}
+                            />
+                        ))}
+                    </div>
+                </FilterSection>
+            )}
+
+            {brands.length === 0 && sizes.length === 0 && uniqueColors.length === 0 && (
+                <p className="sf-no-filters">No filters available yet.</p>
+            )}
+
+            {isMobile && (
+                <div className="sf-mobile-footer">
+                    {hasFilters && (
+                        <button className="sf-mobile-reset" onClick={() => { onReset(); onClose(); }}>
+                            Reset All
+                        </button>
+                    )}
+                    <button className="sf-mobile-apply" onClick={onClose}>
+                        Show Results
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+/* ─── FILTER PILL ─── */
 const FilterPill = ({ label, onRemove }) => (
     <button className="store-filter-pill" onClick={onRemove}>
         {label} <XIcon />
     </button>
 );
 
-/* ─── MAIN STORE ─── */
+/* ════════════════════════════════
+   MAIN STORE
+════════════════════════════════ */
 const Store = () => {
     const { products, loading } = useProducts();
 
-    const [query, setQuery] = useState({});
+    const [activeFilters, setActiveFilters] = useState({});
     const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [debouncedSearch, setDebounced] = useState("");
     const [sort, setSort] = useState("newest");
     const [view, setView] = useState("grid");
-    const [sidebar, setSidebar] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mobileFilterOpen, setMobileOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const searchRef = useRef(null);
 
+    /* detect mobile */
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth <= 768);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
+
     /* init from URL */
     useEffect(() => {
         const params = Object.fromEntries([...searchParams]);
-        setQuery(params);
+        setActiveFilters(params);
         if (params.search) setSearch(params.search);
         if (params.sort) setSort(params.sort);
     }, []);
 
     /* debounce search */
     useEffect(() => {
-        const t = setTimeout(() => setDebouncedSearch(search), 400);
+        const t = setTimeout(() => setDebounced(search), 380);
         return () => clearTimeout(t);
     }, [search]);
 
     /* sync URL */
-    useEffect(() => { setSearchParams(query); }, [query]);
+    useEffect(() => {
+        const params = { ...activeFilters };
+        if (debouncedSearch) params.search = debouncedSearch;
+        if (sort !== "newest") params.sort = sort;
+        setSearchParams(params);
+    }, [activeFilters, debouncedSearch, sort]);
 
-    /* ── FILTER LOCALLY ── */
+    /* lock body scroll when mobile drawer open */
+    useEffect(() => {
+        document.body.style.overflow = mobileFilterOpen ? "hidden" : "";
+        return () => { document.body.style.overflow = ""; };
+    }, [mobileFilterOpen]);
+
+    /* ── FILTER PRODUCTS ── */
     let filtered = [...products];
 
     if (debouncedSearch) {
+        const q = debouncedSearch.toLowerCase();
         filtered = filtered.filter(p =>
-            p.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            p.brand?.toLowerCase().includes(debouncedSearch.toLowerCase())
+            p.name.toLowerCase().includes(q) ||
+            p.brand?.toLowerCase().includes(q)
         );
     }
-    if (query.category) filtered = filtered.filter(p => p.category === query.category);
-    if (query.brand) filtered = filtered.filter(p => p.brand === query.brand);
+    if (activeFilters.brand) {
+        filtered = filtered.filter(p => p.brand === activeFilters.brand);
+    }
+    if (activeFilters.size) {
+        filtered = filtered.filter(p =>
+            p.variants?.some(v => v.sizes?.some(s => s.size === activeFilters.size))
+        );
+    }
+    if (activeFilters.color) {
+        filtered = filtered.filter(p =>
+            p.variants?.some(v => v.color === activeFilters.color)
+        );
+    }
+
     if (sort === "price-low") filtered.sort((a, b) => a.price - b.price);
     if (sort === "price-high") filtered.sort((a, b) => b.price - a.price);
 
-    const resetFilters = () => {
-        setQuery({});
+    const resetFilters = useCallback(() => {
+        setActiveFilters({});
         setSearch("");
+        setDebounced("");
         setSort("newest");
         setSearchParams({});
-    };
+    }, []);
 
-    /* active filter pills */
+    /* active pills */
     const activePills = [
-        query.category && { key: "category", label: query.category },
-        query.brand && { key: "brand", label: query.brand },
+        activeFilters.brand && { key: "brand", label: activeFilters.brand },
+        activeFilters.size && { key: "size", label: `Size: ${activeFilters.size}` },
+        activeFilters.color && { key: "color", label: `Color` },
         debouncedSearch && { key: "search", label: `"${debouncedSearch}"` },
     ].filter(Boolean);
 
     const removeFilter = (key) => {
-        if (key === "search") { setSearch(""); setDebouncedSearch(""); }
-        else setQuery(q => { const n = { ...q }; delete n[key]; return n; });
+        if (key === "search") { setSearch(""); setDebounced(""); }
+        else setActiveFilters(q => { const n = { ...q }; delete n[key]; return n; });
     };
+
+    const activeFilterCount = activePills.length;
 
     return (
         <PageTransition>
             <div className="store-page">
 
-                {/* ── HERO HEADER ── */}
+                {/* ── HERO ── */}
                 <div className="store-hero">
                     <div className="store-hero-bg" aria-hidden="true" />
                     <div className="store-hero-content">
                         <p className="store-eyebrow">MotoPark Collection</p>
                         <h1 className="store-title">Explore All Gear</h1>
                         <p className="store-subtitle">Premium motorcycle gear for every ride</p>
-
-                        {/* SEARCH BAR */}
                         <div className="store-search-wrap">
                             <SearchIcon />
                             <input
@@ -274,7 +449,8 @@ const Store = () => {
                                 autoComplete="off"
                             />
                             {search && (
-                                <button className="store-search-clear" onClick={() => { setSearch(""); setDebouncedSearch(""); }}>
+                                <button className="store-search-clear"
+                                    onClick={() => { setSearch(""); setDebounced(""); }}>
                                     <XIcon />
                                 </button>
                             )}
@@ -285,12 +461,12 @@ const Store = () => {
                 {/* ── STICKY TOOLBAR ── */}
                 <div className="store-toolbar">
                     <button
-                        className={`store-filter-toggle ${sidebar ? "store-filter-toggle--active" : ""}`}
-                        onClick={() => setSidebar(s => !s)}>
+                        className={`store-filter-toggle ${(sidebarOpen && !isMobile) || (mobileFilterOpen && isMobile) ? "store-filter-toggle--active" : ""}`}
+                        onClick={() => isMobile ? setMobileOpen(true) : setSidebarOpen(s => !s)}>
                         <FilterIcon />
                         <span>Filters</span>
-                        {activePills.length > 0 && (
-                            <span className="store-filter-count">{activePills.length}</span>
+                        {activeFilterCount > 0 && (
+                            <span className="store-filter-count">{activeFilterCount}</span>
                         )}
                     </button>
 
@@ -298,7 +474,6 @@ const Store = () => {
                         <span className="store-result-count">
                             {loading ? "—" : `${filtered.length} product${filtered.length !== 1 ? "s" : ""}`}
                         </span>
-
                         <div className="store-sort-wrap">
                             <select className="store-sort" value={sort}
                                 onChange={(e) => setSort(e.target.value)}>
@@ -307,7 +482,6 @@ const Store = () => {
                                 <option value="price-high">Price: High → Low</option>
                             </select>
                         </div>
-
                         <div className="store-view-toggle">
                             <button className={`store-view-btn ${view === "grid" ? "store-view-btn--active" : ""}`}
                                 onClick={() => setView("grid")} aria-label="Grid view">
@@ -329,30 +503,24 @@ const Store = () => {
                             {activePills.map(p => (
                                 <FilterPill key={p.key} label={p.label} onRemove={() => removeFilter(p.key)} />
                             ))}
-                            <button className="store-reset-all" onClick={resetFilters}>
-                                Clear All
-                            </button>
+                            <button className="store-reset-all" onClick={resetFilters}>Clear All</button>
                         </div>
                     </div>
                 )}
 
                 {/* ── LAYOUT ── */}
-                <div className={`store-layout ${sidebar ? "store-layout--sidebar" : "store-layout--full"}`}>
+                <div className={`store-layout ${sidebarOpen && !isMobile ? "store-layout--sidebar" : "store-layout--full"}`}>
 
-                    {/* SIDEBAR */}
-                    {sidebar && (
+                    {/* DESKTOP SIDEBAR */}
+                    {sidebarOpen && !isMobile && (
                         <aside className="store-sidebar">
-                            <div className="store-sidebar-inner">
-                                <div className="store-sidebar-header">
-                                    <h3 className="store-sidebar-title">Filters</h3>
-                                    {activePills.length > 0 && (
-                                        <button className="store-sidebar-reset" onClick={resetFilters}>
-                                            Reset
-                                        </button>
-                                    )}
-                                </div>
-                                <ProductFilters onChange={setQuery} />
-                            </div>
+                            <FilterPanel
+                                products={products}
+                                activeFilters={activeFilters}
+                                onChange={setActiveFilters}
+                                onReset={resetFilters}
+                                isMobile={false}
+                            />
                         </aside>
                     )}
 
@@ -373,9 +541,7 @@ const Store = () => {
                                 </div>
                                 <h3>No products found</h3>
                                 <p>Try a different search or adjust your filters.</p>
-                                <button className="store-empty-btn" onClick={resetFilters}>
-                                    Clear Filters
-                                </button>
+                                <button className="store-empty-btn" onClick={resetFilters}>Clear Filters</button>
                             </div>
                         ) : (
                             <div className={`store-grid ${view === "list" ? "store-grid--list" : ""}`}>
@@ -385,8 +551,32 @@ const Store = () => {
                             </div>
                         )}
                     </section>
-
                 </div>
+
+                {/* ── MOBILE FILTER DRAWER ── */}
+                {isMobile && (
+                    <>
+                        {/* backdrop */}
+                        <div
+                            className={`store-drawer-backdrop ${mobileFilterOpen ? "store-drawer-backdrop--visible" : ""}`}
+                            onClick={() => setMobileOpen(false)}
+                            aria-hidden="true"
+                        />
+                        {/* sheet */}
+                        <div className={`store-drawer ${mobileFilterOpen ? "store-drawer--open" : ""}`}
+                            role="dialog" aria-modal="true" aria-label="Filters">
+                            <div className="store-drawer-handle" />
+                            <FilterPanel
+                                products={products}
+                                activeFilters={activeFilters}
+                                onChange={setActiveFilters}
+                                onReset={resetFilters}
+                                isMobile={true}
+                                onClose={() => setMobileOpen(false)}
+                            />
+                        </div>
+                    </>
+                )}
 
             </div>
         </PageTransition>

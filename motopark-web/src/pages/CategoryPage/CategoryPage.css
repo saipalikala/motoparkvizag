@@ -55,7 +55,9 @@
     transition: color 0.2s ease;
 }
 
-.cat-breadcrumb a:hover { color: #ff6b3d; }
+.cat-breadcrumb a:hover {
+    color: #ff6b3d;
+}
 
 .cat-breadcrumb span {
     color: rgba(255, 255, 255, 0.75);
@@ -164,7 +166,8 @@
     outline: none;
 }
 
-.cat-sort:hover, .cat-sort:focus {
+.cat-sort:hover,
+.cat-sort:focus {
     border-color: rgba(11, 29, 58, 0.25);
 }
 
@@ -192,12 +195,14 @@
     transition: background 0.2s ease, color 0.2s ease;
 }
 
-.cat-view-btn:hover { color: #0b1d3a; }
+.cat-view-btn:hover {
+    color: #0b1d3a;
+}
 
 .cat-view-btn--active {
     background: #ffffff;
     color: #0b1d3a;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 /* ════════════════════════════════
@@ -221,7 +226,7 @@
 }
 
 /* ─── SIDEBAR ─── */
-.cat-sidebar {
+/* .cat-sidebar {
     position: sticky;
     top: 72px;
     height: fit-content;
@@ -244,7 +249,7 @@
     margin-bottom: 18px;
     padding-bottom: 14px;
     border-bottom: 1px solid rgba(11, 29, 58, 0.07);
-}
+} */
 
 /* ─── GRID ─── */
 .cat-grid {
@@ -280,8 +285,15 @@
 }
 
 @keyframes catFadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .cat-card--grid:hover {
@@ -297,7 +309,9 @@
 /* ACCENT LINE */
 .cat-card-accent {
     position: absolute;
-    top: 0; left: 0; right: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     height: 2.5px;
     background: #ff6b3d;
     border-radius: 18px 18px 0 0;
@@ -306,12 +320,16 @@
     z-index: 3;
 }
 
-.cat-card--grid:hover .cat-card-accent { opacity: 1; }
+.cat-card--grid:hover .cat-card-accent {
+    opacity: 1;
+}
 
 /* TOP ROW */
 .cat-card-top {
     position: absolute;
-    top: 12px; left: 12px; right: 12px;
+    top: 12px;
+    left: 12px;
+    right: 12px;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -338,7 +356,9 @@
     transition: transform 0.45s ease;
 }
 
-.cat-card--grid:hover .cat-img { transform: scale(1.06); }
+.cat-card--grid:hover .cat-img {
+    transform: scale(1.06);
+}
 
 .cat-img-placeholder {
     width: 100%;
@@ -452,8 +472,14 @@
     transition: opacity 0.2s ease, transform 0.15s ease, background 0.2s ease;
 }
 
-.cat-cart-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-.cat-cart-btn:active { transform: scale(0.96); }
+.cat-cart-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
+
+.cat-cart-btn:active {
+    transform: scale(0.96);
+}
 
 .cat-cart-btn--added {
     background: transparent;
@@ -494,7 +520,9 @@
     padding: 10px;
 }
 
-.cat-card--list:hover .cat-img { transform: scale(1.05); }
+.cat-card--list:hover .cat-img {
+    transform: scale(1.05);
+}
 
 .cat-card-list-body {
     flex: 1;
@@ -548,7 +576,9 @@
     animation: shimmer 1.4s infinite;
 }
 
-.skel-body { padding: 14px; }
+.skel-body {
+    padding: 14px;
+}
 
 .skel-line {
     border-radius: 6px;
@@ -558,13 +588,30 @@
     margin-bottom: 8px;
 }
 
-.skel-line--title  { height: 14px; width: 80%; }
-.skel-line--sub    { height: 11px; width: 50%; }
-.skel-line--price  { height: 13px; width: 35%; margin-top: 12px; }
+.skel-line--title {
+    height: 14px;
+    width: 80%;
+}
+
+.skel-line--sub {
+    height: 11px;
+    width: 50%;
+}
+
+.skel-line--price {
+    height: 13px;
+    width: 35%;
+    margin-top: 12px;
+}
 
 @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
 
 /* ════════════════════════════════
@@ -619,34 +666,64 @@
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.cat-empty-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.cat-empty-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+}
 
 /* ════════════════════════════════
    RESPONSIVE
 ════════════════════════════════ */
 @media (max-width: 1024px) {
-    .cat-hero { padding: 48px 28px 40px; }
-    .cat-toolbar { padding: 0 28px; }
-    .cat-layout { padding: 24px 28px 64px; }
-    .cat-layout--sidebar { grid-template-columns: 220px 1fr; }
+    .cat-hero {
+        padding: 48px 28px 40px;
+    }
+
+    .cat-toolbar {
+        padding: 0 28px;
+    }
+
+    .cat-layout {
+        padding: 24px 28px 64px;
+    }
+
+    .cat-layout--sidebar {
+        grid-template-columns: 220px 1fr;
+    }
 }
 
 @media (max-width: 768px) {
-    .cat-hero { padding: 40px 20px 32px; }
-    .cat-toolbar { padding: 0 20px; height: 52px; }
-    .cat-count { display: none; }
+    .cat-hero {
+        padding: 40px 20px 32px;
+    }
 
-    .cat-layout { padding: 20px 20px 56px; }
-    .cat-layout--sidebar { grid-template-columns: 1fr; }
+    .cat-toolbar {
+        padding: 0 20px;
+        height: 52px;
+    }
 
-    /* sidebar becomes a drawer on mobile */
+    .cat-count {
+        display: none;
+    }
+
+    .cat-layout {
+        padding: 20px 20px 56px;
+    }
+
+    .cat-layout--sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    sidebar becomes a drawer on mobile
     .cat-sidebar {
         position: fixed;
-        top: 0; left: 0; bottom: 0;
+        top: 0;
+        left: 0;
+        bottom: 0;
         width: 280px;
         z-index: 100;
         background: #fff;
-        box-shadow: 4px 0 40px rgba(0,0,0,0.12);
+        box-shadow: 4px 0 40px rgba(0, 0, 0, 0.12);
         overflow-y: auto;
     }
 
@@ -661,13 +738,77 @@
         gap: 10px;
     }
 
-    .cat-image-wrap { height: 160px; }
+    .cat-image-wrap {
+        height: 160px;
+    }
 }
 
 @media (max-width: 480px) {
-    .cat-title { font-size: 36px; }
-    .cat-toolbar-right { gap: 10px; }
-    .cat-view-toggle { display: none; }
-    .cat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .cat-card-list-image { width: 110px; min-width: 110px; }
+    .cat-title {
+        font-size: 36px;
+    }
+
+    .cat-toolbar-right {
+        gap: 10px;
+    }
+
+    .cat-view-toggle {
+        display: none;
+    }
+
+    .cat-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .cat-card-list-image {
+        width: 110px;
+        min-width: 110px;
+    }
+}
+
+
+/* ==============================
+   CATEGORY MOBILE DRAWER (copy from store)
+================================ */
+
+.cat-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    z-index: 98;
+    pointer-events: none;
+    transition: background 0.35s ease;
+}
+
+.cat-drawer-backdrop--visible {
+    background: rgba(0, 0, 0, 0.4);
+    pointer-events: all;
+}
+
+.cat-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    max-height: 88vh;
+    overflow-y: auto;
+
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.cat-drawer--open {
+    transform: translateY(0);
+}
+
+.cat-drawer-handle {
+    width: 36px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 100px;
+    margin: 12px auto 0;
 }
