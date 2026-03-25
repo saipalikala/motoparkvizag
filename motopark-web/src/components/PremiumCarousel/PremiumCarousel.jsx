@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSwipeable } from "react-swipeable";
 import "./PremiumCarousel.css";
 
-import slide1 from "@/assets/carousel/Carousel-1.svg";
+import slide1 from "@/assets/carousel/carousel-1.svg";
 import slide2 from "@/assets/carousel/carousel-2.svg";
 import slide3 from "@/assets/carousel/carousel-3.svg";
 
