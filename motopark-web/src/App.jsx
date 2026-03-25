@@ -46,10 +46,15 @@ function App() {
             window.history.scrollRestoration = "manual";
         }
 
-        setTimeout(() => {
+        const handleLoad = () => {
             window.scrollTo(0, 0);
-        }, 0);
+        };
+
+        window.addEventListener("load", handleLoad);
+
+        return () => window.removeEventListener("load", handleLoad);
     }, [location.pathname]);
+
     return (
 
         <div className="app-container">

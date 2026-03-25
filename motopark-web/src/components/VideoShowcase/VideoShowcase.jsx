@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./VideoShowcase.css";
-import Video from "@/videos/rider.mp4";
+// import Video from "@/videos/rider.mp4";
 
 function VideoShowcase() {
 
@@ -11,7 +11,7 @@ function VideoShowcase() {
         <section className="video-showcase">
 
             {/* VIDEO */}
-            <video
+            {/* <video
                 autoPlay
                 muted
                 loop
@@ -19,6 +19,15 @@ function VideoShowcase() {
                 className="video-bg"
             >
                 <source src={Video} type="video/mp4" />
+            </video> */}
+            <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="video-bg"
+            >
+                <source src="/videos/rider.mp4" type="video/mp4" />
             </video>
 
             {/* LAYERED OVERLAY — cinematic + brand navy at bottom */}
