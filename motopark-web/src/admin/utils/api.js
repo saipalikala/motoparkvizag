@@ -1,33 +1,27 @@
-// import axios from "axios";
-
-// const API = axios.create({
-//     baseURL: "http://localhost:5000/api", // your backend URL
-// });
-
-// // 🔐 Admin Login API
-// export const adminLogin = async (credentials) => {
-//     try {
-//         const res = await API.post("/admin/login", credentials);
-//         return res.data;
-//     } catch (error) {
-//         throw error.response?.data || { message: "Login failed" };
-//     }
-// };
-
 import axios from "axios";
-import { API as BASE_URL } from "@/config/api"; // ✅ ADD THIS
+import { API as BASE_URL } from "@/config/api";
 
-// ✅ Create axios instance with dynamic backend URL
 const API = axios.create({
     baseURL: `${BASE_URL}/api`,
 });
 
-// 🔐 Admin Login API
-export const adminLogin = async (credentials) => {
+// ✅ Fixed: now accepts (email, password) to match AdminLogin.jsx
+export const adminLogin = async (email, password) => {
     try {
-        const res = await API.post("/admin/login", credentials);
+        const res = await API.post("/admin/login", { email, password });
         return res.data;
     } catch (error) {
         throw error.response?.data || { message: "Login failed" };
     }
 };
+
+// ✅ Attach token to all requests automatically
+API.interceptors.request.use((config) => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export default API;

@@ -32,6 +32,7 @@ import OrdersPage from "./pages/Orders/OrdersPage";
 import OrderDetail from "./pages/Orders/OrderDetail";
 import AuthPage from "./pages/Auth/AuthPage";
 import AccountPage from "./pages/Account/AccountPage";
+import ProtectedRoute from "@/admin/utils/ProtectedRoute";
 import "./App.css";
 
 function App() {
@@ -101,7 +102,11 @@ function App() {
 
                 <Route path="/admin/login" element={<AdminLogin />} />
 
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route path="/admin" element={
+                    <ProtectedRoute>
+                        <AdminLayout />
+                    </ProtectedRoute>
+                }>
 
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="offers" element={<OffersAdmin />} />

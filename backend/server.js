@@ -41,7 +41,12 @@ const app = express();
    MIDDLEWARE
 ════════════════════════════════ */
 app.use(cors());
-app.use(helmet());
+app.use(
+   helmet({
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: false, // or configure per your needs
+   })
+);
 /* JSON body parser — only runs for application/json requests.
    multipart/form-data (file uploads) is handled exclusively by multer. */
 app.use(express.json({ limit: "10kb" }));
