@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { Resend } from "resend";
 import User from "../models/userModel.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const getResend = () => new Resend(process.env.RESEND_API_KEY);
 
 /* ── HELPERS ── */
 const generateToken = (id) =>
@@ -51,7 +51,7 @@ export const sendOtp = async (req, res) => {
         await user.save();
 
         /* Send OTP email */
-        await resend.emails.send({
+        await getResend().emails.send({
             from: FROM,
             to: email,
             subject: `${otp} — Your MotoPark login code`,
