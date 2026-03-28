@@ -21,7 +21,7 @@ const InventoryManager = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/products?limit=500`, { headers: AUTH() });
+            const res = await fetch(`${API}/products?limit=500`, { headers: AUTH() });
             const data = await res.json();
             setProducts(data.products || []);
         } catch (e) { console.error(e); }
@@ -52,7 +52,7 @@ const InventoryManager = () => {
         }));
 
         try {
-            await fetch(`${API}/api/products/${product._id}`, {
+            await fetch(`${API}/products/${product._id}`, {
                 method: "PUT",
                 headers: AUTH(),
                 body: JSON.stringify({ variants: JSON.stringify(updatedVariants) }),

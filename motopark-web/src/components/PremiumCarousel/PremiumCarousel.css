@@ -1,14 +1,15 @@
 /* ================================
-   MOTO PARK — PREMIUM CAROUSEL
-   Brand: #0b1d3a / #08162d / #ff6b3d / #fff
-   ================================ */
+MOTO PARK — PREMIUM CAROUSEL (CLEANED)
+Optimized for: CLS + LCP
+================================ */
 
 /* ─── SECTION ─── */
 .carousel {
     position: relative;
     width: 100vw;
     height: calc(100vh - 110px);
-    min-height: 520px;
+    min-height: clamp(480px, 80vh, 700px);
+    /* ✅ CLS FIX */
     max-height: 900px;
     margin: 0;
     padding: 0;
@@ -27,15 +28,29 @@
 .carousel-slide {
     position: absolute;
     inset: 0;
-    background-size: cover;
-    background-position: center;
+    width: 100%;
+    min-height: clamp(480px, 80vh, 700px);
+    /* ✅ CLS FIX */
+    overflow: hidden;
     will-change: transform, opacity;
 }
 
-/* ─── OVERLAY — brand navy fade bottom ─── */
+/* ✅ IMAGE AS BACKGROUND REPLACEMENT */
+.carousel-bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+}
+
+/* ─── OVERLAY ─── */
 .carousel-overlay {
     position: absolute;
     inset: 0;
+    z-index: 1;
     background:
         linear-gradient(to bottom,
             rgba(0, 0, 0, 0.15) 0%,
@@ -69,7 +84,6 @@
 
 .carousel-eyebrow::before {
     content: '';
-    display: inline-block;
     width: 22px;
     height: 2px;
     background: #ff6b3d;
@@ -91,9 +105,7 @@
 .carousel-subtitle {
     font-size: clamp(14px, 1.6vw, 17px);
     color: rgba(255, 255, 255, 0.6);
-    font-weight: 400;
     line-height: 1.6;
-    letter-spacing: -0.01em;
     margin-bottom: 32px;
     max-width: 400px;
 }
@@ -101,12 +113,10 @@
 /* ─── ACTION BUTTONS ─── */
 .carousel-actions {
     display: flex;
-    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
 }
 
-/* PRIMARY CTA */
 .carousel-cta {
     display: inline-flex;
     align-items: center;
@@ -115,13 +125,11 @@
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.03em;
     padding: 13px 26px;
     border-radius: 100px;
     border: none;
     cursor: pointer;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    white-space: nowrap;
+    transition: all 0.2s ease;
 }
 
 .carousel-cta:hover {
@@ -129,11 +137,6 @@
     transform: translateY(-2px);
 }
 
-.carousel-cta:active {
-    transform: scale(0.97);
-}
-
-/* GHOST CTA */
 .carousel-cta-ghost {
     display: inline-flex;
     align-items: center;
@@ -142,61 +145,22 @@
     color: rgba(255, 255, 255, 0.82);
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.02em;
     padding: 13px 22px;
     border-radius: 100px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-    white-space: nowrap;
+    transition: all 0.2s ease;
 }
 
-.carousel-cta-ghost:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-}
-
-.carousel-cta-ghost:active {
-    transform: scale(0.97);
-}
-
-/* ─── SLIDE COUNTER (top-right) ─── */
+/* ─── COUNTER ─── */
 .carousel-counter {
     position: absolute;
     top: 36px;
     right: 48px;
-    z-index: 2;
+    z-index: 3;
     display: flex;
-    align-items: center;
     gap: 10px;
-}
-
-.carousel-counter-cur {
-    font-family: 'Sakana', -apple-system, sans-serif;
-    font-size: 32px;
-    font-weight: 400;
-    color: #ffffff;
-    letter-spacing: -0.02em;
-    line-height: 1;
-}
-
-.carousel-counter-sep {
-    width: 28px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.3);
-    flex-shrink: 0;
-}
-
-.carousel-counter-total {
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.38);
-    letter-spacing: 0.04em;
-    align-self: flex-end;
-    margin-bottom: 4px;
 }
 
 /* ─── ARROWS ─── */
@@ -208,27 +172,11 @@
     width: 46px;
     height: 46px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.18);
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: rgba(255, 255, 255, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
-}
-
-.carousel-arrow:hover {
-    background: rgba(255, 107, 61, 0.25);
-    border-color: rgba(255, 107, 61, 0.55);
-    color: #ffffff;
-    transform: translateY(-50%) scale(1.07);
-}
-
-.carousel-arrow:active {
-    transform: translateY(-50%) scale(0.96);
 }
 
 .carousel-arrow--left {
@@ -247,33 +195,21 @@
     right: 72px;
     z-index: 3;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 20px;
 }
 
-/* DOTS */
+/* ─── DOTS ─── */
 .carousel-dots {
     display: flex;
-    align-items: center;
     gap: 8px;
 }
 
 .carousel-dot {
-    position: relative;
     height: 3px;
     width: 32px;
-    border-radius: 3px;
     background: rgba(255, 255, 255, 0.22);
     border: none;
     cursor: pointer;
-    padding: 0;
-    overflow: hidden;
-    transition: background 0.2s ease, width 0.25s ease;
-}
-
-.carousel-dot:hover {
-    background: rgba(255, 255, 255, 0.4);
 }
 
 .carousel-dot--active {
@@ -281,182 +217,23 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-/* animated fill */
-.carousel-dot-fill {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 0%;
-    background: #ff6b3d;
-    border-radius: 3px;
-    animation: dotFill linear forwards;
-}
-
-@keyframes dotFill {
-    from {
-        width: 0%;
-    }
-
-    to {
-        width: 100%;
-    }
-}
-
-/* SLIDE TITLE MINI */
-.carousel-bar-title {
-    font-size: 12px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.4);
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 260px;
-    text-align: right;
-}
-
-/* ─── SCROLL HINT (bottom-right) ─── */
-.carousel-scroll-hint {
-    position: absolute;
-    bottom: 36px;
-    right: 48px;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.carousel-scroll-line {
-    width: 40px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.12);
-    position: relative;
-    overflow: hidden;
-}
-
-.carousel-scroll-dot {
-    position: absolute;
-    top: 0;
-    left: -8px;
-    width: 8px;
-    height: 1px;
-    background: #ff6b3d;
-    animation: scrollTrack 1.8s ease-in-out infinite;
-}
-
-@keyframes scrollTrack {
-    0% {
-        left: -8px;
-        opacity: 0;
-    }
-
-    20% {
-        opacity: 1;
-    }
-
-    80% {
-        opacity: 1;
-    }
-
-    100% {
-        left: 100%;
-        opacity: 0;
-    }
-}
-
-/* ════════════════════════════════
-   RESPONSIVE
-════════════════════════════════ */
-@media (max-width: 1024px) {
-    .carousel-content {
-        left: 44px;
-        bottom: 88px;
-    }
-
-    .carousel-counter {
-        right: 32px;
-        top: 28px;
-    }
-
-    .carousel-scroll-hint {
-        display: none;
-    }
-
-    .carousel-bar {
-        left: 44px;
-        right: 44px;
-    }
-}
-
+/* ─── MOBILE ─── */
 @media (max-width: 768px) {
-    .carousel {
-        height: calc(100vh - 68px);
-        min-height: 460px;
+
+    .carousel,
+    .carousel-slide {
+        min-height: clamp(320px, 60vh, 500px);
     }
 
     .carousel-content {
         left: 20px;
         right: 20px;
         bottom: 80px;
-        max-width: 100%;
-    }
-
-    .carousel-title {
-        font-size: clamp(30px, 8vw, 46px);
-    }
-
-    .carousel-counter {
-        display: none;
     }
 
     .carousel-arrow {
         display: none;
     }
 
-    .carousel-bar {
-        left: 20px;
-        right: 20px;
-        bottom: 24px;
-    }
 
-    .carousel-bar-title {
-        display: none;
-    }
-
-    .carousel-dot {
-        width: 24px;
-    }
-
-    .carousel-dot--active {
-        width: 36px;
-    }
-
-    .carousel-cta-ghost {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .carousel-title {
-        font-size: 28px;
-    }
-
-    .carousel-subtitle {
-        font-size: 14px;
-    }
-
-    .carousel-cta {
-        padding: 12px 22px;
-        font-size: 12px;
-    }
-
-    .carousel-content {
-        bottom: 72px;
-    }
 }

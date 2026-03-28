@@ -6,7 +6,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import "./Store.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// ✅ Fixed — use central API config, not raw env var
+import { API as API_BASE } from "@/config/api";
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -181,7 +182,7 @@ const StoreCard = ({ product, view, index }) => {
     );
 };
 
-/* ─── FILTER SECTION (accordion row) ─── */
+/* ─── FILTER SECTION ─── */
 const FilterSection = ({ title, children, defaultOpen = true }) => {
     const [open, setOpen] = useState(defaultOpen);
     return (
@@ -195,9 +196,8 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
     );
 };
 
-/* ─── INLINE FILTER PANEL (built from products, no API call needed) ─── */
+/* ─── FILTER PANEL ─── */
 const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
-    /* derive filter options directly from product data */
     const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
     const sizes = [...new Set(products.flatMap(p =>
         p.variants?.flatMap(v => v.sizes?.map(s => s.size) || []) || []
@@ -205,7 +205,6 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
     const colors = [...new Set(products.flatMap(p =>
         p.variants?.map(v => ({ hex: v.color, name: v.colorName || v.color })) || []
     ).filter(c => c.hex))];
-    /* dedupe by hex */
     const uniqueColors = colors.filter((c, i, arr) => arr.findIndex(x => x.hex === c.hex) === i);
 
     const toggle = (key, val) => {
@@ -341,7 +340,6 @@ const Store = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const searchRef = useRef(null);
 
-    /* detect mobile */
     useEffect(() => {
         const check = () => setIsMobile(window.innerWidth <= 768);
         check();
@@ -349,7 +347,6 @@ const Store = () => {
         return () => window.removeEventListener("resize", check);
     }, []);
 
-    /* init from URL */
     useEffect(() => {
         const params = Object.fromEntries([...searchParams]);
         setActiveFilters(params);
@@ -357,13 +354,11 @@ const Store = () => {
         if (params.sort) setSort(params.sort);
     }, []);
 
-    /* debounce search */
     useEffect(() => {
         const t = setTimeout(() => setDebounced(search), 380);
         return () => clearTimeout(t);
     }, [search]);
 
-    /* sync URL */
     useEffect(() => {
         const params = { ...activeFilters };
         if (debouncedSearch) params.search = debouncedSearch;
@@ -371,13 +366,11 @@ const Store = () => {
         setSearchParams(params);
     }, [activeFilters, debouncedSearch, sort]);
 
-    /* lock body scroll when mobile drawer open */
     useEffect(() => {
         document.body.style.overflow = mobileFilterOpen ? "hidden" : "";
         return () => { document.body.style.overflow = ""; };
     }, [mobileFilterOpen]);
 
-    /* ── FILTER PRODUCTS ── */
     let filtered = [...products];
 
     if (debouncedSearch) {
@@ -387,9 +380,7 @@ const Store = () => {
             p.brand?.toLowerCase().includes(q)
         );
     }
-    if (activeFilters.brand) {
-        filtered = filtered.filter(p => p.brand === activeFilters.brand);
-    }
+    if (activeFilters.brand) filtered = filtered.filter(p => p.brand === activeFilters.brand);
     if (activeFilters.size) {
         filtered = filtered.filter(p =>
             p.variants?.some(v => v.sizes?.some(s => s.size === activeFilters.size))
@@ -412,7 +403,6 @@ const Store = () => {
         setSearchParams({});
     }, []);
 
-    /* active pills */
     const activePills = [
         activeFilters.brand && { key: "brand", label: activeFilters.brand },
         activeFilters.size && { key: "size", label: `Size: ${activeFilters.size}` },
@@ -511,7 +501,6 @@ const Store = () => {
                 {/* ── LAYOUT ── */}
                 <div className={`store-layout ${sidebarOpen && !isMobile ? "store-layout--sidebar" : "store-layout--full"}`}>
 
-                    {/* DESKTOP SIDEBAR */}
                     {sidebarOpen && !isMobile && (
                         <aside className="store-sidebar">
                             <FilterPanel
@@ -524,7 +513,6 @@ const Store = () => {
                         </aside>
                     )}
 
-                    {/* PRODUCTS */}
                     <section className="store-products">
                         {loading ? (
                             <div className={`store-grid ${view === "list" ? "store-grid--list" : ""}`}>
@@ -556,13 +544,11 @@ const Store = () => {
                 {/* ── MOBILE FILTER DRAWER ── */}
                 {isMobile && (
                     <>
-                        {/* backdrop */}
                         <div
                             className={`store-drawer-backdrop ${mobileFilterOpen ? "store-drawer-backdrop--visible" : ""}`}
                             onClick={() => setMobileOpen(false)}
                             aria-hidden="true"
                         />
-                        {/* sheet */}
                         <div className={`store-drawer ${mobileFilterOpen ? "store-drawer--open" : ""}`}
                             role="dialog" aria-modal="true" aria-label="Filters">
                             <div className="store-drawer-handle" />

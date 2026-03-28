@@ -97,7 +97,7 @@ const OrderDetail = () => {
         if (!quiet) setLoading(true);
         else setRefreshing(true);
         try {
-            const res = await fetch(`${API}/api/orders/${id}`);
+            const res = await fetch(`${API}/orders/${id}`);
             const data = await res.json();
             if (data.order) setOrder(data.order);
             else setError("Order not found");

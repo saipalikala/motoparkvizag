@@ -6,7 +6,7 @@ import "./OffersAdmin.css";
 import { API } from "@/config/api"; // ✅ ADD THIS
 
 // ✅ Correct endpoint
-const OFFERS_API = `${API}/api/offers`;
+const OFFERS_API = `${API}/offers`;
 
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });

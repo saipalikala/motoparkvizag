@@ -3,6 +3,7 @@ import PageTransition from "../../components/PageTransition/PageTransition";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./Checkout.css";
 
 import { API } from "@/config/api";
@@ -38,14 +39,7 @@ const ChevronRight = () => (
 );
 
 /* ─── PAYMENT ICONS ─── */
-const UPIIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M12 9v6M9 12h6" />
-    </svg>
-);
-const CardIcon = () => (
+const OnlineIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
@@ -56,15 +50,9 @@ const CODIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
+        <path d="M12 8v4l3 3" />
     </svg>
 );
-
-const PAYMENT_METHODS = [
-    { id: "upi", label: "UPI", sub: "PhonePe, GPay, Paytm", Icon: UPIIcon },
-    { id: "card", label: "Card", sub: "Debit / Credit / EMI", Icon: CardIcon },
-    { id: "cod", label: "Cash on Delivery", sub: "Pay at doorstep", Icon: CODIcon },
-];
 
 const INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -75,13 +63,26 @@ const INDIAN_STATES = [
     "Delhi", "Jammu & Kashmir", "Ladakh", "Puducherry",
 ];
 
+/* ─── Load Razorpay script dynamically ─── */
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        if (document.getElementById("razorpay-script")) return resolve(true);
+        const script = document.createElement("script");
+        script.id = "razorpay-script";
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 const Checkout = () => {
     const navigate = useNavigate();
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, token } = useUser();
 
     const [step, setStep] = useState(1);
-    const [payment, setPayment] = useState("upi");
+    const [payment, setPayment] = useState("razorpay");
     const [placing, setPlacing] = useState(false);
     const [success, setSuccess] = useState(false);
 
@@ -122,40 +123,103 @@ const Checkout = () => {
         setStep(s => s + 1);
     };
 
-    const handlePlaceOrder = async () => {
+    /* ─── RAZORPAY PAYMENT HANDLER ─── */
+    const handleRazorpayPayment = async () => {
         setPlacing(true);
-        try {
-            // Send token if logged in — backend attaches user._id to order
-            const headers = { "Content-Type": "application/json" };
-            if (token) headers["Authorization"] = `Bearer ${token}`;
 
-            const res = await fetch(`${API}/api/orders`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    items: cartItems.map(i => ({
-                        product: i._id,
-                        name: i.name,
-                        price: i.price,
-                        quantity: i.quantity,
-                        selectedColor: i.selectedColor,
-                        selectedSize: i.selectedSize,
-                    })),
-                    shippingAddress: form,
-                    paymentMethod: payment,
-                    total: cartTotal,
-                }),
+        const loaded = await loadRazorpayScript();
+        if (!loaded) {
+            alert("Failed to load payment gateway. Please check your internet connection.");
+            setPlacing(false);
+            return;
+        }
+
+        try {
+            // Step 1: Create Razorpay order on backend
+            const { data: orderData } = await axios.post(`${API}/payment/create-order`, {
+                amount: cartTotal,
             });
-            const data = await res.json();
-            clearCart();
-            if (data.orderId) {
-                navigate(`/orders/${data.orderId}`);
-            } else {
-                setSuccess(true);
-            }
+
+            // Step 2: Open Razorpay checkout
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                name: "MotoPark",
+                description: "Order Payment",
+                order_id: orderData.orderId,
+                handler: async (response) => {
+                    try {
+                        // Step 3: Verify payment signature on backend
+                        const { data: verifyData } = await axios.post(`${API}/payment/verify`, {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        });
+
+                        if (!verifyData.success) {
+                            alert("Payment verification failed. Please contact support.");
+                            setPlacing(false);
+                            return;
+                        }
+
+                        // Step 4: Save order to DB after verified payment
+                        const headers = { "Content-Type": "application/json" };
+                        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                        const res = await fetch(`${API}/orders`, {
+                            method: "POST",
+                            headers,
+                            body: JSON.stringify({
+                                items: cartItems.map(i => ({
+                                    product: i._id,
+                                    name: i.name,
+                                    price: i.price,
+                                    quantity: i.quantity,
+                                    selectedColor: i.selectedColor,
+                                    selectedSize: i.selectedSize,
+                                })),
+                                shippingAddress: form,
+                                paymentMethod: "razorpay",
+                                paymentId: response.razorpay_payment_id,
+                                total: cartTotal,
+                            }),
+                        });
+
+                        const data = await res.json();
+                        clearCart();
+
+                        if (data.orderId) {
+                            navigate(`/orders/${data.orderId}`);
+                        } else {
+                            setSuccess(true);
+                        }
+                    } catch (err) {
+                        console.error("Order save error:", err);
+                        alert("Payment was successful but order could not be saved. Please contact support with your payment ID: " + response.razorpay_payment_id);
+                    } finally {
+                        setPlacing(false);
+                    }
+                },
+                prefill: {
+                    name: form.name || "",
+                    email: form.email || "",
+                    contact: form.phone || "",
+                },
+                theme: { color: "#ff6b3d" },
+                modal: {
+                    ondismiss: () => {
+                        setPlacing(false);
+                    },
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+
         } catch (err) {
-            console.error(err);
-        } finally {
+            console.error("Payment init error:", err);
+            alert("Something went wrong while initiating payment. Please try again.");
             setPlacing(false);
         }
     };
@@ -285,40 +349,51 @@ const Checkout = () => {
                                     <h2 className="co-section-title">Payment Method</h2>
 
                                     <div className="co-payment-list">
-                                        {PAYMENT_METHODS.map(({ id, label, sub, Icon }) => (
-                                            <button
-                                                key={id}
-                                                className={`co-payment-option ${payment === id ? "co-payment-option--active" : ""}`}
-                                                onClick={() => setPayment(id)}
-                                            >
-                                                <div className="co-payment-icon">
-                                                    <Icon />
-                                                </div>
-                                                <div className="co-payment-text">
-                                                    <span className="co-payment-label">{label}</span>
-                                                    <span className="co-payment-sub">{sub}</span>
-                                                </div>
-                                                <div className={`co-radio ${payment === id ? "co-radio--active" : ""}`}>
-                                                    {payment === id && <CheckIcon />}
-                                                </div>
-                                            </button>
-                                        ))}
+
+                                        {/* ── RAZORPAY (active, selectable) ── */}
+                                        <button
+                                            className="co-payment-option co-payment-option--active"
+                                            onClick={() => setPayment("razorpay")}
+                                        >
+                                            <div className="co-payment-icon">
+                                                <OnlineIcon />
+                                            </div>
+                                            <div className="co-payment-text">
+                                                <span className="co-payment-label">Pay Online</span>
+                                                <span className="co-payment-sub">UPI · Cards · Net Banking · Wallets</span>
+                                            </div>
+                                            <div className="co-payment-badges">
+                                                <span className="co-pay-badge">UPI</span>
+                                                <span className="co-pay-badge">Visa</span>
+                                                <span className="co-pay-badge">RuPay</span>
+                                            </div>
+                                            <div className="co-radio co-radio--active">
+                                                <CheckIcon />
+                                            </div>
+                                        </button>
+
+                                        {/* ── COD (disabled) ── */}
+                                        <div className="co-payment-option co-payment-option--disabled">
+                                            <div className="co-payment-icon">
+                                                <CODIcon />
+                                            </div>
+                                            <div className="co-payment-text">
+                                                <span className="co-payment-label">
+                                                    Cash on Delivery
+                                                    <span className="co-cod-tag">Not Available</span>
+                                                </span>
+                                                <span className="co-payment-sub">COD is currently not available in your area</span>
+                                            </div>
+                                            <div className="co-radio" />
+                                        </div>
+
                                     </div>
 
-                                    {/* UPI HINT */}
-                                    {payment === "upi" && (
-                                        <div className="co-payment-hint">
-                                            <LockIcon />
-                                            You'll be redirected to complete UPI payment after placing the order.
-                                        </div>
-                                    )}
-
-                                    {payment === "cod" && (
-                                        <div className="co-payment-hint">
-                                            <TruckIcon />
-                                            Pay in cash when your order is delivered. Available on most pincodes.
-                                        </div>
-                                    )}
+                                    {/* ONLINE PAYMENT HINT */}
+                                    <div className="co-payment-hint">
+                                        <LockIcon />
+                                        Secured by Razorpay · UPI, Debit/Credit Cards, Net Banking & Wallets accepted
+                                    </div>
 
                                     <div className="co-step-nav">
                                         <button className="co-back-btn" onClick={() => setStep(1)}>← Back</button>
@@ -353,7 +428,7 @@ const Checkout = () => {
                                             <button className="co-edit-btn" onClick={() => setStep(2)}>Edit</button>
                                         </div>
                                         <p className="co-review-value">
-                                            {PAYMENT_METHODS.find(m => m.id === payment)?.label}
+                                            Pay Online via Razorpay
                                         </p>
                                     </div>
 
@@ -387,10 +462,13 @@ const Checkout = () => {
                                         <button className="co-back-btn" onClick={() => setStep(2)}>← Back</button>
                                         <button
                                             className={`co-place-btn ${placing ? "co-place-btn--loading" : ""}`}
-                                            onClick={handlePlaceOrder}
+                                            onClick={handleRazorpayPayment}
                                             disabled={placing}
                                         >
-                                            {placing ? "Placing Order…" : <>Place Order · ₹{cartTotal.toLocaleString("en-IN")}</>}
+                                            {placing
+                                                ? "Opening Payment…"
+                                                : <>Pay ₹{cartTotal.toLocaleString("en-IN")} via Razorpay</>
+                                            }
                                         </button>
                                     </div>
                                 </div>

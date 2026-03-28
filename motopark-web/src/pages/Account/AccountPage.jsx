@@ -34,7 +34,7 @@ const AccountPage = () => {
     /* Load full profile from server */
     useEffect(() => {
         if (!token) return;
-        fetch(`${API}/api/users/profile`, { headers })
+        fetch(`${API}/users/profile`, { headers })
             .then(r => r.json())
             .then(d => { if (d.user) { setFullUser(d.user); setProfileForm({ name: d.user.name, email: d.user.email || "" }); } })
             .catch(console.error);
@@ -54,7 +54,7 @@ const AccountPage = () => {
     const saveProfile = async (e) => {
         e.preventDefault(); setSaving(true);
         try {
-            const res = await fetch(`${API}/api/users/profile`, { method: "PUT", headers, body: JSON.stringify(profileForm) });
+            const res = await fetch(`${API}/users/profile`, { method: "PUT", headers, body: JSON.stringify(profileForm) });
             const data = await res.json();
             if (data.user) { updateUser(data.user); setFullUser(data.user); setSaved(true); setTimeout(() => setSaved(false), 2000); }
         } catch { /* handle */ }
@@ -65,7 +65,7 @@ const AccountPage = () => {
     const addAddress = async () => {
         if (!addrForm?.name || !addrForm?.address || !addrForm?.city) return;
         try {
-            const res = await fetch(`${API}/api/users/addresses`, { method: "POST", headers, body: JSON.stringify(addrForm) });
+            const res = await fetch(`${API}/users/addresses`, { method: "POST", headers, body: JSON.stringify(addrForm) });
             const data = await res.json();
             if (data.user) { setFullUser(data.user); updateUser(data.user); setAddrForm(null); }
         } catch { /* handle */ }
@@ -75,7 +75,7 @@ const AccountPage = () => {
     const deleteAddress = async (id) => {
         if (!confirm("Remove this address?")) return;
         try {
-            const res = await fetch(`${API}/api/users/addresses/${id}`, { method: "DELETE", headers });
+            const res = await fetch(`${API}/users/addresses/${id}`, { method: "DELETE", headers });
             const data = await res.json();
             if (data.user) { setFullUser(data.user); updateUser(data.user); }
         } catch { /* handle */ }

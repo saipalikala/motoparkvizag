@@ -5,7 +5,7 @@ import "./ProductFilters.css";
 import { API } from "@/config/api"; // ✅ ADDED
 
 // ✅ Correct API URL
-const FILTER_API = `${API}/api/products/filters`;
+const FILTER_API = `${API}/products/filters`;
 const ChevronIcon = ({ open }) => (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
         style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform .2s" }}>

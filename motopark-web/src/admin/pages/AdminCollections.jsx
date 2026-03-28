@@ -3,8 +3,8 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import "./AdminCollections.css";
 
 import { API } from "@/config/api";
-const COLL_URL = `${API}/api/collections`;
-const PROD_URL = `${API}/api/products`;
+const COLL_URL = `${API}/collections`;
+const PROD_URL = `${API}/products`;
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });
 

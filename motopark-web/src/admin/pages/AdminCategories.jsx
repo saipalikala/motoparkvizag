@@ -6,7 +6,7 @@ import "./AdminCategories.css";
 import { API } from "@/config/api"; // ✅ ADDED
 
 // ✅ Correct endpoint
-const CATEGORY_API = `${API}/api/categories`;
+const CATEGORY_API = `${API}/categories`;
 
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });

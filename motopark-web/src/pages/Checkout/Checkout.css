@@ -846,3 +846,48 @@
         width: 32px;
     }
 }
+
+/* ── ADD THESE TO YOUR EXISTING Checkout.css ── */
+
+/* Payment badges (UPI, Visa, RuPay) */
+.co-payment-badges {
+    display: flex;
+    gap: 4px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.co-pay-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 107, 61, 0.1);
+    color: #ff6b3d;
+    border: 1px solid rgba(255, 107, 61, 0.2);
+    letter-spacing: 0.3px;
+}
+
+/* COD unavailable tag */
+.co-cod-tag {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.12);
+    color: #999;
+    border: 1px solid rgba(150, 150, 150, 0.2);
+    letter-spacing: 0.3px;
+    vertical-align: middle;
+}
+
+/* Disabled payment option */
+.co-payment-option--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: transparent !important;
+    border-color: rgba(150, 150, 150, 0.15) !important;
+}

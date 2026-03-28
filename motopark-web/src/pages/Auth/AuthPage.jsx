@@ -51,7 +51,7 @@ const StepEmail = ({ onSent }) => {
         if (!email.includes("@")) { setError("Enter a valid email address"); return; }
         setLoad(true); setError("");
         try {
-            const res = await fetch(`${API}/api/users/otp/send`, {
+            const res = await fetch(`${API}/users/otp/send`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email.toLowerCase() }),
@@ -130,7 +130,7 @@ const StepOtp = ({ email, onSuccess, onBack }) => {
         if (otp.length !== 6) { setError("Enter the 6-digit code"); return; }
         setLoad(true); setError("");
         try {
-            const res = await fetch(`${API}/api/users/otp/verify`, {
+            const res = await fetch(`${API}/users/otp/verify`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, otp }),
@@ -148,7 +148,7 @@ const StepOtp = ({ email, onSuccess, onBack }) => {
     const resend = async () => {
         setResend(true); setError(""); setOtp("");
         try {
-            await fetch(`${API}/api/users/otp/send`, {
+            await fetch(`${API}/users/otp/send`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),

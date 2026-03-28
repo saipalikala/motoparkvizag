@@ -6,7 +6,7 @@ import "./AdminMedia.css";
 import { API } from "@/config/api"; // ✅ ADD THIS
 
 // ✅ FIXED
-const MEDIA_API = `${API}/api/media`;
+const MEDIA_API = `${API}/media`;
 const BASE = API;
 
 const TOKEN = () => localStorage.getItem("adminToken");

@@ -139,7 +139,7 @@ const About = () => {
           <div className="about-story-right">
             <p>
               MotoPark was founded by riders who couldn't find gear that matched their
-              standards — quality that looked as good as it performed. So we built it ourselves.
+              standards — quality that looked as good as it performed.
             </p>
             <p>
               Starting in Visakhapatnam in 2020, we've grown from a single store into

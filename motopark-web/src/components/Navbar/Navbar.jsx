@@ -14,7 +14,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/api/navbar`)
+    fetch(`${API}/navbar`)
       .then(r => r.json())
       .then(setNavbar)
       .catch(console.error);

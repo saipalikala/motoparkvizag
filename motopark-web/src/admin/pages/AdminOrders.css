@@ -552,3 +552,22 @@
         display: none;
     }
 }
+
+.ao-print-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #1a1a1a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ao-print-btn:hover {
+    background: #ff6b3d;
+}

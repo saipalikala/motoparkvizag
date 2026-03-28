@@ -4,7 +4,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useNavigate } from "react-router-dom";
 import "./BentoGrid.css";
 
-const BASE_URL = "http://localhost:5000";
+import { API as BASE_URL } from "@/config/api";
 
 /* ─── BIKE SVG ILLUSTRATION ─── */
 const BikeSVG = ({ size = "small" }) => {
@@ -98,7 +98,7 @@ const BentoCard = ({ product, size = "small" }) => {
     const rawImage = product.images?.[0] || product.variants?.[0]?.images?.[0] || null;
     // Prepend base URL if the path is relative (starts with / or uploads/)
     const image = rawImage
-        ? rawImage.startsWith("http") ? rawImage : `${BASE_URL}/${rawImage.replace(/^\//, "")}`
+        ? rawImage.startsWith("http") ? rawImage : `${BASE_URL}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`
         : null;
     const handleClick = () => {
         navigate(`/product/${product._id}`);

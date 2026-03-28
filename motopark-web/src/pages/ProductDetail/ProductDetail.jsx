@@ -9,7 +9,9 @@ import ProductGallery from "@/components/ProductGallery/ProductGallery";
 
 import "./ProductDetail.css";
 
-const API_BASE = "http://localhost:5000";
+// ✅ Fixed — no more hardcoded localhost
+import { API } from "@/config/api";
+const API_BASE = API.replace("/api", "");
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -151,7 +153,6 @@ const ProductDetail = () => {
     }
   }, [product]);
 
-  /* scroll to top on id change */
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [id]);
@@ -191,7 +192,6 @@ const ProductDetail = () => {
     wishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
   };
 
-  /* fake rating for display */
   const rating = 4;
   const reviewCount = 128;
 
@@ -298,7 +298,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* TABS — Description / Specs / Care */}
+            {/* TABS */}
             <div className="pd-tabs">
               {["description", "specs", "care"].map(tab => (
                 <button
@@ -357,7 +357,6 @@ const ProductDetail = () => {
                 )}
               </div>
 
-              {/* EMI */}
               <p className="pd-emi">
                 or ₹{Math.round(product.price / 12).toLocaleString("en-IN")}/mo with No-cost EMI
               </p>

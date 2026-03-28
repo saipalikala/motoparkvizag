@@ -122,7 +122,7 @@ const OrdersPage = () => {
     useEffect(() => {
         if (!user?._id) return;
         setLoading(true);
-        fetch(`${API}/api/orders?userId=${user._id}`)
+        fetch(`${API}/orders?userId=${user._id}`)
             .then(r => r.json())
             .then(d => { setOrders(d.orders || []); setSearched(true); })
             .catch(() => setError("Could not load orders."))
@@ -136,7 +136,7 @@ const OrdersPage = () => {
 
         setLoading(true); setError(""); setSearched(false);
         try {
-            const res = await fetch(`${API}/api/orders?phone=${p}`);
+            const res = await fetch(`${API}/orders?phone=${p}`);
             const data = await res.json();
             setOrders(data.orders || []);
             setSearched(true);

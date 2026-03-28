@@ -1,35 +1,40 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
-
-// const ProductContext = createContext();
-
-// export const useProducts = () => useContext(ProductContext);
-
-// const API = "http://localhost:5000/api/products";
-
-import { API } from "@/config/api"; // ✅ ADD THIS
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { API } from "@/config/api";
 
 const ProductContext = createContext();
 
 export const useProducts = () => useContext(ProductContext);
 
-// ✅ Correct endpoint
-const PRODUCTS_API = `${API}/api/products`;
+const PRODUCTS_API = `${API}/products`;
+
+// Cache lives outside the component — survives re-renders and page navigation
+let cache = null;
+let cacheTime = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export const ProductProvider = ({ children }) => {
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(cache || []);
+  const [loading, setLoading] = useState(!cache); // skip loading if cache exists
   const [error, setError] = useState(null);
+  const isMounted = useRef(true);
 
-  const fetchProducts = useCallback(async () => {
+  const fetchProducts = useCallback(async (force = false) => {
+
+    // Return cached data if still fresh and not forced
+    if (!force && cache && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
+      setProducts(cache);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await fetch(PRODUCTS_API);
+      setLoading(true);
 
-      if (!res.ok) throw new Error("Failed to fetch");
+      const res = await fetch(PRODUCTS_API);
+      if (!res.ok) throw new Error("Failed to fetch products");
 
       const data = await res.json();
-
       const productList = data.products || [];
 
       const normalized = productList.map(p => ({
@@ -37,31 +42,29 @@ export const ProductProvider = ({ children }) => {
         images: p?.variants?.[0]?.images || []
       }));
 
-      setProducts(normalized);
+      // Update cache
+      cache = normalized;
+      cacheTime = Date.now();
+
+      if (isMounted.current) {
+        setProducts(normalized);
+        setError(null);
+      }
 
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      console.error("ProductContext fetch error:", err);
+      if (isMounted.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
 
   }, []);
 
-  /* INITIAL LOAD */
+  /* INITIAL LOAD — only once */
   useEffect(() => {
+    isMounted.current = true;
     fetchProducts();
-  }, [fetchProducts]);
-
-  /* 🔥 AUTO REFRESH EVERY 5 SEC */
-  useEffect(() => {
-
-    const interval = setInterval(() => {
-      fetchProducts();
-    }, 5000); // 5 seconds
-
-    return () => clearInterval(interval);
-
+    return () => { isMounted.current = false; };
   }, [fetchProducts]);
 
   return (
@@ -70,7 +73,8 @@ export const ProductProvider = ({ children }) => {
         products,
         loading,
         error,
-        refreshProducts: fetchProducts
+        // Call refreshProducts() only after admin makes a change
+        refreshProducts: () => fetchProducts(true),
       }}
     >
       {children}

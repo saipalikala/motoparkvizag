@@ -60,8 +60,8 @@ const Dashboard = () => {
     useEffect(() => {
         const h = { Authorization: `Bearer ${TOKEN()}` };
         Promise.all([
-            fetch(`${API}/api/products`, { headers: h }).then(r => r.json()),
-            fetch(`${API}/api/orders`, { headers: h }).then(r => r.json()).catch(() => ({ orders: [] })),
+            fetch(`${API}/products`, { headers: h }).then(r => r.json()),
+            fetch(`${API}/orders`, { headers: h }).then(r => r.json()).catch(() => ({ orders: [] })),
         ]).then(([prodData, orderData]) => {
             const productList = prodData.products || [];
             const orderList = orderData.orders || [];

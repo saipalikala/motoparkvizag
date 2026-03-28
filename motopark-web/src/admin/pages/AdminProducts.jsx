@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import "./AdminProducts.css";
 
 import { API } from "@/config/api";
-const PROD_URL = `${API}/api/products`;
-const CAT_URL = `${API}/api/categories`;
+const PROD_URL = `${API}/products`;
+const CAT_URL = `${API}/categories`;
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}` });
 

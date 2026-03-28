@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { API } from "@/config/api";
+
 import "./ProductGallery.css";
 
 const ProductGallery = ({ images = [] }) => {
@@ -48,7 +48,7 @@ const ProductGallery = ({ images = [] }) => {
                 >
                     <img
                         key={active}
-                        src={`${API}${images[active]}`}
+                        src={images[active]}
                         alt="product"
                         className="main-img"
                         loading="lazy"
@@ -85,7 +85,7 @@ const ProductGallery = ({ images = [] }) => {
                 {images.map((img, i) => (
                     <img
                         key={i}
-                        src={`${API}${img}`}
+                        src={img}
                         className={active === i ? "active" : ""}
                         onClick={() => setActive(i)}
                         loading="lazy"
@@ -113,7 +113,7 @@ const ProductGallery = ({ images = [] }) => {
 
                     {/* IMAGE */}
                     <img
-                        src={`${API}${images[active]}`}
+                        src={images[active]}
                         alt="fullscreen"
                         onClick={(e) => e.stopPropagation()}
                     />

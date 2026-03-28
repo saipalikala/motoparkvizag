@@ -57,6 +57,7 @@ const Wishlist = () => {
         return raw.startsWith("http") ? raw : `${API}${raw.startsWith("/") ? "" : "/"}${raw}`;
     };
 
+
     /* ── EMPTY STATE ── */
     if (wishlist.length === 0) return (
         <PageTransition>
@@ -93,7 +94,9 @@ const Wishlist = () => {
                         {wishlist.map((item, i) => {
                             const image = getImage(item);
                             const inCart = cartItems.some(c => c._id === item._id);
-
+                            const outOfStock = !item.variants?.some(v =>
+                                v.sizes?.some(s => Number(s.stock) > 0)
+                            );
                             return (
                                 <div className="wl-card" key={item._id}
                                     style={{ animationDelay: `${i * 0.05}s` }}>
@@ -130,10 +133,12 @@ const Wishlist = () => {
                                                 ₹{item.price?.toLocaleString("en-IN")}
                                             </span>
                                             <button
-                                                className={`wl-cart-btn ${inCart ? "wl-cart-btn--added" : ""}`}
-                                                onClick={() => addToCart(item)}
+                                                className={`wl-cart-btn ${inCart ? "wl-cart-btn--added" : ""} ${outOfStock ? "wl-cart-btn--disabled" : ""}`}
+                                                onClick={() => !outOfStock && addToCart(item)}
+                                                disabled={outOfStock}
+                                                title={outOfStock ? "Out of Stock" : ""}
                                             >
-                                                {inCart ? <><CheckIcon /> Added</> : <><CartIcon /> Add</>}
+                                                {outOfStock ? "Out of Stock" : inCart ? <><CheckIcon /> Added</> : <><CartIcon /> Add</>}
                                             </button>
                                         </div>
                                     </div>

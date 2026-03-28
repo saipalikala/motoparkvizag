@@ -5,7 +5,7 @@ import "./ImagePickerModal.css";
 
 import { API } from "@/config/api";
 
-const FILTER_API = `${API}/api/media`;
+const FILTER_API = `${API}/media`;
 export default function ImagePickerModal({ onSelect, onClose }) {
 
     const [media, setMedia] = useState([]);

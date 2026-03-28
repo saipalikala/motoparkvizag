@@ -18,7 +18,7 @@ const AdminCarouselManager = () => {
     const [uploading, setUploading] = useState({});
 
     useEffect(() => {
-        fetch(`${API}/api/carousel`)
+        fetch(`${API}/carousel`)
             .then(r => r.json())
             .then(data => setSlides(Array.isArray(data) ? data : []))
             .catch(console.error);
@@ -34,7 +34,7 @@ const AdminCarouselManager = () => {
     const deleteSlide = async (slide, i) => {
         if (!confirm("Delete this slide?")) return;
         if (slide._id) {
-            await fetch(`${API}/api/carousel/${slide._id}`, { method: "DELETE", headers: AUTH() });
+            await fetch(`${API}/carousel/${slide._id}`, { method: "DELETE", headers: AUTH() });
         }
         setSlides(ss => ss.filter((_, j) => j !== i));
     };
@@ -44,7 +44,7 @@ const AdminCarouselManager = () => {
         const fd = new FormData();
         fd.append("carousel", file);
         try {
-            const res = await fetch(`${API}/api/upload/carousel`, { method: "POST", body: fd });
+            const res = await fetch(`${API}/upload/carousel`, { method: "POST", body: fd });
             const data = await res.json();
             set(i, "image", data.url);
         } catch (e) { console.error(e); }
@@ -58,9 +58,9 @@ const AdminCarouselManager = () => {
                 const body = JSON.stringify(slide);
                 const headers = { ...AUTH(), "Content-Type": "application/json" };
                 if (slide._id) {
-                    await fetch(`${API}/api/carousel/${slide._id}`, { method: "PUT", headers, body });
+                    await fetch(`${API}/carousel/${slide._id}`, { method: "PUT", headers, body });
                 } else {
-                    await fetch(`${API}/api/carousel`, { method: "POST", headers, body });
+                    await fetch(`${API}/carousel`, { method: "POST", headers, body });
                 }
             }
             setSaved(true);

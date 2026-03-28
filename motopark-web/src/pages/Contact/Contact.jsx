@@ -5,7 +5,7 @@ import "./Contact.css";
 const faqs = [
     {
         q: "Do you offer cash on delivery?",
-        a: "Yes, COD is available on selected products across India. You can choose COD at checkout."
+        a: "Currently, Cash on Delivery (COD) is available only in select areas and for certain products. Please choose the appropriate payment option at checkout based on availability."
     },
     {
         q: "Are payments secure?",
@@ -13,7 +13,7 @@ const faqs = [
     },
     {
         q: "What is your return policy?",
-        a: "Returns are accepted within 7 days of delivery. Items must be unused and in original packaging."
+        a: "We accept returns within 7 days of delivery, provided the items are unused and in their original packaging. Kindly note that return shipping charges will be the responsibility of the customer."
     },
     {
         q: "How long does delivery take?",
@@ -142,7 +142,7 @@ const Contact = () => {
                                 <div className="info-hours">
                                     <div className="info-hours-row">
                                         <span>Mon – Sat</span>
-                                        <span className="info-hours-time">10:00 AM – 7:00 PM</span>
+                                        <span className="info-hours-time">10:00 AM – 9:00 PM</span>
                                     </div>
                                     <div className="info-hours-row">
                                         <span>Sunday</span>

@@ -29,7 +29,7 @@ const AdminNavbarManager = () => {
     /* ── LOAD ── */
     useEffect(() => {
         // load navbar
-        fetch(`${API}/api/navbar`)
+        fetch(`${API}/navbar`)
             .then(r => r.json())
             .then(data => {
                 const links = (data.links || []).map(l => ({
@@ -41,7 +41,7 @@ const AdminNavbarManager = () => {
             .catch(console.error);
 
         // load categories (to suggest slugs)
-        fetch(`${API}/api/categories`)
+        fetch(`${API}/categories`)
             .then(r => r.json())
             .then(d => setCats(d.categories || d || []))
             .catch(console.error);
@@ -86,7 +86,7 @@ const AdminNavbarManager = () => {
     const save = async () => {
         setSaving(true);
         try {
-            await fetch(`${API}/api/navbar`, {
+            await fetch(`${API}/navbar`, {
                 method: "PUT",
                 headers: { ...AUTH(), "Content-Type": "application/json" },
                 body: JSON.stringify(navbar),
@@ -104,7 +104,7 @@ const AdminNavbarManager = () => {
         const fd = new FormData();
         fd.append("logo", file);
         try {
-            const res = await fetch(`${API}/api/upload/logo`, { method: "POST", body: fd });
+            const res = await fetch(`${API}/upload/logo`, { method: "POST", body: fd });
             const data = await res.json();
             setNavbar({ ...navbar, logo: data.url });
         } catch (e) { console.error(e); }

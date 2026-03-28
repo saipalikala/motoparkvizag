@@ -5,7 +5,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { API } from "@/config/api"; // ✅ ADD THIS
 
 // ✅ Correct endpoint
-const HOME_LAYOUT_API = `${API}/api/home-layout`;
+const HOME_LAYOUT_API = `${API}/home-layout`;
 
 export default function AdminHomeLayout() {
 

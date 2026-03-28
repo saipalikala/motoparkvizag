@@ -2,11 +2,10 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { API } from "@/config/api";
 import "./CategoryPage.css";
 
-// ✅ FIX 1 — use env variable, never hardcode localhost
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const API = `${API_BASE}/api/products`;
+const API_BASE = API.replace("/api", "");
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -185,10 +184,8 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
   );
 };
 
-/* ─── INLINE FILTER PANEL (derives options from products, no extra API call) ─── */
+/* ─── INLINE FILTER PANEL ─── */
 const CatFilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
-  // ✅ FIX 3 — derive filter options from the already-fetched products array
-  // No separate API call needed — avoids the "No filters available" bug
   const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
   const sizes = [...new Set(
     products.flatMap(p => p.variants?.flatMap(v => v.sizes?.map(s => s.size) || []) || [])
@@ -319,8 +316,7 @@ const CategoryPage = () => {
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
-  /* ✅ FIX 2 — single useEffect: resolve category then fetch products in one async flow.
-     No more race condition between two separate useEffects. */
+  /* fetch categories then products */
   useEffect(() => {
     if (!slug) return;
 
@@ -332,7 +328,7 @@ const CategoryPage = () => {
     const run = async () => {
       try {
         // Step 1 — resolve slug to _id
-        const catRes = await fetch(`${API_BASE}/api/categories`);
+        const catRes = await fetch(`${API}/categories`);
         const catData = await catRes.json();
         const cats = catData.categories || catData || [];
         const match = cats.find(c =>
@@ -343,10 +339,10 @@ const CategoryPage = () => {
 
         if (cancelled) return;
 
-        // Step 2 — fetch ALL products for this category (no filter params yet — we filter locally)
+        // Step 2 — fetch products for this category
         const sortParam = sort === "low" ? "price_asc" : sort === "high" ? "price_desc" : "newest";
         const qs = new URLSearchParams({ category: categoryId, sort: sortParam, limit: 200 }).toString();
-        const prodRes = await fetch(`${API}?${qs}`);
+        const prodRes = await fetch(`${API}/products?${qs}`);
         const prodData = await prodRes.json();
 
         if (cancelled) return;
@@ -363,9 +359,9 @@ const CategoryPage = () => {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
     return () => { cancelled = true; };
-  }, [slug, sort]); // re-fetch when slug or sort changes
+  }, [slug, sort]);
 
-  /* ── LOCAL FILTERING (brand, size, color) — no extra API calls ── */
+  /* ── LOCAL FILTERING ── */
   let filtered = [...allProducts];
 
   if (activeFilters.brand) {
@@ -383,7 +379,6 @@ const CategoryPage = () => {
   }
 
   const resetFilters = useCallback(() => setActiveFilters({}), []);
-
   const activePillCount = Object.keys(activeFilters).length;
 
   return (

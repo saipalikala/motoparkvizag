@@ -11,29 +11,17 @@ import { UserProvider } from "@/context/UserContext";
 ReactDOM.createRoot(document.getElementById("root")).render(
 
   <BrowserRouter>
-
-    <ProductProvider>
-
-      <CartProvider>
-
-        <WishlistProvider>
-
-          <StoreConfigProvider>
-
-            <UserProvider>
-
+    <UserProvider>
+      <ProductProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <StoreConfigProvider>
               <App />
-
-            </UserProvider>
-
-          </StoreConfigProvider>
-
-        </WishlistProvider>
-
-      </CartProvider>
-
-    </ProductProvider>
-
+            </StoreConfigProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </ProductProvider>
+    </UserProvider>
   </BrowserRouter>
 
 );

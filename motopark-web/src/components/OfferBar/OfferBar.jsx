@@ -35,7 +35,7 @@ const OfferBar = () => {
 
   /* FETCH */
   useEffect(() => {
-    fetch(`${API}/api/offers`)
+    fetch(`${API}/offers`)
       .then(r => r.json())
       .then(data => setOffers(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));

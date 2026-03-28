@@ -7,7 +7,7 @@ import "./CategoryShowcase.css";
 import { API } from "@/config/api"; // ✅ ADD THIS
 
 // ✅ Correct endpoint
-const CATEGORY_API = `${API}/api/categories`;
+const CATEGORY_API = `${API}/categories`;
 
 const CategoryShowcase = () => {
 
