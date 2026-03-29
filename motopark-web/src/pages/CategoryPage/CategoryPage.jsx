@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { API } from "@/config/api";
+import { optimizeImage } from "@/utils/imageUrl";
 import "./CategoryPage.css";
 
-const API_BASE = API.replace("/api", "");
+
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -94,9 +95,7 @@ const CatProductCard = ({ product, view, index }) => {
   const wishlisted = isInWishlist(product._id);
 
   const rawImage = product?.variants?.[0]?.images?.[0] || product?.images?.[0];
-  const image = rawImage
-    ? rawImage.startsWith("http") ? rawImage : `${API_BASE}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`
-    : null;
+  const image = optimizeImage(rawImage, 400);
 
   const handleClick = () => navigate(`/product/${product._id}`);
   const handleCart = (e) => { e.stopPropagation(); addToCart(product); };

@@ -1,22 +1,38 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
+    try {
+        console.log("Connecting to MongoDB...");
 
-try {
+        await mongoose.connect(process.env.MONGO_URI);
 
-console.log("Mongo URI:", process.env.MONGO_URI);
+        console.log("✅ MongoDB Connected");
 
-await mongoose.connect(process.env.MONGO_URI);
+        // ── Create indexes for fast queries ──
+        // These are idempotent — safe to run on every startup
+        const db = mongoose.connection.db;
 
-console.log("MongoDB Connected");
+        // Products — most queried fields
+        await db.collection("products").createIndex({ category: 1, createdAt: -1 });
+        await db.collection("products").createIndex({ featured: 1, createdAt: -1 });
+        await db.collection("products").createIndex({ trending: 1, createdAt: -1 });
+        await db.collection("products").createIndex({ newArrival: 1, createdAt: -1 });
+        await db.collection("products").createIndex({ brand: 1, price: 1 });
+        await db.collection("products").createIndex({ price: 1 });
+        await db.collection("products").createIndex({ name: "text" }); // for search
 
-} catch (error) {
+        // Orders — queried by phone, userId, date
+        await db.collection("orders").createIndex({ "shippingAddress.phone": 1 });
+        await db.collection("orders").createIndex({ userId: 1, createdAt: -1 });
+        await db.collection("orders").createIndex({ createdAt: -1 });
+        await db.collection("orders").createIndex({ status: 1 });
 
-console.log("Database connection failed:", error);
-process.exit(1);
+        console.log("✅ MongoDB indexes ready");
 
-}
-
+    } catch (error) {
+        console.error("❌ Database connection failed:", error);
+        process.exit(1);
+    }
 };
 
 export default connectDB;

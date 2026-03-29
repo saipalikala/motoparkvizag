@@ -4,7 +4,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
 import "./Wishlist.css";
 
-import { API } from "@/config/api";
+import { optimizeImage } from "@/utils/imageUrl";
 
 /* ─── ICONS ─── */
 const HeartEmptyIcon = () => (
@@ -53,10 +53,8 @@ const Wishlist = () => {
 
     const getImage = (item) => {
         const raw = item?.variants?.[0]?.images?.[0] || item?.images?.[0];
-        if (!raw) return null;
-        return raw.startsWith("http") ? raw : `${API}${raw.startsWith("/") ? "" : "/"}${raw}`;
+        return optimizeImage(raw, 400);
     };
-
 
     /* ── EMPTY STATE ── */
     if (wishlist.length === 0) return (

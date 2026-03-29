@@ -1,4 +1,3 @@
-import axios from "axios";
 import { API as BASE_URL } from "@/config/api";
 
 const API = axios.create({

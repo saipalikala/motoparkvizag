@@ -3,7 +3,6 @@ import PageTransition from "../../components/PageTransition/PageTransition";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import "./Checkout.css";
 
 import { API } from "@/config/api";
@@ -136,9 +135,12 @@ const Checkout = () => {
 
         try {
             // Step 1: Create Razorpay order on backend
-            const { data: orderData } = await axios.post(`${API}/payment/create-order`, {
-                amount: cartTotal,
+            const orderRes = await fetch(`${API}/payment/create-order`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: cartTotal }),
             });
+            const orderData = await orderRes.json();
 
             // Step 2: Open Razorpay checkout
             const options = {
@@ -151,11 +153,16 @@ const Checkout = () => {
                 handler: async (response) => {
                     try {
                         // Step 3: Verify payment signature on backend
-                        const { data: verifyData } = await axios.post(`${API}/payment/verify`, {
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
+                        const verifyRes = await fetch(`${API}/payment/verify`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            }),
                         });
+                        const verifyData = await verifyRes.json();
 
                         if (!verifyData.success) {
                             alert("Payment verification failed. Please contact support.");

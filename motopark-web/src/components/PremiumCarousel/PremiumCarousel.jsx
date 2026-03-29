@@ -46,7 +46,7 @@ const PremiumCarousel = () => {
         slides.forEach((s, i) => {
             const img = new Image();
             /* First slide: high priority fetch */
-            if (i === 0) img.fetchpriority = "high";
+            if (i === 0) img.fetchPriority = "high";
             img.src = resolveImage(s.image);
         });
     }, [slides]);
@@ -98,7 +98,7 @@ const PremiumCarousel = () => {
                         alt={slide.title || "MotoPark collection"}
                         className="carousel-bg-img"
                         loading="eager"
-                        fetchpriority={index === 0 ? "high" : "auto"}
+                        fetchPriority={index === 0 ? "high" : "auto"}
                         decoding="async"
                         width="1920"
                         height="1080"

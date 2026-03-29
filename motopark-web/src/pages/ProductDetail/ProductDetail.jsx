@@ -6,12 +6,11 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useState, useEffect, useRef } from "react";
 import ProductGallery from "@/components/ProductGallery/ProductGallery";
-
+import { optimizeImage } from "@/utils/imageUrl";
 import "./ProductDetail.css";
 
-// ✅ Fixed — no more hardcoded localhost
-import { API } from "@/config/api";
-const API_BASE = API.replace("/api", "");
+
+
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -80,9 +79,7 @@ const RelatedCard = ({ product }) => {
   const wishlisted = isInWishlist(product._id);
 
   const rawImage = product?.variants?.[0]?.images?.[0] || product?.images?.[0];
-  const image = rawImage
-    ? rawImage.startsWith("http") ? rawImage : `${API_BASE}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`
-    : null;
+  const image = optimizeImage(rawImage, 400);
 
   const handleWishlist = (e) => {
     e.stopPropagation();
