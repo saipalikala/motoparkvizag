@@ -3,6 +3,8 @@ import PageTransition from "../../components/PageTransition/PageTransition";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
+import { useProducts } from "@/context/ProductContext";
+
 import "./Checkout.css";
 
 import { API } from "@/config/api";
@@ -79,7 +81,7 @@ const Checkout = () => {
     const navigate = useNavigate();
     const { cartItems, cartTotal, clearCart } = useCart();
     const { user, token } = useUser();
-
+    const { clearCache } = useProducts();
     const [step, setStep] = useState(1);
     const [payment, setPayment] = useState("razorpay");
     const [placing, setPlacing] = useState(false);
@@ -195,7 +197,7 @@ const Checkout = () => {
 
                         const data = await res.json();
                         clearCart();
-
+                        clearCache();
                         if (data.orderId) {
                             navigate(`/orders/${data.orderId}`);
                         } else {
