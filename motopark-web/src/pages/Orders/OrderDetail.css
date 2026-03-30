@@ -30,6 +30,91 @@
     display: block;
 }
 
+/* Cancel button */
+.od-cancel-btn {
+    padding: 10px 20px;
+    border: 1.5px solid #e53e3e;
+    background: transparent;
+    color: #e53e3e;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.od-cancel-btn:hover {
+    background: #e53e3e;
+    color: #fff;
+}
+
+/* Modal */
+.od-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.od-modal {
+    background: var(--bg-card, #fff);
+    border-radius: 14px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+}
+
+.od-modal h3 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+}
+
+.od-modal p {
+    margin: 0 0 16px;
+    font-size: 0.88rem;
+    color: #666;
+}
+
+.od-modal-error {
+    color: #e53e3e;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+}
+
+.od-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.od-modal-confirm {
+    padding: 10px 20px;
+    background: #e53e3e;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.od-modal-confirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.od-modal-dismiss {
+    padding: 10px 20px;
+    background: transparent;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 @keyframes odSpin {
     to {
         transform: rotate(360deg);

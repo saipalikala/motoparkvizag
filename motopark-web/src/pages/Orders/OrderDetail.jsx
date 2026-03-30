@@ -92,6 +92,9 @@ const OrderDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [refreshing, setRefreshing] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+    const [cancelError, setCancelError] = useState("");
 
     const load = async (quiet = false) => {
         if (!quiet) setLoading(true);
@@ -108,7 +111,31 @@ const OrderDetail = () => {
             setRefreshing(false);
         }
     };
-
+    const handleCancel = async () => {
+        setCancelling(true);
+        setCancelError("");
+        try {
+            const token = localStorage.getItem("motopark_token");
+            const res = await fetch(`${API}/orders/${id}/cancel`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token && { Authorization: `Bearer ${token}` }),
+                },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setCancelError(data.message || "Cancellation failed.");
+                return;
+            }
+            setOrder(data.order);
+            setShowCancelModal(false);
+        } catch {
+            setCancelError("Network error. Please try again.");
+        } finally {
+            setCancelling(false);
+        }
+    };
     useEffect(() => { load(); }, [id]);
 
     if (loading) return (
@@ -325,9 +352,47 @@ const OrderDetail = () => {
                     </div>
 
                     {/* BACK */}
-                    <button className="od-back-btn" onClick={() => navigate("/orders")}>
-                        <BackIcon /> Back to My Orders
-                    </button>
+                    {/* CANCEL + BACK */}
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                        {["pending", "confirmed"].includes(order.status) && (
+                            <button
+                                className="od-cancel-btn"
+                                onClick={() => setShowCancelModal(true)}
+                            >
+                                Cancel Order
+                            </button>
+                        )}
+                        <button className="od-back-btn" onClick={() => navigate("/orders")}>
+                            <BackIcon /> Back to My Orders
+                        </button>
+                    </div>
+
+                    {/* CANCEL MODAL */}
+                    {showCancelModal && (
+                        <div className="od-modal-overlay" onClick={() => !cancelling && setShowCancelModal(false)}>
+                            <div className="od-modal" onClick={(e) => e.stopPropagation()}>
+                                <h3>Cancel this order?</h3>
+                                <p>This action cannot be undone. Stock will be restored.</p>
+                                {cancelError && <p className="od-modal-error">{cancelError}</p>}
+                                <div className="od-modal-actions">
+                                    <button
+                                        className="od-modal-confirm"
+                                        onClick={handleCancel}
+                                        disabled={cancelling}
+                                    >
+                                        {cancelling ? "Cancelling…" : "Yes, Cancel Order"}
+                                    </button>
+                                    <button
+                                        className="od-modal-dismiss"
+                                        onClick={() => setShowCancelModal(false)}
+                                        disabled={cancelling}
+                                    >
+                                        Keep Order
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
             </div>

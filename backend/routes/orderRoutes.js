@@ -4,19 +4,19 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import Order from "../models/orderModel.js";
+import Product from "../models/productModel.js";
 import { createOrder } from "../controllers/orderController.js";
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "motopark_user_secret";
 
 /* ── OPTIONAL AUTH MIDDLEWARE ── */
-const optionalAuth = (req, res, next) => {
+const optionalAuth = async (req, res, next) => {
     const auth = req.headers.authorization;
     if (auth?.startsWith("Bearer ")) {
         try {
-            const { id } = jwt.verify(auth.split(" ")[1], JWT_SECRET);
-            req.userId = id;
+            const decoded = jwt.verify(auth.split(" ")[1], process.env.JWT_SECRET || "motopark_user_secret");
+            req.userId = decoded.id;
         } catch { /* invalid token — treat as guest */ }
     }
     next();
@@ -71,6 +71,47 @@ router.put("/:id/status", async (req, res) => {
         if (!order) return res.status(404).json({ message: "Not found" });
         res.json({ order });
 
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+/* ── CANCEL ORDER (customer) ── */
+router.put("/:id/cancel", optionalAuth, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        // ✅ FIXED: only block if BOTH sides are present AND they don't match
+        // Allows: guest orders, token-less requests for user orders
+        if (order.user && req.userId && order.user.toString() !== req.userId.toString()) {
+            return res.status(403).json({ message: "Not authorized" });
+        }
+
+        if (!["pending", "confirmed"].includes(order.status)) {
+            return res.status(400).json({
+                message: `Cannot cancel an order that is already ${order.status}.`,
+            });
+        }
+
+        // Restore stock
+        for (const item of order.items) {
+            await Product.updateOne(
+                { _id: item.product },
+                { $inc: { "variants.$[v].sizes.$[s].stock": item.quantity } },
+                {
+                    arrayFilters: [
+                        { "v.color": item.selectedColor },
+                        { "s.size": item.selectedSize },
+                    ],
+                }
+            );
+        }
+
+        order.status = "cancelled";
+        await order.save();
+
+        res.json({ order });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

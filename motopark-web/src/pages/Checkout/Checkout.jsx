@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PageTransition from "../../components/PageTransition/PageTransition";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@/context/UserContext";
@@ -86,6 +86,7 @@ const Checkout = () => {
     const [payment, setPayment] = useState("razorpay");
     const [placing, setPlacing] = useState(false);
     const [success, setSuccess] = useState(false);
+    const isSubmittingRef = useRef(false);
 
     const [form, setForm] = useState({
         name: user?.name || "",
@@ -126,10 +127,13 @@ const Checkout = () => {
 
     /* ─── RAZORPAY PAYMENT HANDLER ─── */
     const handleRazorpayPayment = async () => {
+        if (isSubmittingRef.current) return;   // 🛡️ prevent concurrent calls
+        isSubmittingRef.current = true;
         setPlacing(true);
 
         const loaded = await loadRazorpayScript();
         if (!loaded) {
+            isSubmittingRef.current = false;   // allow retry
             alert("Failed to load payment gateway. Please check your internet connection.");
             setPlacing(false);
             return;
@@ -196,13 +200,22 @@ const Checkout = () => {
                         });
 
                         const data = await res.json();
+
+                        // 🛡️ Duplicate order — redirect silently
+                        if (res.status === 409) {
+                            clearCart();
+                            clearCache();
+                            navigate(`/orders/${data.orderId}`);
+                            return;
+                        }
+
+                        if (!res.ok) {
+                            throw new Error(data.message || "Order save failed");
+                        }
+
                         clearCart();
                         clearCache();
-                        if (data.orderId) {
-                            navigate(`/orders/${data.orderId}`);
-                        } else {
-                            setSuccess(true);
-                        }
+                        navigate(`/orders/${data._id}`);
                     } catch (err) {
                         console.error("Order save error:", err);
                         alert("Payment was successful but order could not be saved. Please contact support with your payment ID: " + response.razorpay_payment_id);
@@ -218,6 +231,7 @@ const Checkout = () => {
                 theme: { color: "#ff6b3d" },
                 modal: {
                     ondismiss: () => {
+                        isSubmittingRef.current = false;   // allow retry after dismiss
                         setPlacing(false);
                     },
                 },
@@ -225,9 +239,9 @@ const Checkout = () => {
 
             const rzp = new window.Razorpay(options);
             rzp.open();
-
         } catch (err) {
             console.error("Payment init error:", err);
+            isSubmittingRef.current = false;       // allow retry
             alert("Something went wrong while initiating payment. Please try again.");
             setPlacing(false);
         }

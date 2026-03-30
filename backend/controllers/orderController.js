@@ -12,51 +12,97 @@ export const getOrders = async (req, res) => {
 };
 
 // POST create order (customer checkout)
+// POST create order (customer checkout)
 export const createOrder = async (req, res) => {
     try {
-        const { items, shippingAddress, paymentMethod, total } = req.body;
+        const { items, shippingAddress, paymentMethod, paymentId, total } = req.body;
+        const userId = req.user?._id;  // from userAuth middleware (may be guest if no auth)
 
-        // 0. Validate stock before saving
-        for (const item of items) {
-            const product = await Product.findOne({
-                _id: item.product,
-                "variants.color": item.selectedColor,
-            });
+        // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
+        if (userId) {
+            const sixtySecsAgo = new Date(Date.now() - 60_000);
+            const recent = await Order.findOne({
+                user: userId,
+                createdAt: { $gte: sixtySecsAgo },
+            }).select("_id").lean();
 
-            const variant = product?.variants?.find(v => v.color === item.selectedColor);
-            const sizeEntry = variant?.sizes?.find(s => s.size === item.selectedSize);
-
-            if (!sizeEntry || sizeEntry.stock < item.quantity) {
-                return res.status(400).json({
-                    message: `"${item.name}" (${item.selectedSize}) is out of stock.`
+            if (recent) {
+                return res.status(409).json({
+                    message: "A recent order already exists.",
+                    orderId: recent._id,
                 });
             }
         }
 
-        // 1. Save the order
-        const order = await Order.create({ items, shippingAddress, paymentMethod, total });
+        // ── TASK 2: Atomic stock decrement — check + decrement in one query ───
+        // Attempt decrement first. If any item fails, rollback and reject.
+        const decremented = [];
 
-        // 2. Decrement stock for each ordered item
         for (const item of items) {
-            const result = await Product.updateOne(
+            const result = await Product.findOneAndUpdate(
                 {
                     _id: item.product,
-                    "variants.color": item.selectedColor,
+                    variants: {
+                        $elemMatch: {
+                            color: item.selectedColor,
+                            sizes: {
+                                $elemMatch: {
+                                    size: item.selectedSize,
+                                    stock: { $gte: item.quantity },  // atomic check + decrement
+                                },
+                            },
+                        },
+                    },
                 },
                 {
-                    $inc: { "variants.$[v].sizes.$[s].stock": -item.quantity }
+                    $inc: { "variants.$[v].sizes.$[s].stock": -item.quantity },
                 },
                 {
                     arrayFilters: [
                         { "v.color": item.selectedColor },
-                        { "s.size": item.selectedSize }
-                    ]
+                        { "s.size": item.selectedSize },
+                    ],
+                    new: false,  // don't need the updated doc
                 }
             );
-            console.log("Stock decrement result:", result);
+
+            if (!result) {
+                // This item failed — rollback all previously decremented items
+                for (const done of decremented) {
+                    await Product.updateOne(
+                        { _id: done.product },
+                        {
+                            $inc: { "variants.$[v].sizes.$[s].stock": done.quantity },
+                        },
+                        {
+                            arrayFilters: [
+                                { "v.color": done.selectedColor },
+                                { "s.size": done.selectedSize },
+                            ],
+                        }
+                    );
+                }
+
+                return res.status(400).json({
+                    message: `"${item.name}" (Size: ${item.selectedSize}) is out of stock or insufficient quantity.`,
+                });
+            }
+
+            decremented.push(item);  // track for rollback if later item fails
         }
 
+        // ── All stock decremented successfully — now save the order ──────────
+        const order = await Order.create({
+            user: userId || null,
+            items,
+            shippingAddress,
+            paymentMethod,
+            paymentId: paymentId || null,
+            total,
+        });
+
         res.status(201).json(order);
+
     } catch (err) {
         console.error("createOrder error:", err);
         res.status(400).json({ message: err.message });
