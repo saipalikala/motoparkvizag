@@ -1,9 +1,15 @@
+/* ================================================
+   File: motopark-web/src/components/BentoGrid/BentoGrid.jsx
+
+   CHANGE: accepts `products` prop instead of calling useProducts().
+   This eliminates the internal dependency on ProductContext for homepage.
+   Still works with ProductContext if used on other pages (backwards compatible).
+   ================================================ */
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useNavigate } from "react-router-dom";
 import "./BentoGrid.css";
-
 import { API as BASE_URL } from "@/config/api";
 
 /* ─── BIKE SVG ILLUSTRATION ─── */
@@ -66,7 +72,6 @@ const BikeSVG = ({ size = "small" }) => {
     );
 };
 
-/* ─── WISHLIST HEART ICON ─── */
 const HeartIcon = ({ filled }) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#ff6b3d" : "none"}
         stroke={filled ? "#ff6b3d" : "currentColor"} strokeWidth="2"
@@ -75,17 +80,14 @@ const HeartIcon = ({ filled }) => (
     </svg>
 );
 
-/* ─── CART ICON ─── */
 const CartIcon = () => (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.2"
-        strokeLinecap="round" strokeLinejoin="round">
+        stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
     </svg>
 );
 
-/* ─── PRODUCT CARD (used inside bento) ─── */
 const BentoCard = ({ product, size = "small" }) => {
     const { addToCart, cartItems } = useCart();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -94,97 +96,60 @@ const BentoCard = ({ product, size = "small" }) => {
     const wishlisted = isInWishlist(product._id);
     const inCart = cartItems.some(i => i._id === product._id);
 
-    // Images live inside variants — ProductContext normalizes variants[0].images → product.images
     const rawImage = product.images?.[0] || product.variants?.[0]?.images?.[0] || null;
-    // Prepend base URL if the path is relative (starts with / or uploads/)
     const image = rawImage
         ? rawImage.startsWith("http") ? rawImage : `${BASE_URL}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`
         : null;
-    const handleClick = () => {
-        navigate(`/product/${product._id}`);
-    };
-
-
-    const handleCart = (e) => {
-        e.stopPropagation();
-        addToCart(product);
-    };
-
-    const handleWishlist = (e) => {
-        e.stopPropagation();
-        wishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
-    };
 
     const isHero = size === "hero";
 
-    // category might be populated object {_id, name} or a plain string — never show raw _id
     const categoryLabel = product.category && typeof product.category === "object"
         ? product.category?.name
-        : (product.category?.length === 24 ? null : product.category); // skip 24-char mongo ids
+        : (product.category?.length === 24 ? null : product.category);
 
     return (
         <div
             className={`bento-card ${isHero ? "bento-card--hero" : "bento-card--small"}`}
-            onClick={handleClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && handleClick()}
-        >
-
-            {/* ACCENT LINE */}
+            onClick={() => navigate(`/product/${product._id}`)}
+            role="button" tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && navigate(`/product/${product._id}`)}>
             <div className="card-accent" />
-
-            {/* IMAGE / ILLUSTRATION */}
             <div className="card-image">
                 {image
-                    ? <img src={image} alt={product.name} className="card-photo" />
+                    ? <img
+                        src={image}
+                        alt={product.name}
+                        className="card-photo"
+                        loading="lazy"
+                        decoding="async"
+                    />
                     : <BikeSVG size={size} />
                 }
             </div>
-
-            {/* GRADIENT */}
             <div className="card-gradient" />
-
-            {/* WISHLIST BTN — top left */}
             <button
                 className={`card-wishlist ${wishlisted ? "card-wishlist--active" : ""}`}
-                onClick={handleWishlist}
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            >
+                onClick={(e) => { e.stopPropagation(); wishlisted ? removeFromWishlist(product._id) : addToWishlist(product); }}
+                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}>
                 <HeartIcon filled={wishlisted} />
             </button>
-
-            {/* BADGE — top right */}
             {product.featured && <span className="corner-tag">Featured</span>}
             {product.trending && !product.featured && <span className="corner-tag corner-tag--new">New</span>}
-
-            {/* INFO */}
             <div className="card-info">
-                {categoryLabel && (
-                    <span className="card-badge">{categoryLabel}</span>
-                )}
-
+                {categoryLabel && <span className="card-badge">{categoryLabel}</span>}
                 <h3 className="card-name">{product.name}</h3>
-
                 <div className="card-footer">
                     <div className="price-row">
-                        <span className="card-price">
-                            ₹{product.price?.toLocaleString("en-IN")}
-                        </span>
+                        <span className="card-price">₹{product.price?.toLocaleString("en-IN")}</span>
                         {product.originalPrice && (
-                            <span className="price-original">
-                                ₹{product.originalPrice?.toLocaleString("en-IN")}
-                            </span>
+                            <span className="price-original">₹{product.originalPrice?.toLocaleString("en-IN")}</span>
                         )}
                     </div>
-
                     <button
                         className={`card-cart-btn ${inCart ? "card-cart-btn--added" : ""}`}
-                        onClick={handleCart}
-                        aria-label="Add to cart"
-                    >
-                        <CartIcon />
-                        <span>{inCart ? "Added" : "Add"}</span>
+                        onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+                        aria-label="Add to cart">
+                        <CartIcon /><span>{inCart ? "Added" : "Add"}</span>
                     </button>
                 </div>
             </div>
@@ -192,13 +157,23 @@ const BentoCard = ({ product, size = "small" }) => {
     );
 };
 
-/* ─── BENTO GRID ─── */
-const BentoGrid = ({ title, type }) => {
-    const { products } = useProducts();
+/* ════════════════════════════════
+   BENTO GRID
+   ✅ Now accepts `products` prop from Home.jsx
+   ✅ Falls back to ProductContext if used standalone
+════════════════════════════════ */
+const BentoGrid = ({ title, type, products: propProducts }) => {
+    /* If products passed as prop (from Home.jsx) use those.
+       Otherwise fall back to ProductContext (for other pages). */
+    const { products: ctxProducts } = useProducts();
+    const allProducts = propProducts || ctxProducts;
 
     let items = [];
-    if (type === "featured") items = products.filter(p => p.featured);
-    if (type === "trending") items = products.filter(p => p.trending);
+    if (type === "featured") items = allProducts.filter(p => p.featured);
+    if (type === "trending") items = allProducts.filter(p => p.trending);
+
+    /* If products came from prop, they're already filtered — use directly */
+    if (propProducts && items.length === 0) items = propProducts;
 
     const display = items.slice(0, 5);
     if (display.length === 0) return null;
@@ -206,16 +181,13 @@ const BentoGrid = ({ title, type }) => {
     return (
         <section className="bento-section">
             <div className="bento-container">
-
                 <header className="bento-header">
                     <div className="header-left">
                         <p className="bento-eyebrow">
                             {type === "featured" ? "Featured Collection" : "Trending Now"}
                         </p>
                         <h2 className="bento-title">{title}</h2>
-                        <p className="bento-subtitle">
-                            Engineered for riders who demand performance
-                        </p>
+                        <p className="bento-subtitle">Engineered for riders who demand performance</p>
                     </div>
                     <a href="/products" className="view-all-btn">
                         View All
@@ -226,14 +198,10 @@ const BentoGrid = ({ title, type }) => {
                         </svg>
                     </a>
                 </header>
-
                 <div className="bento-grid">
-                    {/* HERO */}
                     <div className="bento-hero">
                         <BentoCard product={display[0]} size="hero" />
                     </div>
-
-                    {/* SMALL 2×2 */}
                     <div className="bento-small">
                         {display.slice(1).map(product => (
                             <div className="bento-item" key={product._id}>
@@ -242,7 +210,6 @@ const BentoGrid = ({ title, type }) => {
                         ))}
                     </div>
                 </div>
-
             </div>
         </section>
     );

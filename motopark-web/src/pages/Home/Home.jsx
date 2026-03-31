@@ -1,87 +1,126 @@
-import { useEffect, useState } from "react";
+/* ================================================
+   File: motopark-web/src/pages/Home/Home.jsx
 
-import PremiumCarousel from "@/components/PremiumCarousel/PremiumCarousel";
-import NewArrivalsSlider from "@/components/NewArrivalsSlider/NewArrivalsSlider";
-import VideoShowcase from "@/components/VideoShowcase/VideoShowcase";
-import BentoGrid from "@/components/BentoGrid/BentoGrid";
-import TrendingProducts from "@/components/TrendingProducts/TrendingProducts";
-import WhyMotoPark from "@/components/WhyMotoPark/WhyMotoPark";
-import BrandShowcase from "@/components/BrandShowcase/BrandShowcase";
-import ScrollReveal from "@/components/ScrollReveal/ScrollReveal";
-
+   WHY THIS IS FASTER:
+   1. Single /api/home-data call instead of 5 separate fetches
+   2. PremiumCarousel renders immediately with fallback slides (no API wait)
+   3. Product components receive data as props (no internal fetches)
+   4. Skeleton loaders prevent CLS during data load
+   ================================================ */
+import { useEffect, useState, lazy, Suspense } from "react";
 import { API } from "@/config/api";
 import "./Home.css";
 
-const componentMap = {
-    PremiumCarousel: () => <PremiumCarousel />,
-    NewArrivalsSlider: () => <NewArrivalsSlider />,
-    VideoShowcase: () => <VideoShowcase />,
-    BentoGrid: () => <BentoGrid title="Highest Selling" type="featured" />,
-    TrendingProducts: () => <TrendingProducts />,
-    WhyMotoPark: () => <WhyMotoPark />,
-    BrandShowcase: () => <BrandShowcase />,
-};
+/* ── HERO loads eagerly — never lazy ── */
+import PremiumCarousel from "@/components/PremiumCarousel/PremiumCarousel";
 
-/* ── DEFAULT LAYOUT ──────────────────────────────────────────────────
-   Rendered immediately — no API wait.
-   This means the carousel shows on screen instantly.
-   API response only re-orders / hides sections (no visual jump).
-─────────────────────────────────────────────────────────────────── */
-const DEFAULT_SECTIONS = [
-    { key: "PremiumCarousel", order: 0, enabled: true },
-    { key: "BentoGrid", order: 1, enabled: true },
-    { key: "TrendingProducts", order: 2, enabled: true },
-    { key: "NewArrivalsSlider", order: 3, enabled: true },
-    { key: "VideoShowcase", order: 4, enabled: true },
-    { key: "WhyMotoPark", order: 5, enabled: true },
-    { key: "BrandShowcase", order: 6, enabled: true },
-];
+/* ── Below-fold components lazy-loaded ──
+   They only download when needed, not on initial page load.
+   This alone cuts initial JS bundle size significantly. */
+const NewArrivalsSlider = lazy(() => import("@/components/NewArrivalsSlider/NewArrivalsSlider"));
+const VideoShowcase = lazy(() => import("@/components/VideoShowcase/VideoShowcase"));
+const BentoGrid = lazy(() => import("@/components/BentoGrid/BentoGrid"));
+const TrendingProducts = lazy(() => import("@/components/TrendingProducts/TrendingProducts"));
+const WhyMotoPark = lazy(() => import("@/components/WhyMotoPark/WhyMotoPark"));
+const BrandShowcase = lazy(() => import("@/components/BrandShowcase/BrandShowcase"));
+const ScrollReveal = lazy(() => import("@/components/ScrollReveal/ScrollReveal"));
 
+/* ── SKELETON LOADERS ──
+   Fixed heights prevent CLS — browser reserves space before data loads.
+   Height matches the actual component height so no layout shift occurs. */
+const HeroSkeleton = () => (
+    <div className="skeleton skeleton--hero" aria-hidden="true" />
+);
+
+const SliderSkeleton = () => (
+    <div className="skeleton-section" aria-hidden="true">
+        <div className="skeleton skeleton--title" />
+        <div className="skeleton-row">
+            {[1, 2, 3, 4].map(i => (
+                <div key={i} className="skeleton skeleton--card" />
+            ))}
+        </div>
+    </div>
+);
+
+const GridSkeleton = () => (
+    <div className="skeleton-section" aria-hidden="true">
+        <div className="skeleton skeleton--title" />
+        <div className="skeleton-grid">
+            <div className="skeleton skeleton--hero-card" />
+            <div className="skeleton-small-grid">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="skeleton skeleton--small-card" />
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+/* ════════════════════════════════
+   MAIN HOME
+════════════════════════════════ */
 function Home() {
-    const [sections, setSections] = useState(DEFAULT_SECTIONS);
+    const [homeData, setHomeData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`${API}/home-layout`)
+        fetch(`${API}/home-data`)
             .then(r => r.json())
-            .then(data => {
-                if (data?.sections?.length) {
-                    setSections(data.sections.sort((a, b) => a.order - b.order));
-                }
-            })
-            .catch(() => { /* keep default layout on error */ });
+            .then(data => { setHomeData(data); setLoading(false); })
+            .catch(() => {
+                setHomeData({ featured: [], trending: [], newArrivals: [] });
+                setLoading(false);
+            });
     }, []);
-
-    const enabled = sections.filter(s => s.enabled);
 
     return (
         <div className="home-page">
-            {enabled.map((section, i) => {
-                const Component = componentMap[section.key];
-                if (!Component) return null;
 
-                const isHero = section.key === "PremiumCarousel";
+            <section className="hero">
+                <PremiumCarousel />
+            </section>
 
-                /* ── FIX 1: Never wrap hero in ScrollReveal ──
-                   ScrollReveal hides elements until they scroll into view.
-                   The hero IS the first view — wrapping it causes CLS and
-                   delays LCP because the element starts as opacity:0 / hidden. */
-                if (isHero) {
-                    return (
-                        <section key={section.key} className="hero">
-                            <Component />
-                        </section>
-                    );
-                }
-
-                /* Below-fold sections are fine with ScrollReveal */
-                return (
-                    <ScrollReveal key={section.key}>
+            {/* ✅ Always render — pass empty array, let component handle it */}
+            {loading ? <GridSkeleton /> : (
+                <Suspense fallback={<GridSkeleton />}>
+                    <ScrollReveal>
                         <section className="home-section">
-                            <Component />
+                            <BentoGrid
+                                title="Highest Selling"
+                                type="featured"
+                                products={homeData?.featured || []}
+                            />
                         </section>
                     </ScrollReveal>
-                );
-            })}
+                </Suspense>
+            )}
+
+            {loading ? <SliderSkeleton /> : (
+                <Suspense fallback={<SliderSkeleton />}>
+                    <ScrollReveal>
+                        <section className="home-section">
+                            <TrendingProducts products={homeData?.trending || []} />
+                        </section>
+                    </ScrollReveal>
+                </Suspense>
+            )}
+
+            {loading ? <SliderSkeleton /> : (
+                <Suspense fallback={<SliderSkeleton />}>
+                    <ScrollReveal>
+                        <section className="home-section">
+                            <NewArrivalsSlider products={homeData?.newArrivals || []} />
+                        </section>
+                    </ScrollReveal>
+                </Suspense>
+            )}
+
+            {/* These have no data dependency — unchanged */}
+            <Suspense fallback={null}><ScrollReveal><section className="home-section"><VideoShowcase /></section></ScrollReveal></Suspense>
+            <Suspense fallback={null}><ScrollReveal><section className="home-section"><WhyMotoPark /></section></ScrollReveal></Suspense>
+            <Suspense fallback={null}><ScrollReveal><section className="home-section"><BrandShowcase /></section></ScrollReveal></Suspense>
+
         </div>
     );
 }

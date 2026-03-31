@@ -61,3 +61,110 @@
 
 }
 
+
+
+/* ================================================
+   File: motopark-web/src/pages/Home/Home.css
+   ADD these to the bottom of your existing Home.css
+   ================================================ */
+
+/* ════════════════════════════════
+   SKELETON LOADERS
+   Fixed heights = zero CLS. Browser reserves exact
+   space before data loads so nothing jumps.
+════════════════════════════════ */
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(90deg,
+            #e8e8ed 25%,
+            #f0f0f5 50%,
+            #e8e8ed 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 12px;
+}
+
+/* Hero — matches exact PremiumCarousel height */
+.skeleton--hero {
+    width: 100%;
+    height: 85vh;
+    min-height: 500px;
+    border-radius: 0;
+}
+
+.skeleton-section {
+    padding: 48px 48px 0;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.skeleton--title {
+    height: 32px;
+    width: 260px;
+    margin-bottom: 24px;
+}
+
+.skeleton-row {
+    display: flex;
+    gap: 14px;
+    overflow: hidden;
+}
+
+/* Card skeletons — match actual card heights */
+.skeleton--card {
+    flex: 0 0 220px;
+    height: 300px;
+    border-radius: 18px;
+}
+
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.skeleton--hero-card {
+    height: 460px;
+    border-radius: 18px;
+}
+
+.skeleton-small-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.skeleton--small-card {
+    height: 220px;
+    border-radius: 18px;
+}
+
+@media (max-width: 768px) {
+    .skeleton-section {
+        padding: 32px 20px 0;
+    }
+
+    .skeleton--hero {
+        height: 60vh;
+        min-height: 360px;
+    }
+
+    .skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .skeleton--card {
+        flex: 0 0 160px;
+        height: 240px;
+    }
+}

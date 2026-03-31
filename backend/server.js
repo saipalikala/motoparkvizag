@@ -1,6 +1,8 @@
-import dotenv from "dotenv";
-dotenv.config();
 
+import dotenv from "dotenv";
+
+dotenv.config();
+import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -23,6 +25,8 @@ import storeConfigRoutes from "./routes/storeConfigRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import homeRoutes from "./routes/homeDataRoutes.js";
+import homeDataRoutes from "./routes/homeDataRoutes.js";
 
 /* ── SECURITY MIDDLEWARE ── */
 import {
@@ -79,6 +83,7 @@ app.get("/api/health", (req, res) => {
    API ROUTES
 ════════════════════════════════ */
 app.use("/api/offers", offerRoutes);
+app.use("/api/home-data", homeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/navbar", navbarRoutes);
 app.use("/api/carousel", carouselRoutes);
@@ -94,7 +99,9 @@ app.use("/api/payment", paymentRoutes);
 
 app.use("/api/users/otp", otpLimiter);
 app.use("/api/users", authLimiter, userRoutes);
-
+app.use("/api/home-data", homeDataRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRouter);
 /* ════════════════════════════════
    ERROR HANDLING (must be last)
 ════════════════════════════════ */

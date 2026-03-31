@@ -1,36 +1,36 @@
 import Navbar from "../models/navbarModel.js";
-
+import { clearHomeCache } from "./homeController.js";
 /* GET NAVBAR */
 
-export const getNavbar = async (req,res)=>{
-  try{
+export const getNavbar = async (req, res) => {
+  try {
 
     const navbar = await Navbar.findOne();
 
     res.json(navbar);
 
-  }catch(err){
-    res.status(500).json({message:"Server error"});
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
 /* UPDATE NAVBAR */
 
-export const updateNavbar = async (req,res)=>{
+export const updateNavbar = async (req, res) => {
 
-  try{
+  try {
 
     const updated = await Navbar.findOneAndUpdate(
       {},
       req.body,
-      { new:true, upsert:true }
+      { new: true, upsert: true }
     );
-
+    clearHomeCache();
     res.json(updated);
 
-  }catch(err){
-    res.status(500).json({message:"Update failed"});
+  } catch (err) {
+    res.status(500).json({ message: "Update failed" });
   }
 
 };

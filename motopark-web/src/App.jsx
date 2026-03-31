@@ -36,6 +36,15 @@ const AdminOrders = lazy(() => import("@/admin/pages/AdminOrders"));
 const AdminHomeLayout = lazy(() => import("@/admin/pages/AdminHomeLayout"));
 const InventoryManager = lazy(() => import("@/admin/pages/InventoryManager"));
 
+if (typeof window !== "undefined") {
+    window.addEventListener("load", () => {
+        setTimeout(() => {
+            import("@/pages/Cart/Cart");
+            import("@/pages/Checkout/Checkout");
+            import("@/pages/ProductDetail/ProductDetail");
+        }, 2000); // 2s delay — after FCP, don't compete with render
+    });
+}
 const PageLoader = () => (
     <div className="page-loading">
         <div className="page-spinner" />
