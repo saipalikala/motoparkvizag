@@ -27,6 +27,18 @@
     display: block;
 }
 
+.cart-stock-limit {
+    font-size: 11px;
+    color: #dc2626;
+    margin-top: 4px;
+    display: block;
+}
+
+.cart-qty-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
 .cart-empty-inner h2 {
     font-family: 'Sakana', -apple-system, sans-serif;
     font-size: 28px;

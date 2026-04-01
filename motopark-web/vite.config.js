@@ -10,6 +10,10 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: "/index.html",
         runtimeCaching: [
           {
             // API responses — NetworkFirst (fresh data, fallback to cache)
@@ -17,7 +21,7 @@ export default defineConfig({
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 },
               networkTimeoutSeconds: 4,
             },
           },

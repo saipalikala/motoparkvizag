@@ -147,10 +147,31 @@ const Cart = () => {
                                                     <button
                                                         className="cart-qty-btn"
                                                         onClick={() => increaseQty(item._id)}
-                                                        aria-label="Increase">
+                                                        aria-label="Increase"
+                                                        disabled={(() => {
+                                                            const variant = item.variants?.find(v => v.color === item.selectedColor)
+                                                                || item.variants?.[0];
+                                                            const sizeObj = variant?.sizes?.find(s => s.size === item.selectedSize)
+                                                                || variant?.sizes?.[0];
+                                                            const maxStock = Number(sizeObj?.stock || 0);
+                                                            return maxStock > 0 && item.quantity >= maxStock;
+                                                        })()}>
                                                         +
                                                     </button>
                                                 </div>
+
+                                                {/* ✅ Stock limit warning — appears below qty controls */}
+                                                {(() => {
+                                                    const variant = item.variants?.find(v => v.color === item.selectedColor)
+                                                        || item.variants?.[0];
+                                                    const sizeObj = variant?.sizes?.find(s => s.size === item.selectedSize)
+                                                        || variant?.sizes?.[0];
+                                                    const maxStock = Number(sizeObj?.stock || 0);
+                                                    if (maxStock > 0 && item.quantity >= maxStock) {
+                                                        return <span className="cart-stock-limit">Max stock reached</span>;
+                                                    }
+                                                    return null;
+                                                })()}
 
                                                 {/* PRICE */}
                                                 <div className="cart-item-price-col">

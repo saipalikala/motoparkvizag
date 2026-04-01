@@ -161,14 +161,19 @@ export const CartProvider = ({ children }) => {
        CART OPERATIONS
     =============================== */
     const addToCart = (product) => {
-        const hasStock = product.variants?.some(v =>
-            v.sizes?.some(s => Number(s.stock) > 0)
-        );
-        if (!hasStock) return;
+        const variant = product.variants?.find(v => v.color === product.selectedColor)
+            || product.variants?.[0];
+        const sizeObj = variant?.sizes?.find(s => s.size === product.selectedSize)
+            || variant?.sizes?.[0];
+        const maxStock = Number(sizeObj?.stock || 0);
+
+        if (!maxStock) return; // no stock at all
 
         setCartItems(prev => {
             const existing = prev.find(item => item._id === product._id);
             if (existing) {
+                // ✅ Cap at maxStock on re-add too
+                if (existing.quantity >= maxStock) return prev;
                 return prev.map(item =>
                     item._id === product._id
                         ? { ...item, quantity: item.quantity + 1 }
@@ -182,10 +187,23 @@ export const CartProvider = ({ children }) => {
     const removeFromCart = (id) =>
         setCartItems(prev => prev.filter(item => item._id !== id));
 
+    // ✅ FIXED — respects actual stock
     const increaseQty = (id) =>
-        setCartItems(prev => prev.map(item =>
-            item._id === id ? { ...item, quantity: item.quantity + 1 } : item
-        ));
+        setCartItems(prev => prev.map(item => {
+            if (item._id !== id) return item;
+
+            // Find max stock for selected size/variant
+            const variant = item.variants?.find(v => v.color === item.selectedColor)
+                || item.variants?.[0];
+            const sizeObj = variant?.sizes?.find(s => s.size === item.selectedSize)
+                || variant?.sizes?.[0];
+            const maxStock = Number(sizeObj?.stock || 0);
+
+            // Don't exceed stock
+            if (maxStock > 0 && item.quantity >= maxStock) return item;
+
+            return { ...item, quantity: item.quantity + 1 };
+        }));
 
     const decreaseQty = (id) =>
         setCartItems(prev => prev.map(item =>
