@@ -1,7 +1,8 @@
+import axios from "axios"; // ✅ ADD THIS — was missing
 import { API as BASE_URL } from "@/config/api";
 
 const API = axios.create({
-    baseURL: `${BASE_URL}/api`,
+    baseURL: BASE_URL, // ✅ FIXED — was `${BASE_URL}/api` which made /api/api/
 });
 
 // ✅ Fixed: now accepts (email, password) to match AdminLogin.jsx
