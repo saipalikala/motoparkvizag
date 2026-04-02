@@ -7,15 +7,22 @@ const CAT_URL = `${API}/categories`;
 const TOKEN = () => localStorage.getItem("adminToken");
 const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}` });
 
-const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "Free Size", "6", "7", "8", "9", "10", "11", "One Size"];
+const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "Free Size", "6", "7", "8", "9", "10", "11", "One Size", "Standard"];
 
 const PlusIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
 const TrashIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /></svg>;
 const EditIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>;
 const SearchIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>;
 const CloseIcon = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 2l8 8M10 2l-8 8" /></svg>;
+const UploadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg>;
+const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 17 12 21 16 17" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29" /></svg>;
 
-const emptyForm = () => ({ name: "", price: "", brand: "", category: "", description: "", newArrival: false, featured: false, trending: false });
+const emptyForm = () => ({
+    name: "", price: "", brand: "", category: "",
+    description: "", newArrival: false, featured: false, trending: false,
+    productType: "variable",
+    stock: 0,
+});
 const emptyVariant = () => ({ color: "#ff6b3d", colorName: "", images: [], sizes: [{ size: "", stock: 0 }] });
 
 const AdminProducts = () => {
@@ -29,7 +36,8 @@ const AdminProducts = () => {
     const [form, setForm] = useState(emptyForm());
     const [variants, setVariants] = useState([emptyVariant()]);
     const [tab, setTab] = useState("info");
-    const [error, setError] = useState("");   // ← shows inline error instead of alert
+    const [error, setError] = useState("");
+    const [bulkStatus, setBulkStatus] = useState(""); // ✅ bulk upload feedback
 
     /* ── load products + categories ── */
     const load = async () => {
@@ -77,19 +85,18 @@ const AdminProducts = () => {
             name: p.name,
             price: p.price,
             brand: p.brand,
-            /* ✅ handle both populated object and plain string */
             category: p.category?._id || p.category || "",
             description: p.description || "",
             newArrival: !!p.newArrival,
             featured: !!p.featured,
             trending: !!p.trending,
+            productType: "variable",
+            stock: 0,
         });
         setVariants(
             (p.variants || []).map(v => ({
                 color: v.color || "#ff6b3d",
                 colorName: v.color || "",
-                /* ✅ convert existing URL strings into {url, preview} objects
-                   so they show in the thumbnail grid and get preserved on save */
                 images: (v.images || []).map(url =>
                     typeof url === "string"
                         ? { url, preview: url.startsWith("http") ? url : `${API}/${url.replace(/^\//, "")}` }
@@ -123,6 +130,53 @@ const AdminProducts = () => {
         }
     };
 
+    /* ── bulk CSV upload ── */
+    const handleBulkUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setBulkStatus("Uploading…");
+
+        const fd = new FormData();
+        fd.append("csv", file);
+
+        try {
+            const res = await fetch(`${PROD_URL}/bulk`, {
+                method: "POST",
+                headers: AUTH(),
+                body: fd,
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setBulkStatus(`✅ ${data.message}`);
+                load();
+            } else {
+                setBulkStatus(`❌ ${data.message}`);
+            }
+        } catch (err) {
+            setBulkStatus("❌ Upload failed — check connection");
+        }
+
+        // clear status after 5 seconds
+        setTimeout(() => setBulkStatus(""), 5000);
+        e.target.value = "";
+    };
+
+    /* ── download CSV template ── */
+    const downloadTemplate = () => {
+        const header = "name,brand,price,category,description,color,sizes,featured,trending,newArrival";
+        const example = "Steelbird SBH-40,Steelbird,2499,Helmets,Premium full-face helmet,Matte Black,S:10|M:20|L:15,false,false,true";
+        const example2 = "Phone Mount Pro,Generic,599,Accessories,Universal phone holder,,Standard:50,false,false,false";
+        const csv = [header, example, example2].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "motopark_bulk_template.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     /* ── submit ── */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -133,14 +187,33 @@ const AdminProducts = () => {
         if (!form.price) return setError("Price is required");
         if (!form.category) return setError("Please select a category");
 
-        const hasValidVariant = variants.some(v =>
-            (v.colorName?.trim() || v.color?.trim()) &&
-            v.sizes.some(s => s.size?.trim())
-        );
+        // Simple product validation
+        if (form.productType === "simple") {
+            if (!form.stock && form.stock !== 0) {
+                return setError("Stock quantity is required");
+            }
+            // Simple products don't need variant image validation
+        } else {
+            // Variable product validation
+            if (variants.length === 0) {
+                return setError("Add at least one variant");
+            }
 
-        if (!hasValidVariant) {
-            return setError("Add at least one variant with color and size");
+            // ✅ Every variant must have at least one image
+            const missingImage = variants.findIndex(v => v.images.length === 0);
+            if (missingImage !== -1) {
+                setTab("variants");
+                return setError(`Variant ${missingImage + 1} needs at least one image`);
+            }
         }
+
+        // ✅ Auto-fix sizes — add Standard if none provided
+        const fixedVariants = variants.map(v => ({
+            ...v,
+            sizes: v.sizes.filter(s => s.size?.trim()).length > 0
+                ? v.sizes.filter(s => s.size?.trim())
+                : [{ size: "Standard", stock: 0 }]
+        }));
 
         setSaving(true);
 
@@ -152,27 +225,36 @@ const AdminProducts = () => {
             fd.append("price", form.price);
             fd.append("category", form.category);
             fd.append("description", form.description || "");
-
-            // 🔥 IMPORTANT FIX (boolean → string)
             fd.append("newArrival", String(form.newArrival));
             fd.append("featured", String(form.featured));
             fd.append("trending", String(form.trending));
 
-            fd.append("variants", JSON.stringify(
-                variants.map(v => ({
-                    color: v.colorName?.trim() || v.color,
-                    colorName: v.colorName?.trim() || v.color,
-                    sizes: v.sizes.filter(s => s.size?.trim()),
-                }))
-            ));
+            // ✅ Simple vs variable product data
+            if (form.productType === "simple") {
+                fd.append("variants", JSON.stringify([{
+                    color: "Default",
+                    colorName: "",
+                    sizes: [{ size: "Standard", stock: Number(form.stock) }],
+                }]));
+                // No image files for simple — images added via edit later
+            } else {
+                fd.append("variants", JSON.stringify(
+                    fixedVariants.map(v => ({
+                        color: v.colorName?.trim() || v.color || "",
+                        colorName: v.colorName?.trim() || "",
+                        sizes: v.sizes,
+                    }))
+                ));
 
-            variants.forEach((v, i) => {
-                v.images.forEach(img => {
-                    if (img.file instanceof File) {
-                        fd.append(`variantImages_${i}`, img.file);
-                    }
+                // Attach image files
+                fixedVariants.forEach((v, i) => {
+                    v.images.forEach(img => {
+                        if (img.file instanceof File) {
+                            fd.append(`variantImages_${i}`, img.file);
+                        }
+                    });
                 });
-            });
+            }
 
             console.log("📤 FormData:");
             for (const [k, v] of fd.entries()) {
@@ -185,12 +267,10 @@ const AdminProducts = () => {
             const res = await fetch(url, {
                 method,
                 headers: AUTH(),
-                body: fd
+                body: fd,
             });
 
             let data;
-
-            // 🔥 CRITICAL FIX (avoid crash)
             try {
                 data = await res.json();
             } catch (err) {
@@ -207,7 +287,6 @@ const AdminProducts = () => {
             }
 
             console.log("✅ Product saved:", data._id);
-
             close();
             load();
 
@@ -250,8 +329,29 @@ const AdminProducts = () => {
                     />
                     {search && <button className="ap-search-clear" onClick={() => setSearch("")}><CloseIcon /></button>}
                 </div>
-                <button className="ap-add-btn" onClick={openNew}><PlusIcon /> Add Product</button>
+
+                <div className="ap-toolbar-actions">
+                    {/* ✅ Download CSV template */}
+                    <button className="ap-template-btn" onClick={downloadTemplate} title="Download CSV template">
+                        <DownloadIcon /> Template
+                    </button>
+
+                    {/* ✅ Bulk upload CSV */}
+                    <label className="ap-bulk-btn" title="Bulk upload via CSV">
+                        <UploadIcon /> Bulk Upload
+                        <input type="file" accept=".csv" hidden onChange={handleBulkUpload} />
+                    </label>
+
+                    <button className="ap-add-btn" onClick={openNew}><PlusIcon /> Add Product</button>
+                </div>
             </div>
+
+            {/* ✅ Bulk upload status message */}
+            {bulkStatus && (
+                <div className={`ap-bulk-status ${bulkStatus.startsWith("✅") ? "ap-bulk-status--ok" : bulkStatus.startsWith("❌") ? "ap-bulk-status--err" : ""}`}>
+                    {bulkStatus}
+                </div>
+            )}
 
             <div className="ap-meta">
                 <span>{filtered.length} product{filtered.length !== 1 ? "s" : ""}</span>
@@ -290,7 +390,7 @@ const AdminProducts = () => {
                                         </td>
                                         <td><span className="ap-cat-badge">{p.category}</span></td>
                                         <td><strong>₹{p.price?.toLocaleString("en-IN")}</strong></td>
-                                        <td>{p.variants?.length || 0} color{p.variants?.length !== 1 ? "s" : ""}</td>
+                                        <td>{p.variants?.length || 0} variant{p.variants?.length !== 1 ? "s" : ""}</td>
                                         <td>
                                             <div className="ap-flags">
                                                 {p.featured && <span className="ap-flag ap-flag--featured">Featured</span>}
@@ -322,19 +422,21 @@ const AdminProducts = () => {
                             <button className="ap-panel-close" onClick={close}><CloseIcon /></button>
                         </div>
 
+                        {/* ✅ Hide variants tab for simple products */}
                         <div className="ap-tabs">
-                            {["info", "variants", "flags"].map(t => (
-                                <button
-                                    key={t}
-                                    className={`ap-tab ${tab === t ? "ap-tab--active" : ""}`}
-                                    onClick={() => setTab(t)}
-                                >
-                                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                                </button>
-                            ))}
+                            {["info", form.productType === "variable" ? "variants" : null, "flags"]
+                                .filter(Boolean)
+                                .map(t => (
+                                    <button
+                                        key={t}
+                                        className={`ap-tab ${tab === t ? "ap-tab--active" : ""}`}
+                                        onClick={() => setTab(t)}
+                                    >
+                                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                                    </button>
+                                ))}
                         </div>
 
-                        {/* ── inline error banner ── */}
                         {error && (
                             <div className="ap-error-banner">
                                 ⚠ {error}
@@ -356,6 +458,7 @@ const AdminProducts = () => {
                                             <input value={form.brand} onChange={e => setF("brand", e.target.value)} placeholder="e.g. Steelbird" required />
                                         </div>
                                     </div>
+
                                     <div className="ap-field-row">
                                         <div className="ap-field">
                                             <label>Price (₹) *</label>
@@ -371,6 +474,47 @@ const AdminProducts = () => {
                                             </select>
                                         </div>
                                     </div>
+
+                                    {/* ✅ PRODUCT TYPE TOGGLE */}
+                                    <div className="ap-field">
+                                        <label>Product Type</label>
+                                        <div className="ap-type-toggle">
+                                            <button
+                                                type="button"
+                                                className={`ap-type-btn ${form.productType === "simple" ? "ap-type-btn--active" : ""}`}
+                                                onClick={() => { setF("productType", "simple"); setTab("info"); }}
+                                            >
+                                                Simple
+                                                <span>No variants — just stock &amp; image</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`ap-type-btn ${form.productType === "variable" ? "ap-type-btn--active" : ""}`}
+                                                onClick={() => setF("productType", "variable")}
+                                            >
+                                                Variable
+                                                <span>Colors, sizes, images per variant</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* ✅ Simple product — stock only */}
+                                    {form.productType === "simple" && (
+                                        <div className="ap-field">
+                                            <label>Stock Quantity *</label>
+                                            <input
+                                                type="number"
+                                                value={form.stock}
+                                                onChange={e => setF("stock", Number(e.target.value))}
+                                                placeholder="e.g. 50"
+                                                min="0"
+                                            />
+                                            <p style={{ fontSize: 11, color: "#888", marginTop: 4 }}>
+                                                Add images after creating via the Edit panel
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="ap-field">
                                         <label>Description</label>
                                         <textarea value={form.description} onChange={e => setF("description", e.target.value)} rows={4} placeholder="Product description…" />
@@ -378,8 +522,8 @@ const AdminProducts = () => {
                                 </div>
                             )}
 
-                            {/* VARIANTS TAB */}
-                            {tab === "variants" && (
+                            {/* VARIANTS TAB — only shown for variable products */}
+                            {tab === "variants" && form.productType === "variable" && (
                                 <div className="ap-tab-body">
                                     {variants.map((v, vi) => (
                                         <div className="ap-variant-card" key={vi}>
@@ -392,7 +536,8 @@ const AdminProducts = () => {
 
                                             <div className="ap-field-row">
                                                 <div className="ap-field">
-                                                    <label>Color Name *</label>
+                                                    {/* ✅ Color is optional */}
+                                                    <label>Color Name <span style={{ color: "#aaa", fontWeight: 400, fontSize: 11 }}>(optional)</span></label>
                                                     <input
                                                         value={v.colorName}
                                                         onChange={e => setVr(vi, "colorName", e.target.value)}
@@ -406,11 +551,17 @@ const AdminProducts = () => {
                                             </div>
 
                                             <div className="ap-field">
-                                                <label>Images</label>
+                                                <label>Images *</label>
                                                 <label className="ap-img-upload">
                                                     <PlusIcon /> Add Images
                                                     <input type="file" multiple accept="image/*" hidden onChange={e => addImgs(vi, e.target.files)} />
                                                 </label>
+                                                {/* ✅ Inline warning if no images */}
+                                                {v.images.length === 0 && (
+                                                    <p style={{ fontSize: 11, color: "#dc2626", marginTop: 6 }}>
+                                                        ⚠ At least one image is required
+                                                    </p>
+                                                )}
                                                 {v.images.length > 0 && (
                                                     <div className="ap-img-grid">
                                                         {v.images.map((img, ii) => {
@@ -431,7 +582,8 @@ const AdminProducts = () => {
                                             </div>
 
                                             <div className="ap-field">
-                                                <label>Sizes & Stock</label>
+                                                {/* ✅ Sizes optional — auto-adds Standard if empty */}
+                                                <label>Sizes &amp; Stock <span style={{ color: "#aaa", fontWeight: 400, fontSize: 11 }}>(optional — defaults to Standard)</span></label>
                                                 <div className="ap-size-presets">
                                                     {SIZE_PRESETS.map(s => (
                                                         <button

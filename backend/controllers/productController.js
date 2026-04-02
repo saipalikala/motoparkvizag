@@ -28,33 +28,33 @@ const buildVariants = (rawVariants, files, existingVariants = []) => {
                 variant.color?.trim() ||
                 "Default";
 
-            // ✅ USE files (NOT req.files)
             const newFiles = (files || []).filter(
                 f => f.fieldname === `variantImages_${index}`
             );
 
             const newImages = newFiles.map(f => {
                 const url = f.path || f.secure_url || f.url || f.filename;
-
                 if (!url) {
                     console.log("❌ Invalid file object:", f);
                     throw new Error("Image upload failed - no URL returned");
                 }
-
                 return url;
             });
 
             const existingImages = existingVariants?.[index]?.images || [];
             const images = newImages.length > 0 ? newImages : existingImages;
 
-            const sizes = (variant.sizes || [])
+            // ✅ Auto-add Standard size if none provided
+            let sizes = (variant.sizes || [])
                 .filter(s => s.size && s.size.trim() !== "")
                 .map(s => ({
                     size: s.size,
                     stock: Number(s.stock) || 0
                 }));
 
-            if (sizes.length === 0) return null;
+            if (sizes.length === 0) {
+                sizes = [{ size: "Standard", stock: 0 }];
+            }
 
             return {
                 color: colorValue,
@@ -161,7 +161,6 @@ export const getProductFilters = async (req, res) => {
 =============================== */
 export const createProduct = async (req, res) => {
     try {
-        /* ── DEBUG (remove after confirming it works) ── */
         console.log("📦 CREATE — body keys :", Object.keys(req.body));
         console.log("📦 CREATE — category  :", req.body.category);
         console.log("📦 CREATE — variants  :", req.body.variants?.slice(0, 80));
@@ -169,18 +168,15 @@ export const createProduct = async (req, res) => {
 
         const { name, price, brand, description } = req.body;
 
-        /* ── category: accept ObjectId string OR plain name ── */
         const category = req.body.category?.trim();
         if (!category) {
             return res.status(400).json({ message: "Category is required" });
         }
 
-        /* ── boolean flags ── */
         const newArrival = req.body.newArrival === "true" || req.body.newArrival === true;
         const featured = req.body.featured === "true" || req.body.featured === true;
         const trending = req.body.trending === "true" || req.body.trending === true;
 
-        /* ── parse variants safely ── */
         const rawVariants = safeParseVariants(req.body.variants);
         if (rawVariants === null) {
             return res.status(400).json({ message: "Invalid variants JSON — check frontend FormData" });
@@ -189,10 +185,8 @@ export const createProduct = async (req, res) => {
         console.log("📦 CREATE — rawVariants count:", rawVariants.length);
 
         let variants;
-
         try {
             console.log("📂 FILES RECEIVED:", req.files);
-
             variants = buildVariants(rawVariants, req.files, []);
         } catch (err) {
             console.error("🔥 BUILD VARIANTS ERROR:", err);
@@ -203,7 +197,7 @@ export const createProduct = async (req, res) => {
 
         if (variants.length === 0) {
             return res.status(400).json({
-                message: "At least one variant with a color name and at least one size is required"
+                message: "At least one variant is required"
             });
         }
 
@@ -240,32 +234,26 @@ export const updateProduct = async (req, res) => {
 
         const updateData = { ...req.body };
 
-        /* ── boolean coercion ── */
         if ("newArrival" in updateData) updateData.newArrival = updateData.newArrival === "true" || updateData.newArrival === true;
         if ("featured" in updateData) updateData.featured = updateData.featured === "true" || updateData.featured === true;
         if ("trending" in updateData) updateData.trending = updateData.trending === "true" || updateData.trending === true;
 
         if ("price" in updateData) updateData.price = Number(updateData.price);
 
-        /* ── category trim ── */
         if (updateData.category) updateData.category = updateData.category.trim();
 
-        /* ── rebuild variants ── */
         if (updateData.variants) {
             const rawVariants = safeParseVariants(updateData.variants);
             if (rawVariants === null) {
                 return res.status(400).json({ message: "Invalid variants JSON" });
             }
 
-            /* fetch existing to preserve Cloudinary image URLs */
             const existing = await Product.findById(req.params.id).lean();
             if (!existing) return res.status(404).json({ message: "Product not found" });
 
             let variants;
-
             try {
                 console.log("📂 UPDATE FILES:", req.files);
-
                 variants = buildVariants(rawVariants, req.files, existing.variants);
             } catch (err) {
                 console.error("🔥 UPDATE VARIANTS ERROR:", err);
@@ -274,7 +262,7 @@ export const updateProduct = async (req, res) => {
 
             if (variants.length === 0) {
                 return res.status(400).json({
-                    message: "At least one variant with a color name and at least one size is required"
+                    message: "At least one variant is required"
                 });
             }
 
@@ -310,5 +298,88 @@ export const deleteProduct = async (req, res) => {
     } catch (error) {
         console.error("❌ DELETE PRODUCT ERROR:", error.message);
         res.status(500).json({ error: error.message });
+    }
+};
+
+/* ===============================
+   BULK CREATE PRODUCTS (CSV)
+   POST /api/products/bulk
+=============================== */
+export const bulkCreateProducts = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No CSV file uploaded" });
+        }
+
+        // ✅ Dynamic import — install with: npm install csvtojson
+        const csv = (await import("csvtojson")).default;
+
+        const csvString = req.file.buffer.toString("utf-8");
+        const rows = await csv().fromString(csvString);
+
+        if (!rows.length) {
+            return res.status(400).json({ message: "CSV file is empty" });
+        }
+
+        // ✅ Validate required fields
+        const invalid = rows.filter(r => !r.name?.trim() || !r.brand?.trim() || !r.price || !r.category?.trim());
+        if (invalid.length > 0) {
+            return res.status(400).json({
+                message: `${invalid.length} row(s) are missing required fields: name, brand, price, category`
+            });
+        }
+
+        // ✅ Map CSV rows to product schema
+        // CSV format: name,brand,price,category,description,color,sizes,featured,trending,newArrival
+        // sizes format: "S:10,M:20,L:15" (size:stock pairs separated by commas)
+        const products = rows.map(row => {
+            let sizes = [{ size: "Standard", stock: 0 }]; // default
+
+            if (row.sizes?.trim()) {
+                const parsed = row.sizes.split(",").map(s => {
+                    const [size, stock] = s.trim().split(":");
+                    return { size: size?.trim(), stock: Number(stock || 0) };
+                }).filter(s => s.size);
+
+                if (parsed.length > 0) sizes = parsed;
+            }
+
+            return {
+                name: row.name.trim(),
+                brand: row.brand.trim(),
+                price: Number(row.price),
+                category: row.category.trim(),
+                description: row.description?.trim() || "",
+                featured: row.featured === "true",
+                trending: row.trending === "true",
+                newArrival: row.newArrival === "true",
+                variants: [{
+                    color: row.color?.trim() || "Default",
+                    images: [], // ✅ images added later via Edit panel
+                    sizes,
+                }]
+            };
+        });
+
+        const created = await Product.insertMany(products);
+
+        console.log(`✅ Bulk created ${created.length} products`);
+        res.status(201).json({
+            message: `${created.length} products created successfully. Add images via the Edit panel.`,
+            count: created.length,
+            products: created.map(p => ({ _id: p._id, name: p.name }))
+        });
+
+    } catch (err) {
+        console.error("❌ BULK CREATE ERROR:", err.message);
+
+        // ✅ Handle csvtojson not installed
+        if (err.code === "ERR_MODULE_NOT_FOUND") {
+            return res.status(500).json({
+                message: "csvtojson package not installed. Run: npm install csvtojson"
+            });
+        }
+
+        res.status(500).json({ message: "Bulk upload failed", error: err.message });
     }
 };
