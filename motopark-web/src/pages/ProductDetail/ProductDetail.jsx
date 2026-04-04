@@ -1,5 +1,4 @@
 import PageTransition from "../../components/PageTransition/PageTransition";
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
@@ -8,9 +7,6 @@ import { useState, useEffect, useRef } from "react";
 import ProductGallery from "@/components/ProductGallery/ProductGallery";
 import { optimizeImage } from "@/utils/imageUrl";
 import "./ProductDetail.css";
-
-
-
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -69,7 +65,7 @@ const ChevronRight = () => (
   </svg>
 );
 
-/* ─── RELATED PRODUCT MINI CARD ─── */
+/* ─── RELATED CARD ─── */
 const RelatedCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart, cartItems } = useCart();
@@ -138,6 +134,7 @@ const ProductDetail = () => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
+  const [galleryFullscreen, setGalleryFullscreen] = useState(false); // ✅ NEW
   const purchaseRef = useRef(null);
 
   const alreadyInCart = cartItems.some(i => i._id === product?._id);
@@ -196,7 +193,7 @@ const ProductDetail = () => {
     <PageTransition>
       <div className="pd-page">
 
-        {/* ── BREADCRUMB ── */}
+        {/* BREADCRUMB */}
         <nav className="pd-breadcrumb">
           <a href="/">Home</a>
           <ChevronRight />
@@ -211,18 +208,34 @@ const ProductDetail = () => {
           <span>{product.name}</span>
         </nav>
 
-        {/* ── MAIN LAYOUT ── */}
+        {/* MAIN LAYOUT */}
         <div className="pd-layout">
 
           {/* LEFT — GALLERY */}
           <div className="pd-gallery-col">
-            <ProductGallery images={images} />
+            <ProductGallery
+              images={images}
+              product={product}
+              variant={variant}
+              selectedSize={selectedSize}
+              setSelectedSize={setSelectedSize}
+              variantIndex={variantIndex}
+              setVariantIndex={setVariantIndex}
+              sizeError={sizeError}
+              setSizeError={setSizeError}
+              onAddToCart={handleAddToCart}
+              addedToCart={addedToCart}
+              wishlisted={wishlisted}
+              onWishlist={handleWishlist}
+              inStock={inStock}
+              alreadyInCart={alreadyInCart}
+              onFullscreenChange={setGalleryFullscreen}
+            />
           </div>
 
           {/* MIDDLE — PRODUCT INFO */}
-          <div className="pd-info-col">
+          <div className="pd-info-col" style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
 
-            {/* BADGES */}
             <div className="pd-badges">
               {categoryLabel && <span className="pd-badge">{categoryLabel}</span>}
               {product.featured && <span className="pd-badge pd-badge--featured">Featured</span>}
@@ -230,25 +243,18 @@ const ProductDetail = () => {
               {inStock && <span className="pd-badge pd-badge--in">In Stock</span>}
             </div>
 
-            {/* TITLE */}
             <h1 className="pd-title">{product.name}</h1>
 
-            {/* BRAND + RATING */}
             <div className="pd-meta">
-              {product.brand && (
-                <span className="pd-brand">{product.brand}</span>
-              )}
+              {product.brand && <span className="pd-brand">{product.brand}</span>}
               <div className="pd-rating">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <StarIcon key={s} filled={s <= rating} />
-                ))}
+                {[1, 2, 3, 4, 5].map(s => <StarIcon key={s} filled={s <= rating} />)}
                 <span className="pd-rating-count">({reviewCount})</span>
               </div>
             </div>
 
             <div className="pd-divider" />
 
-            {/* COLOR VARIANTS */}
             {product.variants?.length > 0 && (
               <div className="pd-section">
                 <div className="pd-section-label">
@@ -257,8 +263,7 @@ const ProductDetail = () => {
                 </div>
                 <div className="pd-colors">
                   {product.variants.map((v, i) => (
-                    <button
-                      key={i}
+                    <button key={i}
                       className={`pd-color-btn ${variantIndex === i ? "pd-color-btn--active" : ""}`}
                       style={{ background: v.color?.toLowerCase() }}
                       onClick={() => { setVariantIndex(i); setSelectedSize(null); }}
@@ -269,7 +274,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* SIZE */}
             {variant?.sizes?.length > 0 && (
               <div className="pd-section">
                 <div className="pd-section-label">
@@ -278,31 +282,24 @@ const ProductDetail = () => {
                 </div>
                 <div className={`pd-sizes ${sizeError ? "pd-sizes--error" : ""}`}>
                   {variant.sizes.map((s, i) => (
-                    <button
-                      key={i}
+                    <button key={i}
                       disabled={Number(s.stock) === 0}
                       className={`pd-size-btn ${selectedSize === s.size ? "pd-size-btn--active" : ""}`}
-                      onClick={() => { setSelectedSize(s.size); setSizeError(false); }}
-                    >
+                      onClick={() => { setSelectedSize(s.size); setSizeError(false); }}>
                       {s.size}
                       {Number(s.stock) === 0 && <span className="pd-size-slash" />}
                     </button>
                   ))}
                 </div>
-                {sizeError && (
-                  <p className="pd-size-error">Please select a size to continue</p>
-                )}
+                {sizeError && <p className="pd-size-error">Please select a size to continue</p>}
               </div>
             )}
 
-            {/* TABS */}
             <div className="pd-tabs">
               {["description", "specs", "care"].map(tab => (
-                <button
-                  key={tab}
+                <button key={tab}
                   className={`pd-tab ${activeTab === tab ? "pd-tab--active" : ""}`}
-                  onClick={() => setActiveTab(tab)}
-                >
+                  onClick={() => setActiveTab(tab)}>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
@@ -311,7 +308,7 @@ const ProductDetail = () => {
             <div className="pd-tab-content">
               {activeTab === "description" && (
                 <p className="pd-description">
-                  {product.description || "Premium quality gear designed for performance and protection. Crafted with the finest materials for maximum durability on every ride."}
+                  {product.description || "Premium quality gear designed for performance and protection."}
                 </p>
               )}
               {activeTab === "specs" && (
@@ -336,16 +333,13 @@ const ProductDetail = () => {
           </div>
 
           {/* RIGHT — PURCHASE BOX */}
-          <div className="pd-purchase-col" ref={purchaseRef}>
+          <div className="pd-purchase-col" ref={purchaseRef} style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
             <div className="pd-purchase-box">
 
-              {/* PRICE */}
               <div className="pd-price-row">
                 <span className="pd-price">₹{product.price?.toLocaleString("en-IN")}</span>
                 {product.originalPrice && (
-                  <span className="pd-original-price">
-                    ₹{product.originalPrice?.toLocaleString("en-IN")}
-                  </span>
+                  <span className="pd-original-price">₹{product.originalPrice?.toLocaleString("en-IN")}</span>
                 )}
                 {product.originalPrice && (
                   <span className="pd-discount">
@@ -360,33 +354,22 @@ const ProductDetail = () => {
 
               <div className="pd-purchase-divider" />
 
-              {/* ADD TO CART */}
               <button
                 className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
                 disabled={!inStock}
-                onClick={handleAddToCart}
-              >
-                {addedToCart ? (
-                  <><CheckIcon /> Added to Cart</>
-                ) : alreadyInCart ? (
-                  "Go to Cart →"
-                ) : (
-                  "Add to Cart"
-                )}
+                onClick={handleAddToCart}>
+                {addedToCart ? <><CheckIcon /> Added to Cart</> : alreadyInCart ? "Go to Cart →" : "Add to Cart"}
               </button>
 
-              {/* WISHLIST */}
               <button
                 className={`pd-wishlist ${wishlisted ? "pd-wishlist--active" : ""}`}
-                onClick={handleWishlist}
-              >
+                onClick={handleWishlist}>
                 <HeartIcon filled={wishlisted} />
                 {wishlisted ? "Wishlisted" : "Add to Wishlist"}
               </button>
 
               <div className="pd-purchase-divider" />
 
-              {/* DELIVERY INFO */}
               <div className="pd-delivery">
                 <div className="pd-delivery-item">
                   <TruckIcon />
@@ -416,7 +399,7 @@ const ProductDetail = () => {
 
         </div>
 
-        {/* ── RELATED PRODUCTS ── */}
+        {/* RELATED PRODUCTS */}
         {related.length > 0 && (
           <section className="pd-related">
             <div className="pd-related-header">
@@ -425,14 +408,11 @@ const ProductDetail = () => {
                 <h2 className="pd-related-title">You May Also Like</h2>
               </div>
               <a href={`/category/${product.category}`} className="pd-related-link">
-                View All
-                <ChevronRight />
+                View All <ChevronRight />
               </a>
             </div>
             <div className="pd-related-grid">
-              {related.map(p => (
-                <RelatedCard key={p._id} product={p} />
-              ))}
+              {related.map(p => <RelatedCard key={p._id} product={p} />)}
             </div>
           </section>
         )}

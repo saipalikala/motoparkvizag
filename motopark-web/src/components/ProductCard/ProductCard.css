@@ -75,11 +75,9 @@
     justify-content: space-between;
     align-items: center;
 
-    background: linear-gradient(
-        to top,
-        rgba(0,0,0,0.9),
-        rgba(0,0,0,0)
-    );
+    background: linear-gradient(to top,
+            rgba(0, 0, 0, 0.9),
+            rgba(0, 0, 0, 0));
 
     color: white;
 

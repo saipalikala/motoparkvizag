@@ -189,7 +189,7 @@ const BentoGrid = ({ title, type, products: propProducts }) => {
                         <h2 className="bento-title">{title}</h2>
                         <p className="bento-subtitle">Engineered for riders who demand performance</p>
                     </div>
-                    <a href="/products" className="view-all-btn">
+                    <a href="/store" className="view-all-btn">
                         View All
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11"

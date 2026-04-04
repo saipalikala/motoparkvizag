@@ -1,7 +1,6 @@
 /* ================================
    MOTO PARK — PRODUCT DETAIL PAGE
-   Brand: #0b1d3a / #08162d / #ff6b3d / #fff / #f5f5f7
-   ================================ */
+================================ */
 
 /* ─── LOADING ─── */
 .pd-loading {
@@ -32,6 +31,7 @@
   min-height: 100vh;
   font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
   animation: pdFadeIn 0.5s ease;
+  isolation: isolate;
 }
 
 @keyframes pdFadeIn {
@@ -89,7 +89,7 @@
   gap: 0;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 0 48px 0;
+  padding: 0 48px;
   align-items: start;
 }
 
@@ -300,7 +300,6 @@
   cursor: not-allowed;
 }
 
-/* slash for out of stock sizes */
 .pd-size-slash {
   position: absolute;
   top: 50%;
@@ -612,10 +611,9 @@
 ════════════════════════════════ */
 .pd-related {
   max-width: 1320px;
-  margin: 0 auto;
+  margin: 32px auto 0;
   padding: 64px 48px 80px;
   border-top: 1px solid rgba(11, 29, 58, 0.07);
-  margin-top: 32px;
 }
 
 .pd-related-header {
@@ -810,7 +808,6 @@
   color: #fff;
   border: none;
   font-size: 18px;
-  font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -912,7 +909,7 @@
 
   .pd-tab {
     font-size: 12px;
-    padding: 8px 8px;
+    padding: 8px;
   }
 
   .pd-related-grid {

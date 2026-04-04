@@ -116,7 +116,7 @@ const Contact = () => {
                                 <h4>Visit Us</h4>
                                 <p>Seethammapeta Main Rd<br />near Swagath Grand Hotel<br />Visakhapatnam – 530016</p>
                                 <a
-                                    href="https://www.google.com/maps?q=Seethammapeta+Main+Rd+Visakhapatnam"
+                                    href="https://maps.app.goo.gl/YSRdTuZ4wKAbdG2P9"
                                     target="_blank" rel="noreferrer"
                                     className="info-card-link">
                                     View on Maps →
@@ -196,7 +196,7 @@ const Contact = () => {
                     <div className="map-wrap">
                         <iframe
                             title="MotoPark Location"
-                            src="https://www.google.com/maps?q=Seethammapeta%20Main%20Rd%20Visakhapatnam&output=embed"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3800.123!2d83.3070643!3d17.7347461!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a394304c1cd46bf%3A0x14af2a5d2fe934ac!2sMOTOPARK!5e0!3m2!1sen!2sin!4f13.1"
                             loading="lazy"
                         />
                     </div>
