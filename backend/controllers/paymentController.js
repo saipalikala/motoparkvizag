@@ -1,6 +1,6 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
-import Product from "../models/Product.js"; // ← add this import
+import Product from "../models/productModel.js"; // ← add this import
 
 // Step 1: Create order on Razorpay
 export const createOrder = async (req, res) => {

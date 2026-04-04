@@ -14,7 +14,7 @@ export const getOrders = async (req, res) => {
 // POST create order (customer checkout)
 export const createOrder = async (req, res) => {
     try {
-        const { items, shippingAddress, paymentMethod, paymentId, total } = req.body;
+        const { items, shippingAddress, paymentMethod, paymentId } = req.body; // ✅ removed total
         const userId = req.user?._id;
 
         // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
@@ -97,6 +97,13 @@ export const createOrder = async (req, res) => {
             decremented.push(item);
         }
 
+        // ── TASK 3: Calculate real total from DB ✅ ───────────────────────────
+        let verifiedTotal = 0;
+        for (const item of items) {
+            const product = await Product.findById(item.product).select("price").lean();
+            if (product) verifiedTotal += product.price * item.quantity;
+        }
+
         // ── All stock decremented successfully — now save the order ──────────
         const order = await Order.create({
             user: userId || null,
@@ -104,7 +111,7 @@ export const createOrder = async (req, res) => {
             shippingAddress,
             paymentMethod,
             paymentId: paymentId || null,
-            total,
+            total: verifiedTotal, // ✅ from DB, not frontend
         });
 
         res.status(201).json(order);

@@ -1,12 +1,12 @@
-
 import dotenv from "dotenv";
-
 dotenv.config();
+
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import express from "express";
 import cors from "cors";
 import path from "path";
 import compression from "compression";
+import rateLimit from "express-rate-limit"; // ✅ already installed
 
 import connectDB from "./config/db.js";
 
@@ -43,10 +43,29 @@ connectDB();
 
 const app = express();
 
+/* ── Payment rate limiter ── */
+const paymentLimiter = rateLimit({
+   windowMs: 60 * 1000,
+   max: 10, // max 10 payment attempts per minute per IP
+   message: { message: "Too many payment attempts. Please wait." },
+   standardHeaders: true,
+   legacyHeaders: false,
+});
+
 /* ════════════════════════════════
    MIDDLEWARE
 ════════════════════════════════ */
-app.use(cors());
+
+// ✅ CORS — only allow your frontend domains
+app.use(cors({
+   origin: [
+      "http://localhost:5173",
+      "https://motoparkvizag.in",
+      "https://www.motoparkvizag.in"
+   ],
+   credentials: true,
+}));
+
 app.use(
    helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -54,7 +73,6 @@ app.use(
    })
 );
 
-/* ── COMPRESSION — reduces response sizes significantly ── */
 app.use(compression());
 
 app.use(express.json({ limit: "10kb" }));
@@ -62,18 +80,18 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 app.use("/api", apiLimiter);
 
-/* ── STATIC — serve uploads with cache headers ── */
+/* ── STATIC ── */
 app.use(
    "/uploads",
    express.static(path.join(process.cwd(), "uploads"), {
-      maxAge: "7d",        // browser caches images for 7 days
-      etag: true,          // sends ETag for revalidation
+      maxAge: "7d",
+      etag: true,
       lastModified: true,
    })
 );
 
 /* ════════════════════════════════
-   HEALTH CHECK (keep-alive target)
+   HEALTH CHECK
 ════════════════════════════════ */
 app.get("/api/health", (req, res) => {
    res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -95,13 +113,14 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/store-config", storeConfigRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/payment", paymentRoutes);
+app.use("/api/payment", paymentLimiter, paymentRoutes); // ✅ payment rate limiter added
 
 app.use("/api/users/otp", otpLimiter);
 app.use("/api/users", authLimiter, userRoutes);
 app.use("/api/home-data", homeDataRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRouter);
+
 /* ════════════════════════════════
    ERROR HANDLING (must be last)
 ════════════════════════════════ */
@@ -133,7 +152,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
    console.log(`✅ Server running on port ${PORT}`);
 
-   /* ── KEEP RENDER AWAKE — ping every 14 minutes ── */
    const BACKEND_URL =
       process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
@@ -145,5 +163,5 @@ app.listen(PORT, () => {
       } catch (e) {
          console.warn("⚠️  Keep-alive ping failed:", e.message);
       }
-   }, 14 * 60 * 1000); // 14 minutes
+   }, 14 * 60 * 1000);
 });

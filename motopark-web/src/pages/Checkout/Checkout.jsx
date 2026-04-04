@@ -152,7 +152,12 @@ const Checkout = () => {
                 }),
             });
             const orderData = await orderRes.json();
-
+            if (!orderRes.ok) {
+                alert("Could not initiate payment. Please try again.");
+                setPlacing(false);
+                isSubmittingRef.current = false;
+                return;
+            }
             // Step 2: Open Razorpay checkout
             const options = {
                 key: import.meta.env.VITE_RAZORPAY_KEY_ID,
