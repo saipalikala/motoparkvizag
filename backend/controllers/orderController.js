@@ -12,11 +12,10 @@ export const getOrders = async (req, res) => {
 };
 
 // POST create order (customer checkout)
-// POST create order (customer checkout)
 export const createOrder = async (req, res) => {
     try {
         const { items, shippingAddress, paymentMethod, paymentId, total } = req.body;
-        const userId = req.user?._id;  // from userAuth middleware (may be guest if no auth)
+        const userId = req.user?._id;
 
         // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
         if (userId) {
@@ -34,11 +33,17 @@ export const createOrder = async (req, res) => {
             }
         }
 
-        // ── TASK 2: Atomic stock decrement — check + decrement in one query ───
-        // Attempt decrement first. If any item fails, rollback and reject.
+        // ── TASK 2: Atomic stock decrement ────────────────────────────────────
         const decremented = [];
 
         for (const item of items) {
+
+            // ✅ Skip stock check if product has no size/color variants
+            if (!item.selectedSize || !item.selectedColor) {
+                decremented.push(item);
+                continue;
+            }
+
             const result = await Product.findOneAndUpdate(
                 {
                     _id: item.product,
@@ -48,7 +53,7 @@ export const createOrder = async (req, res) => {
                             sizes: {
                                 $elemMatch: {
                                     size: item.selectedSize,
-                                    stock: { $gte: item.quantity },  // atomic check + decrement
+                                    stock: { $gte: item.quantity },
                                 },
                             },
                         },
@@ -62,13 +67,14 @@ export const createOrder = async (req, res) => {
                         { "v.color": item.selectedColor },
                         { "s.size": item.selectedSize },
                     ],
-                    new: false,  // don't need the updated doc
+                    new: false,
                 }
             );
 
             if (!result) {
-                // This item failed — rollback all previously decremented items
+                // Rollback only items that had variants
                 for (const done of decremented) {
+                    if (!done.selectedSize || !done.selectedColor) continue;
                     await Product.updateOne(
                         { _id: done.product },
                         {
@@ -88,7 +94,7 @@ export const createOrder = async (req, res) => {
                 });
             }
 
-            decremented.push(item);  // track for rollback if later item fails
+            decremented.push(item);
         }
 
         // ── All stock decremented successfully — now save the order ──────────

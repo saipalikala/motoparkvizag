@@ -144,7 +144,12 @@ const Checkout = () => {
             const orderRes = await fetch(`${API}/payment/create-order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: cartTotal }),
+                body: JSON.stringify({
+                    items: cartItems.map(i => ({
+                        productId: i._id,
+                        quantity: i.quantity,
+                    }))
+                }),
             });
             const orderData = await orderRes.json();
 
