@@ -53,7 +53,15 @@ const productSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        specs: {
+            type: String,
+            default: "",
+        },
 
+        care: {
+            type: String,
+            default: "",
+        },
         price: {
             type: Number,
             required: true,

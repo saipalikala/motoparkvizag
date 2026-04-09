@@ -5,7 +5,7 @@ const ProductContext = createContext();
 
 export const useProducts = () => useContext(ProductContext);
 
-const PRODUCTS_API = `${API}/products`;
+const PRODUCTS_API = `${API}/products?limit=200`;
 
 let cache = null;
 let cacheTime = null;

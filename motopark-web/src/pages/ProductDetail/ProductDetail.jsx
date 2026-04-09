@@ -1,6 +1,7 @@
 import PageTransition from "../../components/PageTransition/PageTransition";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProducts } from "@/context/ProductContext";
+import { useProduct } from "@/hooks/useProduct";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useState, useEffect, useRef } from "react";
@@ -122,12 +123,14 @@ const RelatedCard = ({ product }) => {
 /* ─── MAIN PAGE ─── */
 const ProductDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { products } = useProducts();
+  const { product, loading, error } = useProduct(id);
+  const navigate = useNavigate();
+
   const { addToCart, cartItems } = useCart();
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
 
-  const product = products.find(p => p._id === id);
+  // const product = products.find(p => p._id === id);
 
   const [variantIndex, setVariantIndex] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -151,12 +154,26 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [id]);
 
-  if (!product) return (
-    <div className="pd-loading">
-      <div className="pd-loading-spinner" />
-    </div>
-  );
+  // if (!product) return (
+  //   <div className="pd-loading">
+  //     <div className="pd-loading-spinner" />
+  //   </div>
+  // );
+  if (loading) {
+    return (
+      <div className="pd-loading">
+        <div className="pd-loading-spinner" />
+      </div>
+    );
+  }
 
+  if (error || !product) {
+    return (
+      <div className="pd-loading">
+        <p>{error || "Product not found"}</p>
+      </div>
+    );
+  }
   const variant = product.variants?.[variantIndex];
   const images = variant?.images || [];
   const inStock = variant?.sizes?.some(s => Number(s.stock) > 0);
@@ -313,19 +330,46 @@ const ProductDetail = () => {
               )}
               {activeTab === "specs" && (
                 <ul className="pd-specs-list">
+                  {/* Always show system fields first */}
                   {product.brand && <li><span>Brand</span><span>{product.brand}</span></li>}
                   {categoryLabel && <li><span>Category</span><span>{categoryLabel}</span></li>}
                   {variant?.color && <li><span>Color</span><span>{variant.color}</span></li>}
                   <li><span>SKU</span><span>{product._id?.slice(-8).toUpperCase()}</span></li>
-                  <li><span>Availability</span><span style={{ color: inStock ? "#16a34a" : "#dc2626" }}>{inStock ? "In Stock" : "Out of Stock"}</span></li>
+                  <li>
+                    <span>Availability</span>
+                    <span style={{ color: inStock ? "#16a34a" : "#dc2626" }}>
+                      {inStock ? "In Stock" : "Out of Stock"}
+                    </span>
+                  </li>
+                  {/* Admin-entered specs: parse "Label: Value" lines */}
+                  {product.specs && product.specs.trim() &&
+                    product.specs.split("\n")
+                      .map(line => line.trim())
+                      .filter(Boolean)
+                      .map((line, i) => {
+                        const colonIdx = line.indexOf(":");
+                        if (colonIdx === -1) return <li key={`spec-${i}`}><span>{line}</span><span>—</span></li>;
+                        const label = line.slice(0, colonIdx).trim();
+                        const value = line.slice(colonIdx + 1).trim();
+                        return <li key={`spec-${i}`}><span>{label}</span><span>{value}</span></li>;
+                      })
+                  }
                 </ul>
               )}
               {activeTab === "care" && (
                 <ul className="pd-care-list">
-                  <li>Store in a cool, dry place away from direct sunlight</li>
-                  <li>Clean with a damp cloth and mild soap</li>
-                  <li>Do not machine wash unless label specifies</li>
-                  <li>Inspect regularly for wear before each ride</li>
+                  {product.care && product.care.trim()
+                    ? product.care.split("\n")
+                      .map(line => line.trim())
+                      .filter(Boolean)
+                      .map((line, i) => <li key={i}>{line}</li>)
+                    : <>
+                      <li>Store in a cool, dry place away from direct sunlight</li>
+                      <li>Clean with a damp cloth and mild soap</li>
+                      <li>Do not machine wash unless label specifies</li>
+                      <li>Inspect regularly for wear before each ride</li>
+                    </>
+                  }
                 </ul>
               )}
             </div>

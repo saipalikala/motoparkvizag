@@ -105,7 +105,7 @@ export const getProducts = async (req, res) => {
         const [products, total] = await Promise.all([
             Product
                 .find(query)
-                .select("name price brand category variants createdAt featured trending newArrival")
+                .select("name price brand category variants description specs care createdAt featured trending newArrival")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(Number(limit))
@@ -166,7 +166,7 @@ export const createProduct = async (req, res) => {
         console.log("📦 CREATE — variants  :", req.body.variants?.slice(0, 80));
         console.log("📦 CREATE — files     :", req.files?.map(f => ({ field: f.fieldname, path: f.path })));
 
-        const { name, price, brand, description } = req.body;
+        const { name, price, brand, description, specs, care } = req.body;
 
         const category = req.body.category?.trim();
         if (!category) {
@@ -206,6 +206,11 @@ export const createProduct = async (req, res) => {
             price: Number(price),
             brand,
             description: description || "",
+
+            // ✅ ADD THESE
+            specs: specs || "",
+            care: care || "",
+
             category,
             newArrival,
             featured,
@@ -233,13 +238,15 @@ export const updateProduct = async (req, res) => {
         console.log("📦 UPDATE — body keys:", Object.keys(req.body));
 
         const updateData = { ...req.body };
-
+        if ("specs" in updateData) updateData.specs = updateData.specs || "";
+        if ("care" in updateData) updateData.care = updateData.care || "";
         if ("newArrival" in updateData) updateData.newArrival = updateData.newArrival === "true" || updateData.newArrival === true;
         if ("featured" in updateData) updateData.featured = updateData.featured === "true" || updateData.featured === true;
         if ("trending" in updateData) updateData.trending = updateData.trending === "true" || updateData.trending === true;
 
         if ("price" in updateData) updateData.price = Number(updateData.price);
-
+        if ("specs" in updateData) updateData.specs = updateData.specs || "";
+        if ("care" in updateData) updateData.care = updateData.care || "";
         if (updateData.category) updateData.category = updateData.category.trim();
 
         if (updateData.variants) {
@@ -381,5 +388,18 @@ export const bulkCreateProducts = async (req, res) => {
         }
 
         res.status(500).json({ message: "Bulk upload failed", error: err.message });
+    }
+};
+
+// productController.js
+export const getProductById = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id)
+            .select("name price brand category variants description specs care featured trending newArrival originalPrice")
+            .lean();
+        if (!product) return res.status(404).json({ message: "Product not found" });
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 };
