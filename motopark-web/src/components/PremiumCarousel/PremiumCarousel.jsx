@@ -26,7 +26,7 @@ const resolveImage = (src) => {
 };
 
 const PremiumCarousel = () => {
-    const [slides, setSlides] = useState(fallbackSlides);
+    const [slides, setSlides] = useState(null);
     const [index, setIndex] = useState(0);
     const [paused, setPaused] = useState(false);
     const [direction, setDirection] = useState(1);
@@ -37,15 +37,17 @@ const PremiumCarousel = () => {
     useEffect(() => {
         fetch(`${API}/carousel`)
             .then(r => r.json())
-            .then(data => { if (Array.isArray(data) && data.length) setSlides(data); })
-            .catch(() => { });
+            .then(data => {
+                setSlides(Array.isArray(data) && data.length ? data : fallbackSlides);
+            })
+            .catch(() => setSlides(fallbackSlides));
     }, []);
 
     /* Preload all slide images */
     useEffect(() => {
+        if (!slides) return;
         slides.forEach((s, i) => {
             const img = new Image();
-            /* First slide: high priority fetch */
             if (i === 0) img.fetchPriority = "high";
             img.src = resolveImage(s.image);
         });
@@ -53,11 +55,11 @@ const PremiumCarousel = () => {
 
     const startTimer = () => {
         clearInterval(timerRef.current);
+        if (!slides) return;
         timerRef.current = setInterval(() => {
             if (!paused) { setDirection(1); setIndex(p => (p + 1) % slides.length); }
         }, 5000);
     };
-
     useEffect(() => { startTimer(); return () => clearInterval(timerRef.current); }, [slides, paused]);
 
     const goTo = (i, dir = 1) => { setDirection(dir); setIndex(i); startTimer(); };
@@ -65,6 +67,8 @@ const PremiumCarousel = () => {
     const prev = () => goTo(index === 0 ? slides.length - 1 : index - 1, -1);
 
     const handlers = useSwipeable({ onSwipedLeft: next, onSwipedRight: prev, trackMouse: false });
+    if (!slides) return <div className="carousel-skeleton" />;
+
     const slide = slides[index];
     const imageSrc = resolveImage(slide.image);
 

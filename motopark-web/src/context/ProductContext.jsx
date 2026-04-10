@@ -7,36 +7,53 @@ export const useProducts = () => useContext(ProductContext);
 
 const PRODUCTS_API = `${API}/products?limit=200`;
 
-let cache = null;
-let cacheTime = null;
+const CACHE_KEY = "mp_products";
 const CACHE_TTL = 5 * 60 * 1000;
+
+const getCache = () => {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { data, time } = JSON.parse(raw);
+    if (Date.now() - time > CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+};
+
+const setCache = (data) => {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, time: Date.now() }));
+  } catch { }
+};
 
 export const ProductProvider = ({ children }) => {
 
-  const [products, setProducts] = useState(cache || []);
-  const [loading, setLoading] = useState(!cache);
+  const [products, setProducts] = useState(() => getCache() || []);
+  const [loading, setLoading] = useState(() => !getCache());
   const [error, setError] = useState(null);
   const isMounted = useRef(true);
 
   // ✅ fetchProducts FIRST
+  // REMOVE
   const fetchProducts = useCallback(async (force = false) => {
-    if (!force && cache && cacheTime && Date.now() - cacheTime < CACHE_TTL) {
-      setProducts(cache);
-      setLoading(false);
-      return;
+    if (!force) {
+      const cached = getCache();
+      if (cached) {
+        setProducts(cached);
+        setLoading(false);
+        return;
+      }
     }
     try {
       setLoading(true);
       const res = await fetch(PRODUCTS_API);
       if (!res.ok) throw new Error("Failed to fetch products");
       const data = await res.json();
-      const productList = data.products || [];
-      const normalized = productList.map(p => ({
+      const normalized = (data.products || []).map(p => ({
         ...p,
         images: p?.variants?.[0]?.images || []
       }));
-      cache = normalized;
-      cacheTime = Date.now();
+      setCache(normalized);
       if (isMounted.current) {
         setProducts(normalized);
         setError(null);
@@ -51,8 +68,7 @@ export const ProductProvider = ({ children }) => {
 
   // ✅ clearCache AFTER fetchProducts
   const clearCache = useCallback(() => {
-    cache = null;
-    cacheTime = null;
+    sessionStorage.removeItem(CACHE_KEY);
     fetchProducts(true);
   }, [fetchProducts]);
 
