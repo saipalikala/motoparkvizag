@@ -82,6 +82,7 @@ const SkeletonCard = () => (
 
 /* ─── PRODUCT CARD ─── */
 const CatProductCard = ({ product, view, index }) => {
+  const isMobile = window.innerWidth <= 768;
   const { addToCart, cartItems } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
@@ -131,30 +132,93 @@ const CatProductCard = ({ product, view, index }) => {
       </div>
     </div>
   );
+  if (view === "grid" && isMobile) {
+    return (
+      <div
+        className="cat-card cat-card--mobile"
+        onClick={handleClick}
+      >
+        <div className="cat-image-wrap">
+          {image ? (
+            <img src={image} alt={product.name} className="cat-img" />
+          ) : (
+            <div className="cat-img-placeholder" />
+          )}
 
+          {/* wishlist button */}
+          <button
+            className={`cat-wishlist-btn ${wishlisted ? "cat-wishlist-btn--active" : ""}`}
+            onClick={handleWishlist}
+          >
+            <HeartIcon filled={wishlisted} />
+          </button>
+        </div>
+
+        <div className="cat-card-mobile-info">
+          <h3 className="cat-name">{product.name}</h3>
+
+          {product.brand && (
+            <p className="cat-brand">{product.brand}</p>
+          )}
+
+          <div className="cat-mobile-row">
+            <span className="cat-price">
+              ₹{product.price?.toLocaleString("en-IN")}
+            </span>
+
+            <button
+              className={`cat-cart-btn ${inCart ? "cat-cart-btn--added" : ""}`}
+              onClick={handleCart}
+            >
+              {inCart ? <CheckIcon /> : <CartIcon />}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="cat-card cat-card--grid"
       style={{ animationDelay: `${Math.min(index * 0.04, 0.3)}s` }}
-      onClick={handleClick} role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && handleClick()}>
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && handleClick()}
+    >
       <div className="cat-card-accent" />
+
       <div className="cat-card-top">
         <span />
-        <button className={`cat-wishlist-btn ${wishlisted ? "cat-wishlist-btn--active" : ""}`}
-          onClick={handleWishlist} aria-label="Wishlist">
+        <button
+          className={`cat-wishlist-btn ${wishlisted ? "cat-wishlist-btn--active" : ""}`}
+          onClick={handleWishlist}
+        >
           <HeartIcon filled={wishlisted} />
         </button>
       </div>
+
       <div className="cat-image-wrap">
-        {image ? <img src={image} alt={product.name} className="cat-img" /> : <div className="cat-img-placeholder" />}
+        {image ? (
+          <img src={image} alt={product.name} className="cat-img" />
+        ) : (
+          <div className="cat-img-placeholder" />
+        )}
       </div>
+
       <div className="cat-card-info">
         <h3 className="cat-name">{product.name}</h3>
+
         {product.brand && <p className="cat-brand">{product.brand}</p>}
+
         <div className="cat-card-footer">
-          <span className="cat-price">₹{product.price?.toLocaleString("en-IN")}</span>
-          <button className={`cat-cart-btn ${inCart ? "cat-cart-btn--added" : ""}`}
-            onClick={handleCart} aria-label="Add to cart">
+          <span className="cat-price">
+            ₹{product.price?.toLocaleString("en-IN")}
+          </span>
+
+          <button
+            className={`cat-cart-btn ${inCart ? "cat-cart-btn--added" : ""}`}
+            onClick={handleCart}
+          >
             {inCart ? <CheckIcon /> : <CartIcon />}
             <span>{inCart ? "Added" : "Add"}</span>
           </button>

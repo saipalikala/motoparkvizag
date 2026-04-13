@@ -120,6 +120,60 @@ const RelatedCard = ({ product }) => {
   );
 };
 
+/* ─── SHARED PURCHASE CONTENT ─── */
+/* Extracted so both desktop box and mobile box render identical content */
+const PurchaseContent = ({ product, inStock, addedToCart, alreadyInCart, wishlisted, handleAddToCart, handleWishlist }) => (
+  <>
+    <div className="pd-price-row">
+      <span className="pd-price">₹{product.price?.toLocaleString("en-IN")}</span>
+    </div>
+
+    <p className="pd-emi">
+      or ₹{Math.round(product.price / 12).toLocaleString("en-IN")}/mo with No-cost EMI
+    </p>
+
+    <button
+      className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
+      disabled={!inStock}
+      onClick={handleAddToCart}
+    >
+      {addedToCart ? <><CheckIcon /> Added</> : alreadyInCart ? "Go to Cart →" : "Add to Cart"}
+    </button>
+
+    <button
+      className={`pd-wishlist ${wishlisted ? "pd-wishlist--active" : ""}`}
+      onClick={handleWishlist}
+    >
+      <HeartIcon filled={wishlisted} />
+      {wishlisted ? "Wishlisted" : "Add to Wishlist"}
+    </button>
+
+    <div className="pd-delivery">
+      <div className="pd-delivery-item">
+        <TruckIcon />
+        <div>
+          <strong>Free Delivery</strong>
+          <p>Ships within 2–3 business days</p>
+        </div>
+      </div>
+      <div className="pd-delivery-item">
+        <ReturnIcon />
+        <div>
+          <strong>Easy Returns</strong>
+          <p>30-day hassle-free return policy</p>
+        </div>
+      </div>
+      <div className="pd-delivery-item">
+        <ShieldIcon />
+        <div>
+          <strong>1 Year Warranty</strong>
+          <p>Covered against manufacturing defects</p>
+        </div>
+      </div>
+    </div>
+  </>
+);
+
 /* ─── MAIN PAGE ─── */
 const ProductDetail = () => {
   const { id } = useParams();
@@ -130,14 +184,13 @@ const ProductDetail = () => {
   const { addToCart, cartItems } = useCart();
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
 
-  // const product = products.find(p => p._id === id);
   const [descExpanded, setDescExpanded] = useState(false);
   const [variantIndex, setVariantIndex] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
-  const [galleryFullscreen, setGalleryFullscreen] = useState(false); // ✅ NEW
+  const [galleryFullscreen, setGalleryFullscreen] = useState(false);
   const purchaseRef = useRef(null);
 
   const alreadyInCart = cartItems.some(i => i._id === product?._id);
@@ -154,11 +207,6 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [id]);
 
-  // if (!product) return (
-  //   <div className="pd-loading">
-  //     <div className="pd-loading-spinner" />
-  //   </div>
-  // );
   if (loading) {
     return (
       <div className="pd-loading">
@@ -174,6 +222,7 @@ const ProductDetail = () => {
       </div>
     );
   }
+
   const variant = product.variants?.[variantIndex];
   const images = variant?.images || [];
   const inStock = variant?.sizes?.some(s => Number(s.stock) > 0);
@@ -206,11 +255,22 @@ const ProductDetail = () => {
   const rating = 4;
   const reviewCount = 128;
 
+  /* shared props for PurchaseContent */
+  const purchaseProps = {
+    product,
+    inStock,
+    addedToCart,
+    alreadyInCart,
+    wishlisted,
+    handleAddToCart,
+    handleWishlist,
+  };
+
   return (
     <PageTransition>
       <div className="pd-page">
 
-        {/* BREADCRUMB */}
+        {/* ── BREADCRUMB ── */}
         <nav className="pd-breadcrumb">
           <a href="/">Home</a>
           <ChevronRight />
@@ -225,10 +285,10 @@ const ProductDetail = () => {
           <span>{product.name}</span>
         </nav>
 
-        {/* MAIN LAYOUT */}
+        {/* ── MAIN 3-COLUMN LAYOUT ── */}
         <div className="pd-layout">
 
-          {/* LEFT — GALLERY */}
+          {/* COL 1 — GALLERY */}
           <div className="pd-gallery-col">
             <ProductGallery
               images={images}
@@ -250,7 +310,7 @@ const ProductDetail = () => {
             />
           </div>
 
-          {/* MIDDLE — PRODUCT INFO */}
+          {/* COL 2 — PRODUCT INFO */}
           <div className="pd-info-col" style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
 
             <div className="pd-badges">
@@ -363,9 +423,9 @@ const ProductDetail = () => {
                   </div>
                 );
               })()}
+
               {activeTab === "specs" && (
                 <ul className="pd-specs-list">
-                  {/* Always show system fields first */}
                   {product.brand && <li><span>Brand</span><span>{product.brand}</span></li>}
                   {categoryLabel && <li><span>Category</span><span>{categoryLabel}</span></li>}
                   {variant?.color && <li><span>Color</span><span>{variant.color}</span></li>}
@@ -376,7 +436,6 @@ const ProductDetail = () => {
                       {inStock ? "In Stock" : "Out of Stock"}
                     </span>
                   </li>
-                  {/* Admin-entered specs: parse "Label: Value" lines */}
                   {product.specs && product.specs.trim() &&
                     product.specs.split("\n")
                       .map(line => line.trim())
@@ -391,120 +450,70 @@ const ProductDetail = () => {
                   }
                 </ul>
               )}
-              {activeTab === "care" && (
-                <ul className="pd-care-list">
-                  {product.care && product.care.trim()
-                    ? product.care.split("\n")
-                      .map(line => line.trim())
-                      .filter(Boolean)
-                      .map((line, i) => <li key={i}>{line}</li>)
-                    : <>
-                      <li>Store in a cool, dry place away from direct sunlight</li>
-                      <li>Clean with a damp cloth and mild soap</li>
-                      <li>Do not machine wash unless label specifies</li>
-                      <li>Inspect regularly for wear before each ride</li>
-                    </>
-                  }
-                </ul>
-              )}
+
+              {activeTab === "care" && (() => {
+                const text = product.care ||
+                  "Regular cleaning recommended. Wipe with a soft cloth to remove dust. Avoid harsh chemicals. Store in a dry place and inspect regularly before use.";
+
+                const isLong = text.length > 300;
+
+                return (
+                  <div>
+                    <p
+                      className="pd-description"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: descExpanded ? "unset" : 4,
+                        WebkitBoxOrient: "vertical",
+                        overflow: descExpanded ? "visible" : "hidden",
+                        lineHeight: "1.7",
+                        transition: "all 0.3s ease"
+                      }}
+                    >
+                      {text}
+                    </p>
+
+                    {isLong && (
+                      <button
+                        onClick={() => setDescExpanded(e => !e)}
+                        style={{
+                          marginTop: "8px",
+                          background: "none",
+                          border: "none",
+                          color: "#ff6b3d",
+                          fontWeight: 600,
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          padding: 0
+                        }}
+                      >
+                        {descExpanded ? "Show less ↑" : "Read more ↓"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
           </div>
 
-          {/* RIGHT — PURCHASE BOX */}
-          {/* RIGHT — PURCHASE BOX */}
-          <div className="pd-purchase-col" ref={purchaseRef} style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
-
-            {/* MOBILE STICKY BAR */}
-            <div className="pd-mobile-sticky" style={{
-              display: "none",
-              position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 999,
-              background: "#fff", borderTop: "1px solid #eee",
-              padding: "12px 16px", gap: "12px", alignItems: "center",
-              boxShadow: "0 -4px 20px rgba(0,0,0,0.1)"
-            }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: "18px" }}>₹{product.price?.toLocaleString("en-IN")}</div>
-                {product.originalPrice && (
-                  <div style={{ fontSize: "12px", color: "#999", textDecoration: "line-through" }}>
-                    ₹{product.originalPrice?.toLocaleString("en-IN")}
-                  </div>
-                )}
-              </div>
-              <button
-                className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
-                disabled={!inStock}
-                onClick={handleAddToCart}
-                style={{ flex: 1, margin: 0 }}>
-                {addedToCart ? <><CheckIcon /> Added to Cart</> : alreadyInCart ? "Go to Cart →" : "Add to Cart"}
-              </button>
-            </div>
+          {/* COL 3 — PURCHASE BOX (desktop only, hidden ≤768px via CSS) */}
+          <div className="pd-purchase-col" ref={purchaseRef}>
             <div className="pd-purchase-box">
-
-              <div className="pd-price-row">
-                <span className="pd-price">₹{product.price?.toLocaleString("en-IN")}</span>
-                {product.originalPrice && (
-                  <span className="pd-original-price">₹{product.originalPrice?.toLocaleString("en-IN")}</span>
-                )}
-                {product.originalPrice && (
-                  <span className="pd-discount">
-                    {Math.round((1 - product.price / product.originalPrice) * 100)}% off
-                  </span>
-                )}
-              </div>
-
-              <p className="pd-emi">
-                or ₹{Math.round(product.price / 12).toLocaleString("en-IN")}/mo with No-cost EMI
-              </p>
-
-              <div className="pd-purchase-divider" />
-
-              <button
-                className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
-                disabled={!inStock}
-                onClick={handleAddToCart}>
-                {addedToCart ? <><CheckIcon /> Added to Cart</> : alreadyInCart ? "Go to Cart →" : "Add to Cart"}
-              </button>
-
-              <button
-                className={`pd-wishlist ${wishlisted ? "pd-wishlist--active" : ""}`}
-                onClick={handleWishlist}>
-                <HeartIcon filled={wishlisted} />
-                {wishlisted ? "Wishlisted" : "Add to Wishlist"}
-              </button>
-
-              <div className="pd-purchase-divider" />
-
-              <div className="pd-delivery">
-                <div className="pd-delivery-item">
-                  <TruckIcon />
-                  <div>
-                    <strong>Free Delivery</strong>
-                    <p>Ships within 2–3 business days</p>
-                  </div>
-                </div>
-                <div className="pd-delivery-item">
-                  <ReturnIcon />
-                  <div>
-                    <strong>Easy Returns</strong>
-                    <p>30-day hassle-free return policy</p>
-                  </div>
-                </div>
-                <div className="pd-delivery-item">
-                  <ShieldIcon />
-                  <div>
-                    <strong>1 Year Warranty</strong>
-                    <p>Covered against manufacturing defects</p>
-                  </div>
-                </div>
-              </div>
-
+              <PurchaseContent {...purchaseProps} />
             </div>
           </div>
 
         </div>
 
-        {/* RELATED PRODUCTS */}
+        {/* MOBILE PURCHASE BOX (shown only ≤768px via CSS, sits below layout) */}
+        <div className="pd-mobile-sticky">
+          <div className="pd-mobile-box">
+            <PurchaseContent {...purchaseProps} />
+          </div>
+        </div>
+
+        {/* ── RELATED PRODUCTS ── */}
         {related.length > 0 && (
           <section className="pd-related">
             <div className="pd-related-header">

@@ -847,3 +847,28 @@
         display: none;
     }
 }
+
+.cat-card--mobile {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.cat-card--mobile .cat-image-wrap {
+    position: relative;
+}
+
+.cat-card--mobile .cat-wishlist-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.cat-card-mobile-info {
+    padding: 10px;
+}
+
+.cat-mobile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
