@@ -1,3 +1,4 @@
+import { FilterPanel } from "@/pages/Store/Store";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
@@ -53,19 +54,13 @@ const ChevronRight = () => (
     <path d="M9 18l6-6-6-6" />
   </svg>
 );
-const ChevronDown = ({ open }) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-const XIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
+
+// const XIcon = () => (
+//   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+//     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+//     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+//   </svg>
+// );
 const CheckIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -168,121 +163,6 @@ const CatProductCard = ({ product, view, index }) => {
     </div>
   );
 };
-
-/* ─── FILTER SECTION ACCORDION ─── */
-const FilterSection = ({ title, children, defaultOpen = true }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="cf-section">
-      <button className="cf-section-toggle" onClick={() => setOpen(o => !o)}>
-        <span>{title}</span>
-        <ChevronDown open={open} />
-      </button>
-      {open && <div className="cf-section-body">{children}</div>}
-    </div>
-  );
-};
-
-/* ─── INLINE FILTER PANEL ─── */
-const CatFilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
-  const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
-  const sizes = [...new Set(
-    products.flatMap(p => p.variants?.flatMap(v => v.sizes?.map(s => s.size) || []) || [])
-      .filter(Boolean)
-  )].sort();
-  const colors = products
-    .flatMap(p => p.variants?.map(v => ({ hex: v.color, name: v.colorName || v.color })) || [])
-    .filter(c => c.hex)
-    .filter((c, i, arr) => arr.findIndex(x => x.hex === c.hex) === i);
-
-  const toggle = (key, val) => {
-    onChange(prev => {
-      if (prev[key] === val) { const n = { ...prev }; delete n[key]; return n; }
-      return { ...prev, [key]: val };
-    });
-  };
-
-  const hasFilters = Object.keys(activeFilters).length > 0;
-
-  return (
-    <div className={`cf-panel ${isMobile ? "cf-panel--mobile" : ""}`}>
-      {isMobile && (
-        <div className="cf-mobile-header">
-          <span className="cf-mobile-title">Filters</span>
-          <button className="cf-mobile-close" onClick={onClose} aria-label="Close"><XIcon /></button>
-        </div>
-      )}
-
-      {!isMobile && (
-        <div className="cf-header">
-          <span className="cf-header-title">FILTERS</span>
-          {hasFilters && <button className="cf-reset-btn" onClick={onReset}>Reset all</button>}
-        </div>
-      )}
-
-      {brands.length > 0 && (
-        <FilterSection title="Brand">
-          <div className="cf-check-list">
-            {brands.map(b => (
-              <label key={b} className="cf-check-row">
-                <input type="checkbox" className="cf-checkbox"
-                  checked={activeFilters.brand === b}
-                  onChange={() => toggle("brand", b)} />
-                <span className="cf-check-label">{b}</span>
-              </label>
-            ))}
-          </div>
-        </FilterSection>
-      )}
-
-      {sizes.length > 0 && (
-        <FilterSection title="Size">
-          <div className="cf-size-grid">
-            {sizes.map(s => (
-              <button key={s}
-                className={`cf-size-pill ${activeFilters.size === s ? "cf-size-pill--active" : ""}`}
-                onClick={() => toggle("size", s)}>
-                {s}
-              </button>
-            ))}
-          </div>
-        </FilterSection>
-      )}
-
-      {colors.length > 0 && (
-        <FilterSection title="Color">
-          <div className="cf-color-grid">
-            {colors.map(c => (
-              <button key={c.hex}
-                className={`cf-color-swatch ${activeFilters.color === c.hex ? "cf-color-swatch--active" : ""}`}
-                style={{ "--swatch": c.hex }}
-                onClick={() => toggle("color", c.hex)}
-                title={c.name !== c.hex ? c.name : undefined}
-                aria-label={c.name || c.hex} />
-            ))}
-          </div>
-        </FilterSection>
-      )}
-
-      {brands.length === 0 && sizes.length === 0 && colors.length === 0 && (
-        <p className="cf-no-filters">No filters available yet.</p>
-      )}
-
-      {isMobile && (
-        <div className="cf-mobile-footer">
-          {hasFilters && (
-            <button className="cf-mobile-reset" onClick={() => { onReset(); onClose(); }}>Reset All</button>
-          )}
-          <button className="cf-mobile-apply" onClick={onClose}>Show Results</button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ════════════════════════════════
-   MAIN PAGE
-════════════════════════════════ */
 const CategoryPage = () => {
   const { slug } = useParams();
 
@@ -441,7 +321,7 @@ const CategoryPage = () => {
         {/* DESKTOP SIDEBAR */}
         {sidebarOpen && !isMobile && (
           <aside className="cat-sidebar">
-            <CatFilterPanel
+            <FilterPanel
               products={allProducts}
               activeFilters={activeFilters}
               onChange={setActiveFilters}
@@ -494,7 +374,7 @@ const CategoryPage = () => {
           <div className={`cat-drawer ${mobileOpen ? "cat-drawer--open" : ""}`}
             role="dialog" aria-modal="true" aria-label="Filters">
             <div className="cat-drawer-handle" />
-            <CatFilterPanel
+            <FilterPanel
               products={allProducts}
               activeFilters={activeFilters}
               onChange={setActiveFilters}

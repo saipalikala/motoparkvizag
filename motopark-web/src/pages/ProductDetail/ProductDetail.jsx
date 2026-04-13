@@ -131,7 +131,7 @@ const ProductDetail = () => {
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
 
   // const product = products.find(p => p._id === id);
-
+  const [descExpanded, setDescExpanded] = useState(false);
   const [variantIndex, setVariantIndex] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -279,14 +279,25 @@ const ProductDetail = () => {
                   <span className="pd-section-value">{variant?.color}</span>
                 </div>
                 <div className="pd-colors">
-                  {product.variants.map((v, i) => (
+                  {(product.variants.slice(0, 8)).map((v, i) => (
                     <button key={i}
                       className={`pd-color-btn ${variantIndex === i ? "pd-color-btn--active" : ""}`}
                       style={{ background: v.color?.toLowerCase() }}
                       onClick={() => { setVariantIndex(i); setSelectedSize(null); }}
                       aria-label={`Color: ${v.color}`}
+                      title={v.color}
                     />
                   ))}
+                  {product.variants.length > 8 && (
+                    <span style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "#f5f5f5", border: "1px solid #ddd",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "11px", fontWeight: 600, color: "#555", cursor: "default"
+                    }}>
+                      +{product.variants.length - 8}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -323,11 +334,35 @@ const ProductDetail = () => {
             </div>
 
             <div className="pd-tab-content">
-              {activeTab === "description" && (
-                <p className="pd-description">
-                  {product.description || "Premium quality gear designed for performance and protection."}
-                </p>
-              )}
+              {activeTab === "description" && (() => {
+                const text = product.description || "Premium quality gear designed for performance and protection.";
+                const isLong = text.length > 300;
+                return (
+                  <div>
+                    <p className="pd-description" style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: descExpanded ? "unset" : 4,
+                      WebkitBoxOrient: "vertical",
+                      overflow: descExpanded ? "visible" : "hidden",
+                      lineHeight: "1.7",
+                      transition: "all 0.3s ease"
+                    }}>
+                      {text}
+                    </p>
+                    {isLong && (
+                      <button
+                        onClick={() => setDescExpanded(e => !e)}
+                        style={{
+                          marginTop: "8px", background: "none", border: "none",
+                          color: "#ff6b3d", fontWeight: 600, fontSize: "13px",
+                          cursor: "pointer", padding: 0
+                        }}>
+                        {descExpanded ? "Show less ↑" : "Read more ↓"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
               {activeTab === "specs" && (
                 <ul className="pd-specs-list">
                   {/* Always show system fields first */}
@@ -377,7 +412,33 @@ const ProductDetail = () => {
           </div>
 
           {/* RIGHT — PURCHASE BOX */}
+          {/* RIGHT — PURCHASE BOX */}
           <div className="pd-purchase-col" ref={purchaseRef} style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
+
+            {/* MOBILE STICKY BAR */}
+            <div className="pd-mobile-sticky" style={{
+              display: "none",
+              position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 999,
+              background: "#fff", borderTop: "1px solid #eee",
+              padding: "12px 16px", gap: "12px", alignItems: "center",
+              boxShadow: "0 -4px 20px rgba(0,0,0,0.1)"
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "18px" }}>₹{product.price?.toLocaleString("en-IN")}</div>
+                {product.originalPrice && (
+                  <div style={{ fontSize: "12px", color: "#999", textDecoration: "line-through" }}>
+                    ₹{product.originalPrice?.toLocaleString("en-IN")}
+                  </div>
+                )}
+              </div>
+              <button
+                className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
+                disabled={!inStock}
+                onClick={handleAddToCart}
+                style={{ flex: 1, margin: 0 }}>
+                {addedToCart ? <><CheckIcon /> Added to Cart</> : alreadyInCart ? "Go to Cart →" : "Add to Cart"}
+              </button>
+            </div>
             <div className="pd-purchase-box">
 
               <div className="pd-price-row">

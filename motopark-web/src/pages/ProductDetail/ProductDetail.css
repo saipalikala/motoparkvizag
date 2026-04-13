@@ -923,3 +923,17 @@
     gap: 12px;
   }
 }
+
+@media (max-width: 768px) {
+  .pd-mobile-sticky {
+    display: flex !important;
+  }
+
+  .pd-purchase-col {
+    display: none;
+  }
+
+  .pd-page {
+    padding-bottom: 80px;
+  }
+}

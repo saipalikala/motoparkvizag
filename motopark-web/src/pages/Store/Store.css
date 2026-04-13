@@ -419,21 +419,66 @@
 .sf-check-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 2px;
+    max-height: 152px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e0e0e0 transparent;
+}
+
+.sf-check-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sf-check-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sf-check-list::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 2px;
 }
 
 .sf-check-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
+    padding: 6px 4px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.sf-check-row:hover {
+    background: #f7f7f7;
+}
+
+/* Custom checkbox div */
+.sf-checkbox-custom {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid #d0d0d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: #fff;
     cursor: pointer;
 }
 
+.sf-checkbox-custom--checked {
+    background: #ff6b3d;
+    border-color: #ff6b3d;
+}
+
+/* Keep old sf-checkbox for any remaining native inputs */
 .sf-checkbox {
-    width: 17px;
-    height: 17px;
-    border-radius: 5px;
-    border: 1.5px solid rgba(11, 29, 58, 0.2);
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid #d0d0d0;
     appearance: none;
     -webkit-appearance: none;
     cursor: pointer;
@@ -444,8 +489,8 @@
 }
 
 .sf-checkbox:checked {
-    background: #0b1d3a;
-    border-color: #0b1d3a;
+    background: #ff6b3d;
+    border-color: #ff6b3d;
 }
 
 .sf-checkbox:checked::after {
@@ -465,6 +510,14 @@
     font-size: 13px;
     color: #1d1d1f;
     font-weight: 400;
+    cursor: pointer;
+}
+
+.sf-no-match {
+    font-size: 12px;
+    color: #aaa;
+    padding: 8px 4px;
+    margin: 0;
 }
 
 /* ─── SIZE GRID ─── */
@@ -498,7 +551,7 @@
     border-color: #0b1d3a;
 }
 
-/* ─── COLOR SWATCHES ─── */
+/* ─── COLOR SWATCHES — 5-per-row grid ── */
 .sf-color-grid {
     display: flex;
     flex-wrap: wrap;
@@ -525,6 +578,162 @@
 .sf-color-swatch--active {
     box-shadow: 0 0 0 3px #fff, 0 0 0 5px #0b1d3a;
     transform: scale(1.1);
+}
+
+/* New swatch grid — used by updated FilterPanel */
+.sf-color-swatches {
+    display: grid;
+    grid-template-columns: repeat(5, 28px);
+    gap: 8px;
+    align-items: center;
+}
+
+.sf-swatch-btn {
+    background: none;
+    border: none;
+    padding: 3px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s;
+}
+
+.sf-swatch-btn:hover {
+    transform: scale(1.12);
+}
+
+.sf-swatch-btn--active {
+    outline: 2px solid #ff6b3d;
+    outline-offset: 2px;
+    border-radius: 50%;
+}
+
+.sf-swatch-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sf-show-more {
+    background: none;
+    border: none;
+    color: #ff6b3d;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 0 0;
+    display: block;
+}
+
+.sf-show-more:hover {
+    text-decoration: underline;
+}
+
+/* ── Section toggle label + count badge ── */
+.sf-section-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0b1d3a;
+}
+
+.sf-count-badge {
+    background: #ff6b3d;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 99px;
+    padding: 1px 6px;
+    line-height: 1.4;
+}
+
+/* ── Active pills inside panel ── */
+.sf-active-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 20px 4px;
+}
+
+.sf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff4f0;
+    border: 1px solid #ffd4c2;
+    color: #cc4a1a;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px 3px 7px;
+    border-radius: 99px;
+}
+
+.sf-pill button {
+    background: none;
+    border: none;
+    color: #cc4a1a;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 1px;
+    display: flex;
+    align-items: center;
+}
+
+.sf-pill-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ── Brand search ── */
+.sf-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #f7f7f7;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+    color: #999;
+}
+
+.sf-search {
+    flex: 1;
+    border: none;
+    background: none;
+    font-size: 12px;
+    color: #1a1a1a;
+    outline: none;
+}
+
+.sf-search::placeholder {
+    color: #aaa;
+}
+
+.sf-search-clear {
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.sf-search-clear:hover {
+    color: #888;
 }
 
 /* ════════════════════════════════

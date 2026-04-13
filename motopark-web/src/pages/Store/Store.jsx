@@ -183,12 +183,15 @@ const StoreCard = ({ product, view, index }) => {
 };
 
 /* ─── FILTER SECTION ─── */
-const FilterSection = ({ title, children, defaultOpen = true }) => {
+const FilterSection = ({ title, children, defaultOpen = true, count = 0 }) => {
     const [open, setOpen] = useState(defaultOpen);
     return (
         <div className="sf-section">
             <button className="sf-section-toggle" onClick={() => setOpen(o => !o)}>
-                <span>{title}</span>
+                <span className="sf-section-toggle-label">
+                    {title}
+                    {count > 0 && <span className="sf-count-badge">{count}</span>}
+                </span>
                 <ChevronIcon open={open} />
             </button>
             {open && <div className="sf-section-body">{children}</div>}
@@ -196,8 +199,27 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
     );
 };
 
+const SF_COLOR_LIMIT = 10;
+
+const sfColorFromName = (name) => {
+    if (!name) return "#e8e8e8";
+    if (name.startsWith("#") || name.startsWith("rgb")) return name;
+    const map = {
+        black: "#1a1a1a", white: "#f5f5f5", red: "#ef4444", blue: "#3b82f6",
+        green: "#22c55e", yellow: "#eab308", orange: "#f97316", purple: "#a855f7",
+        pink: "#ec4899", grey: "#6b7280", gray: "#6b7280", silver: "#c0c0c0",
+        brown: "#a16207", gold: "#ca8a04", navy: "#1e3a5f", maroon: "#7f1d1d",
+        "matte black": "#1a1a1a", "gloss black": "#000", "pearl white": "#f9f9f9",
+    };
+    const lower = name.toLowerCase();
+    for (const [k, v] of Object.entries(map)) { if (lower.includes(k)) return v; }
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return `hsl(${Math.abs(hash) % 360}, 55%, 50%)`;
+};
+
 /* ─── FILTER PANEL ─── */
-const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
+export const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onClose }) => {
     const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
     const sizes = [...new Set(products.flatMap(p =>
         p.variants?.flatMap(v => v.sizes?.map(s => s.size) || []) || []
@@ -206,6 +228,15 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
         p.variants?.map(v => ({ hex: v.color, name: v.colorName || v.color })) || []
     ).filter(c => c.hex))];
     const uniqueColors = colors.filter((c, i, arr) => arr.findIndex(x => x.hex === c.hex) === i);
+
+    const [brandQuery, setBrandQuery] = useState("");
+    const [showAllColors, setShowAllColors] = useState(false);
+
+    const filteredBrands = brands.filter(b =>
+        b.toLowerCase().includes(brandQuery.toLowerCase())
+    );
+    const visibleColors = showAllColors ? uniqueColors : uniqueColors.slice(0, SF_COLOR_LIMIT);
+    const hiddenColorCount = uniqueColors.length - SF_COLOR_LIMIT;
 
     const toggle = (key, val) => {
         onChange(prev => {
@@ -220,6 +251,7 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
     };
 
     const hasFilters = Object.keys(activeFilters).some(k => k !== "sort");
+    const activeCount = Object.keys(activeFilters).filter(k => k !== "sort").length;
 
     return (
         <div className={`sf-panel ${isMobile ? "sf-panel--mobile" : ""}`}>
@@ -241,30 +273,82 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
                 </div>
             )}
 
+            {/* Active filter pills */}
+            {hasFilters && (
+                <div className="sf-active-pills">
+                    {activeFilters.brand && (
+                        <span className="sf-pill">
+                            {activeFilters.brand}
+                            <button onClick={() => toggle("brand", activeFilters.brand)}>×</button>
+                        </span>
+                    )}
+                    {activeFilters.size && (
+                        <span className="sf-pill">
+                            {activeFilters.size}
+                            <button onClick={() => toggle("size", activeFilters.size)}>×</button>
+                        </span>
+                    )}
+                    {activeFilters.color && (
+                        <span className="sf-pill">
+                            <span className="sf-pill-swatch" style={{ background: activeFilters.color }} />
+                            Color
+                            <button onClick={() => toggle("color", activeFilters.color)}>×</button>
+                        </span>
+                    )}
+                </div>
+            )}
+
             {!hasFilters && !isMobile && (
                 <p className="sf-no-filters">No filters applied</p>
             )}
 
+            {/* Brand */}
             {brands.length > 0 && (
-                <FilterSection title="Brand">
+                <FilterSection title="Brand" count={activeFilters.brand ? 1 : 0}>
+                    {brands.length > 5 && (
+                        <div className="sf-search-wrap">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                            </svg>
+                            <input
+                                type="text"
+                                className="sf-search"
+                                placeholder="Search brands…"
+                                value={brandQuery}
+                                onChange={e => setBrandQuery(e.target.value)}
+                            />
+                            {brandQuery && (
+                                <button className="sf-search-clear" onClick={() => setBrandQuery("")}>×</button>
+                            )}
+                        </div>
+                    )}
                     <div className="sf-check-list">
-                        {brands.map(b => (
-                            <label key={b} className="sf-check-row">
-                                <input
-                                    type="checkbox"
-                                    className="sf-checkbox"
-                                    checked={activeFilters.brand === b}
-                                    onChange={() => toggle("brand", b)}
-                                />
-                                <span className="sf-check-label">{b}</span>
-                            </label>
-                        ))}
+                        {filteredBrands.length === 0 ? (
+                            <p className="sf-no-match">No brands match "{brandQuery}"</p>
+                        ) : (
+                            filteredBrands.map(b => (
+                                <label key={b} className="sf-check-row">
+                                    <div
+                                        className={`sf-checkbox-custom ${activeFilters.brand === b ? "sf-checkbox-custom--checked" : ""}`}
+                                        onClick={() => toggle("brand", b)}
+                                    >
+                                        {activeFilters.brand === b && (
+                                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+                                                <path d="M2 6l3 3 5-5" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="sf-check-label" onClick={() => toggle("brand", b)}>{b}</span>
+                                </label>
+                            ))
+                        )}
                     </div>
                 </FilterSection>
             )}
 
+            {/* Size */}
             {sizes.length > 0 && (
-                <FilterSection title="Size">
+                <FilterSection title="Size" count={activeFilters.size ? 1 : 0}>
                     <div className="sf-size-grid">
                         {sizes.map(s => (
                             <button
@@ -278,20 +362,46 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
                 </FilterSection>
             )}
 
+            {/* Color */}
             {uniqueColors.length > 0 && (
-                <FilterSection title="Color">
-                    <div className="sf-color-grid">
-                        {uniqueColors.map(c => (
-                            <button
-                                key={c.hex}
-                                className={`sf-color-swatch ${activeFilters.color === c.hex ? "sf-color-swatch--active" : ""}`}
-                                style={{ "--swatch": c.hex }}
-                                onClick={() => toggle("color", c.hex)}
-                                title={c.name && c.name !== c.hex ? c.name : undefined}
-                                aria-label={c.name || c.hex}
-                            />
-                        ))}
+                <FilterSection title="Color" count={activeFilters.color ? 1 : 0}>
+                    <div className="sf-color-swatches">
+                        {visibleColors.map(c => {
+                            const bg = sfColorFromName(c.hex || c.name);
+                            const isActive = activeFilters.color === c.hex;
+                            const isLight = bg === "#f5f5f5" || bg === "#f9f9f9" || bg === "#e8e8e8";
+                            return (
+                                <button
+                                    key={c.hex}
+                                    className={`sf-swatch-btn ${isActive ? "sf-swatch-btn--active" : ""}`}
+                                    onClick={() => toggle("color", c.hex)}
+                                    title={c.name && c.name !== c.hex ? c.name : c.name}
+                                    aria-label={c.name || c.hex}
+                                >
+                                    <span
+                                        className="sf-swatch-circle"
+                                        style={{
+                                            background: bg,
+                                            border: isLight ? "1px solid #d0d0d0" : "none",
+                                        }}
+                                    >
+                                        {isActive && (
+                                            <svg width="9" height="9" viewBox="0 0 12 12" fill="none"
+                                                stroke={isLight ? "#333" : "#fff"}
+                                                strokeWidth="2.5" strokeLinecap="round">
+                                                <path d="M2 6l3 3 5-5" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
+                    {hiddenColorCount > 0 && (
+                        <button className="sf-show-more" onClick={() => setShowAllColors(s => !s)}>
+                            {showAllColors ? "Show less ↑" : `+ ${hiddenColorCount} more colors`}
+                        </button>
+                    )}
                 </FilterSection>
             )}
 
@@ -302,7 +412,7 @@ const FilterPanel = ({ products, activeFilters, onChange, onReset, isMobile, onC
             {isMobile && (
                 <div className="sf-mobile-footer">
                     {hasFilters && (
-                        <button className="sf-mobile-reset" onClick={() => { onReset(); onClose(); }}>
+                        <button className="sf-mobile-reset" onClick={() => { onReset(); setBrandQuery(""); onClose(); }}>
                             Reset All
                         </button>
                     )}
