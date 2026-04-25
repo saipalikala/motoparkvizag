@@ -47,7 +47,7 @@ const Cart = () => {
         if (i.originalPrice) return sum + (i.originalPrice - i.price) * i.quantity;
         return sum;
     }, 0);
-
+const delivery = cartTotal >= 2000 ? 0 : 150;
     /* ── EMPTY STATE ── */
     if (cartItems.length === 0) return (
         <PageTransition>
@@ -197,14 +197,17 @@ const Cart = () => {
                                 <h2 className="cart-summary-title">Order Summary</h2>
 
                                 <div className="cart-summary-rows">
-                                    <div className="cart-summary-row">
-                                        <span>Subtotal ({itemCount} item{itemCount !== 1 ? "s" : ""})</span>
-                                        <span>₹{cartTotal.toLocaleString("en-IN")}</span>
-                                    </div>
-                                    <div className="cart-summary-row">
-                                        <span>Delivery</span>
-                                        <span className="cart-summary-free">Free</span>
-                                    </div>
+<div className="cart-summary-row">
+    <span>Subtotal ({itemCount} item{itemCount !== 1 ? "s" : ""})</span>
+    <span>₹{cartTotal.toLocaleString("en-IN")}</span>
+</div>
+<div className="cart-summary-row">
+    <span>Delivery</span>
+    {delivery === 0
+        ? <span className="cart-summary-free">Free</span>
+        : <span>₹150</span>
+    }
+</div>
                                     {savings > 0 && (
                                         <div className="cart-summary-row cart-summary-row--savings">
                                             <span>You save</span>
@@ -217,7 +220,7 @@ const Cart = () => {
 
                                 <div className="cart-summary-total">
                                     <span>Total</span>
-                                    <span>₹{cartTotal.toLocaleString("en-IN")}</span>
+                                    <span>₹{(cartTotal + delivery).toLocaleString("en-IN")}</span>
                                 </div>
 
                                 <p className="cart-summary-tax">Inclusive of all taxes</p>

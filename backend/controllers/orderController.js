@@ -14,7 +14,7 @@ export const getOrders = async (req, res) => {
 // POST create order (customer checkout)
 export const createOrder = async (req, res) => {
     try {
-        const { items, shippingAddress, paymentMethod, paymentId } = req.body; // ✅ removed total
+        const { items, shippingAddress, paymentMethod, paymentId, deliveryCharge = 0 } = req.body; // ✅ removed total
         const userId = req.user?._id;
 
         // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
@@ -111,7 +111,7 @@ export const createOrder = async (req, res) => {
             shippingAddress,
             paymentMethod,
             paymentId: paymentId || null,
-            total: verifiedTotal, // ✅ from DB, not frontend
+            total: verifiedTotal + deliveryCharge, // ✅ from DB, not frontend
         });
 
         res.status(201).json(order);

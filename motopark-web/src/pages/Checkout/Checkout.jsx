@@ -141,16 +141,17 @@ const Checkout = () => {
 
         try {
             // Step 1: Create Razorpay order on backend
-            const orderRes = await fetch(`${API}/payment/create-order`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    items: cartItems.map(i => ({
-                        productId: i._id,
-                        quantity: i.quantity,
-                    }))
-                }),
-            });
+const orderRes = await fetch(`${API}/payment/create-order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        items: cartItems.map(i => ({
+            productId: i._id,
+            quantity: i.quantity,
+        })),
+        deliveryCharge: delivery,   // ← add this
+    }),
+});
             const orderData = await orderRes.json();
             if (!orderRes.ok) {
                 alert("Could not initiate payment. Please try again.");
@@ -205,7 +206,8 @@ const Checkout = () => {
                                 shippingAddress: form,
                                 paymentMethod: "razorpay",
                                 paymentId: response.razorpay_payment_id,
-                                total: cartTotal,
+                                total: cartTotal + delivery,
+                                deliveryCharge: delivery,
                             }),
                         });
 
@@ -258,7 +260,7 @@ const Checkout = () => {
     };
 
     const itemCount = cartItems.reduce((s, i) => s + i.quantity, 0);
-
+const delivery = cartTotal >= 2000 ? 0 : 150;  // ← add this
     /* ── SUCCESS ── */
     if (success) return (
         <PageTransition>
@@ -500,7 +502,7 @@ const Checkout = () => {
                                         >
                                             {placing
                                                 ? "Opening Payment…"
-                                                : <>Pay ₹{cartTotal.toLocaleString("en-IN")} via Razorpay</>
+                                                : <>Pay ₹{(cartTotal + delivery).toLocaleString("en-IN")} via Razorpay</>
                                             }
                                         </button>
                                     </div>
@@ -545,17 +547,20 @@ const Checkout = () => {
                                         <span>Subtotal</span>
                                         <span>₹{cartTotal.toLocaleString("en-IN")}</span>
                                     </div>
-                                    <div className="co-summary-row">
-                                        <span>Delivery</span>
-                                        <span className="co-free">Free</span>
-                                    </div>
+<div className="co-summary-row">
+    <span>Delivery</span>
+    {delivery === 0
+        ? <span className="co-free">Free</span>
+        : <span>₹150</span>
+    }
+</div>
                                 </div>
 
                                 <div className="co-summary-divider" />
 
                                 <div className="co-summary-total">
                                     <span>Total</span>
-                                    <span>₹{cartTotal.toLocaleString("en-IN")}</span>
+                                    <span>₹{(cartTotal + delivery).toLocaleString("en-IN")}</span>
                                 </div>
 
                                 <div className="co-trust">

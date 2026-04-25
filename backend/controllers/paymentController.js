@@ -10,7 +10,7 @@ export const createOrder = async (req, res) => {
             key_secret: process.env.RAZORPAY_KEY_SECRET,
         });
 
-        const { items } = req.body; // ← receive items, NOT amount
+        const { items, deliveryCharge = 0 } = req.body; // ← receive items, NOT amount
 
         // ✅ Calculate total from DB — cannot be tampered by frontend
         let total = 0;
@@ -23,7 +23,7 @@ export const createOrder = async (req, res) => {
         }
 
         const order = await razorpay.orders.create({
-            amount: Math.round(total * 100), // paise — from DB ✅
+    amount: Math.round((total + deliveryCharge) * 100), // paise — from DB ✅
             currency: "INR",
             receipt: `receipt_${Date.now()}`,
         });
