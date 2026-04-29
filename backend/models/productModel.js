@@ -74,12 +74,11 @@ const productSchema = new mongoose.Schema(
             trim: true,
         },
 
-        category: {
-            type: String,
-            required: true,
-            trim: true,
-            index: true, // quick access
-        },
+category: {
+    type: String,
+    required: true,
+    trim: true,
+},
 
         variants: [variantSchema],
 
@@ -90,19 +89,16 @@ const productSchema = new mongoose.Schema(
         newArrival: {
             type: Boolean,
             default: false,
-            index: true,
         },
 
         featured: {
             type: Boolean,
             default: false,
-            index: true,
         },
 
         trending: {
             type: Boolean,
             default: false,
-            index: true,
         },
 
         /* =========================
@@ -120,24 +116,29 @@ const productSchema = new mongoose.Schema(
 );
 
 /* =========================
-   INDEXES (CRITICAL)
+   INDEXES (OPTIMIZED)
 ========================= */
 
-// Basic filters
-productSchema.index({ brand: 1 });
+// Core query indexes
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ featured: 1, createdAt: -1 });
+productSchema.index({ trending: 1, createdAt: -1 });
+productSchema.index({ newArrival: 1, createdAt: -1 });
+
+// Pricing & sorting
+productSchema.index({ brand: 1, price: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ createdAt: -1 });
 
-// Nested filters
+// Variant filters
 productSchema.index({ "variants.sizes.size": 1 });
 productSchema.index({ "variants.color": 1 });
 
-// Compound index (powerful for real queries)
-productSchema.index({
-    category: 1,
-    brand: 1,
-    price: 1,
-});
+// Combined filters
+productSchema.index({ category: 1, brand: 1, price: 1 });
+
+// Search
+productSchema.index({ name: "text" });
 
 /* =========================
    EXPORT

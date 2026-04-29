@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { revokeToken } from "../middleware/authMiddleware.js"; // ✅ ADD THIS
 
 export const adminLogin = async (req, res) => {
   const { email, password } = req.body;
 
-  // Check against .env credentials
   if (email !== process.env.ADMIN_EMAIL) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
@@ -16,10 +16,16 @@ export const adminLogin = async (req, res) => {
   }
 
   const token = jwt.sign(
-    { role: "admin" },
+    { role: "admin",email  },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
 
   res.json({ token });
+};
+
+// ✅ ADD THIS FUNCTION
+export const logoutAdmin = (req, res) => {
+  revokeToken(req.token);
+  res.json({ message: "Logged out successfully" });
 };

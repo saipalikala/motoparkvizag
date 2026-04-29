@@ -137,15 +137,15 @@ const NavIcons = ({ openMenu, openSearch }) => {
                 </NavLink>
             )}
 
-            {/* WISHLIST */}
-            <NavLink to="/wishlist"
-                className={({ isActive }) => `icon-btn icon-btn--badge ${isActive ? "icon-btn--active" : ""}`}
-                aria-label="Wishlist" title="Wishlist">
-                <HeartIcon />
-                {wishlist.length > 0 && (
-                    <span className="nav-badge">{wishlist.length > 9 ? "9+" : wishlist.length}</span>
-                )}
-            </NavLink>
+  {/* WISHLIST */}
+<NavLink to="/wishlist"
+    className={({ isActive }) => `icon-btn icon-btn--badge nav-icon--desktop-only ${isActive ? "icon-btn--active" : ""}`}
+    aria-label="Wishlist" title="Wishlist">
+    <HeartIcon />
+    {wishlist.length > 0 && (
+        <span className="nav-badge">{wishlist.length > 9 ? "9+" : wishlist.length}</span>
+    )}
+</NavLink>
 
             {/* CART */}
             <NavLink to="/cart"
@@ -157,12 +157,12 @@ const NavIcons = ({ openMenu, openSearch }) => {
                 )}
             </NavLink>
 
-            {/* ORDERS — after cart */}
-            <NavLink to="/orders"
-                className={({ isActive }) => `icon-btn ${isActive ? "icon-btn--active" : ""}`}
-                aria-label="My Orders" title="My Orders">
-                <OrdersIcon />
-            </NavLink>
+{/* ORDERS — after cart */}
+<NavLink to="/orders"
+    className={({ isActive }) => `icon-btn nav-icon--desktop-only ${isActive ? "icon-btn--active" : ""}`}
+    aria-label="My Orders" title="My Orders">
+    <OrdersIcon />
+</NavLink>
 
             {/* MOBILE MENU */}
             <button className="icon-btn nav-menu-btn" onClick={openMenu} aria-label="Menu">

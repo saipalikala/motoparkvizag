@@ -1,12 +1,17 @@
 import "./BrandShowcase.css";
 
 const brands = [
-    "/brands/shad.png",
-    "/brands/shad.png",
-    "/brands/shad.png",
-    "/brands/shad.png",
-    "/brands/shad.png",
-    "/brands/shad.png",
+  "/brands/66BHP.png",
+  "/brands/Axor.png",
+  "/brands/BMC.png",
+  "/brands/Kodra.png",
+  "/brands/LIUHG.png",
+  "/brands/MotoTorque.png",
+  "/brands/NGK.png",
+  "/brands/REDROOSTER.jpg",
+  "/brands/shad.png",
+  "/brands/SMK.png",
+  "/brands/VIATERRA.png",
 ];
 
 const BrandShowcase = () => (

@@ -81,7 +81,7 @@
     padding: 9px 12px 9px 36px;
     border: 1.5px solid rgba(11, 29, 58, .1);
     border-radius: 100px;
-    background: #fff;
+    background: #fff;;
     font-size: 13px;
     color: #0b1d3a;
     outline: none;
@@ -103,7 +103,7 @@
     padding: 6px 12px;
     border-radius: 100px;
     border: 1.5px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #6e6e73;
     cursor: pointer;
     transition: all .15s;
@@ -126,7 +126,7 @@
     height: 36px;
     border-radius: 50%;
     border: 1.5px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #6e6e73;
     display: flex;
     align-items: center;
@@ -140,7 +140,7 @@
 }
 
 .ao-table-wrap {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 16px;
     overflow: hidden;
@@ -268,7 +268,7 @@
     top: calc(100% + 4px);
     left: 0;
     z-index: 50;
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .1);
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
@@ -282,7 +282,7 @@
     gap: 8px;
     padding: 9px 12px;
     border: none;
-    background: transparent;
+    background: #fff;
     cursor: pointer;
     font-size: 13px;
     color: #0b1d3a;
@@ -357,7 +357,7 @@
     bottom: 0;
     z-index: 41;
     width: min(480px, 95vw);
-    background: #fff;
+    background: #fff;;
     display: flex;
     flex-direction: column;
     box-shadow: -8px 0 40px rgba(0, 0, 0, .12);

@@ -125,7 +125,7 @@
 
 /* ─── CARD ─── */
 .wl-card {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     overflow: hidden;
@@ -194,7 +194,7 @@
 }
 
 .wl-remove-btn:hover {
-    background: #fff0eb;
+    background: #fff;
     border-color: rgba(255, 107, 61, .35);
     color: #ff6b3d;
     transform: scale(1.1);
@@ -305,7 +305,7 @@
 }
 
 .wl-cart-btn--added {
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(255, 107, 61, .45);
     color: #ff6b3d;
 }
@@ -347,7 +347,7 @@
 .wl-store-btn {
     display: inline-flex;
     align-items: center;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, .12);
     color: #0b1d3a;
     font-size: 13px;

@@ -85,7 +85,7 @@
    TOOLBAR
 ════════════════════════════════ */
 .cat-toolbar {
-    background: #ffffff;
+    background: #fff;
     border-bottom: 1px solid rgba(11, 29, 58, 0.07);
     padding: 0 48px;
     display: flex;
@@ -105,7 +105,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #0b1d3a;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, 0.12);
     padding: 7px 14px;
     border-radius: 100px;
@@ -186,7 +186,7 @@
     height: 28px;
     border-radius: 100px;
     border: none;
-    background: transparent;
+    background: #fff;
     color: #6e6e73;
     display: flex;
     align-items: center;
@@ -200,7 +200,7 @@
 }
 
 .cat-view-btn--active {
-    background: #ffffff;
+    background: #fff;
     color: #0b1d3a;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -233,7 +233,7 @@
 }
 
 .cat-sidebar-inner {
-    background: #ffffff;
+    background: #fff;
     border-radius: 16px;
     border: 1px solid rgba(11, 29, 58, 0.07);
     padding: 20px;
@@ -267,7 +267,7 @@
    PRODUCT CARD — GRID MODE
 ════════════════════════════════ */
 .cat-card {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, 0.07);
     border-radius: 18px;
     overflow: hidden;
@@ -432,7 +432,7 @@
     height: 32px;
     border-radius: 50%;
     border: 1px solid rgba(11, 29, 58, 0.1);
-    background: #ffffff;
+    background: #fff;
     color: #6e6e73;
     display: flex;
     align-items: center;
@@ -443,13 +443,13 @@
 }
 
 .cat-wishlist-btn:hover {
-    background: #fff0eb;
+    background: #fff;
     border-color: rgba(255, 107, 61, 0.35);
     transform: scale(1.1);
 }
 
 .cat-wishlist-btn--active {
-    background: #fff0eb;
+    background: #fff;
     border-color: rgba(255, 107, 61, 0.5);
 }
 
@@ -482,7 +482,7 @@
 }
 
 .cat-cart-btn--added {
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(255, 107, 61, 0.45);
     color: #ff6b3d;
 }
@@ -561,7 +561,7 @@
    SKELETON LOADING
 ════════════════════════════════ */
 .cat-skeleton {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, 0.06);
     border-radius: 18px;
     overflow: hidden;
@@ -722,7 +722,7 @@
         bottom: 0;
         width: 280px;
         z-index: 100;
-        background: #fff;
+        background: #fff;;
         box-shadow: 4px 0 40px rgba(0, 0, 0, 0.12);
         overflow-y: auto;
     }
@@ -827,7 +827,7 @@
     left: 0;
     right: 0;
     z-index: 99;
-    background: #ffffff;
+    background: #fff;
     border-radius: 20px 20px 0 0;
     max-height: 88vh;
     overflow-y: auto;

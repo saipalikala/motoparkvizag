@@ -1,0 +1,145 @@
+/* ================================================================
+   MOTOPARK ADMIN — STAT CARD
+   ================================================================ */
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-subtle);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform var(--t-mid) var(--ease-out),
+              box-shadow var(--t-mid) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(11, 29, 58, 0.08);
+}
+
+/* Left accent border on hover */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--mp-accent);
+  opacity: 0;
+  transform: scaleY(0);
+  transition: opacity var(--t-mid), transform var(--t-mid) var(--ease-spring);
+}
+.stat-card:hover::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* ── Top row ── */
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+/* ── Icon ── */
+.stat-card__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 107, 61, 0.10);
+  color: var(--mp-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Delta chip ── */
+.stat-card__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+}
+.stat-card__delta--up   { background: var(--green-bg); color: var(--green-text); }
+.stat-card__delta--down { background: var(--red-bg);   color: var(--red-text);   }
+
+/* ── Value ── */
+.stat-card__value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--t-primary);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.stat-card__prefix {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t-secondary);
+  letter-spacing: 0;
+}
+.stat-card__suffix {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--t-secondary);
+  letter-spacing: 0;
+}
+
+/* ── Label ── */
+.stat-card__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--t-secondary);
+}
+
+/* ── Delta label ── */
+.stat-card__delta-label {
+  font-size: 11px;
+  color: var(--t-tertiary);
+  margin-top: 1px;
+}
+
+/* ── Skeleton ── */
+.stat-card--loading {
+  pointer-events: none;
+}
+
+.stat-card__skel-value,
+.stat-card__skel-label {
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    rgba(11,29,58,0.05) 25%,
+    rgba(11,29,58,0.09) 50%,
+    rgba(11,29,58,0.05) 75%);
+  background-size: 300% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.stat-card__skel-value { height: 28px; width: 70%; margin: 4px 0; }
+.stat-card__skel-label { height: 12px; width: 45%; }
+
+@keyframes shimmer {
+  from { background-position: 300% 0; }
+  to   { background-position: -300% 0; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .stat-card        { padding: 14px 16px; }
+  .stat-card__value { font-size: 22px; }
+}

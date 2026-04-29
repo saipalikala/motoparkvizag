@@ -55,7 +55,7 @@
   font-size: 12px;
   font-weight: 500;
   color: #6e6e73;
-  background: #ffffff;
+  background: #fff;
   border-bottom: 1px solid rgba(11, 29, 58, 0.06);
   letter-spacing: 0.01em;
   flex-wrap: wrap;
@@ -118,7 +118,7 @@
    PURCHASE BOX  (desktop card)
 ════════════════════════════════ */
 .pd-purchase-box {
-  background: #ffffff;
+  background: #fff;
   border: 1px solid rgba(11, 29, 58, 0.08);
   border-radius: 20px;
   padding: 28px 24px;
@@ -251,7 +251,7 @@
   justify-content: center;
   gap: 8px;
   padding: 14px;
-  background: transparent;
+  background: #fff;
   border: 1.5px solid rgba(11, 29, 58, 0.14);
   border-radius: 100px;
   font-size: 14px;
@@ -481,7 +481,7 @@
   height: 44px;
   padding: 0 14px;
   border: 1.5px solid rgba(11, 29, 58, 0.15);
-  background: #ffffff;
+  background: #fff;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -541,7 +541,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   border: none;
-  background: transparent;
+  background: #fff;
   font-size: 13px;
   font-weight: 600;
   color: #6e6e73;
@@ -555,7 +555,7 @@
 }
 
 .pd-tab--active {
-  background: #ffffff;
+  background: #fff;
   color: #0b1d3a;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -691,7 +691,7 @@
 
 /* ─── RELATED CARD ─── */
 .related-card {
-  background: #ffffff;
+  background: #fff;
   border: 1px solid rgba(11, 29, 58, 0.07);
   border-radius: 18px;
   overflow: hidden;
@@ -751,13 +751,13 @@
 }
 
 .related-wish:hover {
-  background: #fff0eb;
+  background: #fff;
   border-color: rgba(255, 107, 61, 0.35);
   transform: scale(1.1);
 }
 
 .related-wish--active {
-  background: #fff0eb;
+  background: #fff;
   border-color: rgba(255, 107, 61, 0.5);
 }
 
@@ -939,7 +939,7 @@
   }
 
   .pd-mobile-box {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, 0.08);
     border-radius: 20px;
     padding: 22px 20px;

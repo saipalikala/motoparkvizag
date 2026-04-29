@@ -2,32 +2,26 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
     try {
-        console.log("Connecting to MongoDB...");
-
-        await mongoose.connect(process.env.MONGO_URI);
+        await mongoose.connect(process.env.MONGO_URI, {
+            maxPoolSize: 10,        // connection pool — critical for concurrent requests
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
 
         console.log("✅ MongoDB Connected");
 
-        // ── Create indexes for fast queries ──
-        // These are idempotent — safe to run on every startup
-        const db = mongoose.connection.db;
-
-        // Products — most queried fields
-        await db.collection("products").createIndex({ category: 1, createdAt: -1 });
-        await db.collection("products").createIndex({ featured: 1, createdAt: -1 });
-        await db.collection("products").createIndex({ trending: 1, createdAt: -1 });
-        await db.collection("products").createIndex({ newArrival: 1, createdAt: -1 });
-        await db.collection("products").createIndex({ brand: 1, price: 1 });
-        await db.collection("products").createIndex({ price: 1 });
-        await db.collection("products").createIndex({ name: "text" }); // for search
-
-        // Orders — queried by phone, userId, date
-        await db.collection("orders").createIndex({ "shippingAddress.phone": 1 });
-        await db.collection("orders").createIndex({ userId: 1, createdAt: -1 });
-        await db.collection("orders").createIndex({ createdAt: -1 });
-        await db.collection("orders").createIndex({ status: 1 });
-
-        console.log("✅ MongoDB indexes ready");
+        // Sync indexes from all Mongoose schemas (non-blocking after connect)
+        // This respects schema-defined indexes and won't re-create existing ones.
+        // Remove the manual createIndex calls from this file entirely —
+        // your productModel.js already declares all needed indexes.
+        mongoose.connection.once("open", async () => {
+            try {
+                await mongoose.connection.syncIndexes();
+                console.log("✅ MongoDB indexes synced");
+            } catch (e) {
+                console.warn("⚠️  Index sync warning:", e.message);
+            }
+        });
 
     } catch (error) {
         console.error("❌ Database connection failed:", error);

@@ -93,7 +93,7 @@
 }
 
 .pg-arrow:hover {
-    background: #fff;
+    background: #fff;;
     transform: translateY(-50%) scale(1.08);
 }
 

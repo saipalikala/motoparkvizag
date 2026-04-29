@@ -1,31 +1,24 @@
-/* ================================================
-   File: backend/routes/productRoutes.js
-   ================================================ */
 import express from "express";
 import multer from "multer";
 import {
-    createProduct,
-    getProducts,
-    deleteProduct,
-    updateProduct,
-    getProductFilters,
-    bulkCreateProducts,
-    getProductById,
+    createProduct, getProducts, deleteProduct,
+    updateProduct, getProductFilters, bulkCreateProducts, getProductById,
 } from "../controllers/productController.js";
 import { uploadProducts } from "../config/cloudinary.js";
-import authMiddleware from "../middleware/authMiddleware.js"; // ✅ added
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const csvUpload = multer({ storage: multer.memoryStorage() });
 
-/* ── FILTERS — must be before /:id ── */
-router.get("/filters", getProductFilters);
-router.get("/:id", getProductById);        
-
+// Public — read only
+router.get("/filters", getProductFilters);   // MUST be before /:id
 router.get("/", getProducts);
-router.post("/", uploadProducts.any(), createProduct);
-router.put("/:id", uploadProducts.any(), updateProduct);
-router.delete("/:id", deleteProduct);
-router.post("/bulk", authMiddleware, upload.single("csv"), bulkCreateProducts);
+router.get("/:id", getProductById);
+
+// Protected — admin only
+router.post(  "/",     authMiddleware, uploadProducts.any(), createProduct);
+router.put(   "/:id",  authMiddleware, uploadProducts.any(), updateProduct);
+router.delete("/:id",  authMiddleware, deleteProduct);
+router.post(  "/bulk", authMiddleware, csvUpload.single("csv"), bulkCreateProducts);
 
 export default router;

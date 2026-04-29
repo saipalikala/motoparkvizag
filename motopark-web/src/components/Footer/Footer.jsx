@@ -26,7 +26,7 @@ const Footer = () => {
 
                     {/* SOCIAL */}
                     <div className="footer-social">
-                        <a href="https://instagram.com" target="_blank" rel="noreferrer"
+                        <a href="https://www.instagram.com/motopark_official?igsh=OWcyZHpsamFvMXZ6"
                             className="footer-social-btn" aria-label="Instagram">
                             <Instagram size={16} />
                         </a>

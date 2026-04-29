@@ -81,7 +81,7 @@
     padding: 9px 12px 9px 36px;
     border: 1.5px solid rgba(11, 29, 58, .1);
     border-radius: 100px;
-    background: #fff;
+    background: #fff;;
     font-size: 13px;
     color: #0b1d3a;
     outline: none;
@@ -102,7 +102,7 @@
     padding: 6px 12px;
     border-radius: 100px;
     border: 1.5px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #6e6e73;
     cursor: pointer;
     transition: all .15s;
@@ -120,7 +120,7 @@
 }
 
 .inv-table-wrap {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 16px;
     overflow: hidden;
@@ -256,7 +256,7 @@
 
 .inv-stock-input:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .inv-stock-input--dirty {

@@ -122,7 +122,7 @@
    TOOLBAR
 ════════════════════════════════ */
 .store-toolbar {
-    background: #ffffff;
+    background: #fff;
     border-bottom: 1px solid rgba(11, 29, 58, 0.07);
     padding: 0 48px;
     display: flex;
@@ -142,7 +142,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #0b1d3a;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, 0.12);
     padding: 7px 14px;
     border-radius: 100px;
@@ -228,7 +228,7 @@
     height: 28px;
     border-radius: 100px;
     border: none;
-    background: transparent;
+    background: #fff;
     color: #6e6e73;
     display: flex;
     align-items: center;
@@ -242,7 +242,7 @@
 }
 
 .store-view-btn--active {
-    background: #ffffff;
+    background: #fff;
     color: #0b1d3a;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
@@ -251,7 +251,7 @@
    ACTIVE PILLS
 ════════════════════════════════ */
 .store-active-filters {
-    background: #fff;
+    background: #fff;;
     border-bottom: 1px solid rgba(11, 29, 58, 0.06);
     padding: 10px 48px;
 }
@@ -297,7 +297,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #ff6b3d;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     padding: 5px 8px;
@@ -340,7 +340,7 @@
    FILTER PANEL (shared desktop + mobile)
 ════════════════════════════════ */
 .sf-panel {
-    background: #ffffff;
+    background: #fff;
     border-radius: 16px;
     border: 1px solid rgba(11, 29, 58, 0.07);
     overflow: hidden;
@@ -365,7 +365,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #ff6b3d;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     padding: 0;
@@ -397,7 +397,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 20px;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     font-size: 13px;
@@ -431,7 +431,7 @@
 }
 
 .sf-check-list::-webkit-scrollbar-track {
-    background: transparent;
+    background: #fff;
 }
 
 .sf-check-list::-webkit-scrollbar-thumb {
@@ -464,7 +464,7 @@
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
-    background: #fff;
+    background: #fff;;
     cursor: pointer;
 }
 
@@ -484,7 +484,7 @@
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
-    background: #fff;
+    background: #fff;;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
 
@@ -531,7 +531,7 @@
     padding: 6px 12px;
     border-radius: 8px;
     border: 1.5px solid rgba(11, 29, 58, 0.12);
-    background: #fff;
+    background: #fff;;
     font-size: 12px;
     font-weight: 600;
     color: #0b1d3a;
@@ -667,7 +667,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #fff4f0;
+    background: #fff;
     border: 1px solid #ffd4c2;
     color: #cc4a1a;
     font-size: 11px;
@@ -759,7 +759,7 @@
     left: 0;
     right: 0;
     z-index: 99;
-    background: #ffffff;
+    background: #fff;
     border-radius: 20px 20px 0 0;
     max-height: 88vh;
     overflow-y: auto;
@@ -789,7 +789,7 @@
 .sf-panel--mobile {
     border-radius: 0;
     border: none;
-    background: transparent;
+    background: #fff;
 }
 
 .sf-mobile-header {
@@ -800,7 +800,7 @@
     border-bottom: 1px solid rgba(11, 29, 58, 0.08);
     position: sticky;
     top: 0;
-    background: #fff;
+    background: #fff;;
     z-index: 2;
 }
 
@@ -833,7 +833,7 @@
     position: sticky;
     bottom: 0;
     padding: 16px 20px;
-    background: #fff;
+    background: #fff;;
     border-top: 1px solid rgba(11, 29, 58, 0.08);
     display: flex;
     gap: 10px;
@@ -844,7 +844,7 @@
     padding: 13px;
     border-radius: 100px;
     border: 1.5px solid rgba(11, 29, 58, 0.15);
-    background: transparent;
+    background: #fff;
     font-size: 14px;
     font-weight: 600;
     color: #0b1d3a;
@@ -901,7 +901,7 @@
    STORE CARD — GRID
 ════════════════════════════════ */
 .store-card {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, 0.07);
     border-radius: 18px;
     overflow: hidden;
@@ -1053,7 +1053,7 @@
     height: 32px;
     border-radius: 50%;
     border: 1px solid rgba(11, 29, 58, 0.1);
-    background: #ffffff;
+    background: #fff;
     color: #6e6e73;
     display: flex;
     align-items: center;
@@ -1064,13 +1064,13 @@
 }
 
 .store-wish-btn:hover {
-    background: #fff0eb;
+    background: #fff;
     border-color: rgba(255, 107, 61, .35);
     transform: scale(1.1);
 }
 
 .store-wish-btn--active {
-    background: #fff0eb;
+    background: #fff;
     border-color: rgba(255, 107, 61, .5);
 }
 
@@ -1110,7 +1110,7 @@
 }
 
 .store-cart-btn--added {
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(255, 107, 61, 0.4);
     color: #ff6b3d;
 }
@@ -1188,7 +1188,7 @@
    SKELETON
 ════════════════════════════════ */
 .store-skeleton {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, 0.06);
     border-radius: 18px;
     overflow: hidden;

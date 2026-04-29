@@ -1,6 +1,8 @@
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 import Product from "../models/productModel.js";
 import mongoose from "mongoose";
-
+const filterCache = new Map();
+const FILTER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 /* ===============================
    HELPER — safe JSON parse
 =============================== */
@@ -35,7 +37,6 @@ const buildVariants = (rawVariants, files, existingVariants = []) => {
             const newImages = newFiles.map(f => {
                 const url = f.path || f.secure_url || f.url || f.filename;
                 if (!url) {
-                    console.log("❌ Invalid file object:", f);
                     throw new Error("Image upload failed - no URL returned");
                 }
                 return url;
@@ -78,7 +79,10 @@ export const getProducts = async (req, res) => {
 
         const query = {};
 
-        if (search) query.name = { $regex: search, $options: "i" };
+        if (search) {
+    const safe = escapeRegex(search.trim().slice(0, 100)); // cap length too
+    query.name = { $regex: safe, $options: "i" };
+}
         if (brand) query.brand = { $in: brand.split(",") };
         if (size) query["variants.sizes.size"] = size;
         if (color) query["variants.color"] = { $in: color.split(",") };
@@ -125,46 +129,55 @@ export const getProducts = async (req, res) => {
    GET FILTER OPTIONS
 =============================== */
 export const getProductFilters = async (req, res) => {
-    try {
-        const match = {};
-        if (req.query.category) match.category = req.query.category;
+  try {
+    const cacheKey = req.query.category || "__all__";
+    const cached = filterCache.get(cacheKey);
 
-        const pipeline = [
-            ...(Object.keys(match).length ? [{ $match: match }] : []),
-            {
-                $facet: {
-                    brands: [{ $group: { _id: "$brand" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, brand: "$_id" } }],
-                    sizes: [{ $unwind: "$variants" }, { $unwind: "$variants.sizes" }, { $group: { _id: "$variants.sizes.size" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, size: "$_id" } }],
-                    colors: [{ $unwind: "$variants" }, { $group: { _id: "$variants.color" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, color: "$_id" } }],
-                    priceRange: [{ $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } }]
-                }
-            }
-        ];
-
-        const [result] = await Product.aggregate(pipeline);
-
-        res.json({
-            brands: result.brands.map(b => b.brand).filter(Boolean),
-            sizes: result.sizes.map(s => s.size).filter(Boolean),
-            colors: result.colors.map(c => c.color).filter(Boolean),
-            priceRange: result.priceRange[0] || { min: 0, max: 10000 },
-        });
-
-    } catch (error) {
-        console.error("❌ GET FILTERS ERROR:", error);
-        res.status(500).json({ error: error.message });
+    if (cached && Date.now() - cached.time < FILTER_CACHE_TTL) {
+      return res.json(cached.data);
     }
-};
 
+    const match = {};
+    if (req.query.category) match.category = req.query.category;
+
+    const pipeline = [
+      ...(Object.keys(match).length ? [{ $match: match }] : []),
+      {
+        $facet: {
+          brands:     [{ $group: { _id: "$brand" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, brand: "$_id" } }],
+          sizes:      [{ $unwind: "$variants" }, { $unwind: "$variants.sizes" }, { $group: { _id: "$variants.sizes.size" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, size: "$_id" } }],
+          colors:     [{ $unwind: "$variants" }, { $group: { _id: "$variants.color" } }, { $sort: { _id: 1 } }, { $project: { _id: 0, color: "$_id" } }],
+          priceRange: [{ $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } }],
+        },
+      },
+    ];
+
+    const [result] = await Product.aggregate(pipeline);
+
+    const data = {
+      brands:     result.brands.map(b => b.brand).filter(Boolean),
+      sizes:      result.sizes.map(s => s.size).filter(Boolean),
+      colors:     result.colors.map(c => c.color).filter(Boolean),
+      priceRange: result.priceRange[0] || { min: 0, max: 10000 },
+    };
+
+    filterCache.set(cacheKey, { data, time: Date.now() });
+
+    // Invalidate cache when products change
+    // Call filterCache.clear() at the end of createProduct, updateProduct, deleteProduct
+    res.json(data);
+
+  } catch (error) {
+    console.error("❌ GET FILTERS ERROR:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 /* ===============================
    CREATE PRODUCT
 =============================== */
 export const createProduct = async (req, res) => {
     try {
-        console.log("📦 CREATE — body keys :", Object.keys(req.body));
-        console.log("📦 CREATE — category  :", req.body.category);
-        console.log("📦 CREATE — variants  :", req.body.variants?.slice(0, 80));
-        console.log("📦 CREATE — files     :", req.files?.map(f => ({ field: f.fieldname, path: f.path })));
+       
 
         const { name, price, brand, description, specs, care } = req.body;
 
@@ -182,18 +195,15 @@ export const createProduct = async (req, res) => {
             return res.status(400).json({ message: "Invalid variants JSON — check frontend FormData" });
         }
 
-        console.log("📦 CREATE — rawVariants count:", rawVariants.length);
 
         let variants;
         try {
-            console.log("📂 FILES RECEIVED:", req.files);
             variants = buildVariants(rawVariants, req.files, []);
         } catch (err) {
             console.error("🔥 BUILD VARIANTS ERROR:", err);
             return res.status(500).json({ message: err.message });
         }
 
-        console.log("📦 CREATE — built variants count:", variants.length);
 
         if (variants.length === 0) {
             return res.status(400).json({
@@ -219,7 +229,7 @@ export const createProduct = async (req, res) => {
         });
 
         await product.save();
-        console.log("✅ Product saved:", product._id);
+        filterCache.clear();
         res.status(201).json(product);
 
     } catch (err) {
@@ -229,67 +239,59 @@ export const createProduct = async (req, res) => {
     }
 };
 
-/* ===============================
-   UPDATE PRODUCT
-=============================== */
+
+
 export const updateProduct = async (req, res) => {
     try {
-        console.log("📦 UPDATE — id      :", req.params.id);
-        console.log("📦 UPDATE — body keys:", Object.keys(req.body));
-
         const updateData = { ...req.body };
-        if ("specs" in updateData) updateData.specs = updateData.specs || "";
-        if ("care" in updateData) updateData.care = updateData.care || "";
-        if ("newArrival" in updateData) updateData.newArrival = updateData.newArrival === "true" || updateData.newArrival === true;
-        if ("featured" in updateData) updateData.featured = updateData.featured === "true" || updateData.featured === true;
-        if ("trending" in updateData) updateData.trending = updateData.trending === "true" || updateData.trending === true;
+
+        // Normalize booleans
+        ["newArrival", "featured", "trending"].forEach(flag => {
+            if (flag in updateData)
+                updateData[flag] = updateData[flag] === "true" || updateData[flag] === true;
+        });
 
         if ("price" in updateData) updateData.price = Number(updateData.price);
         if ("specs" in updateData) updateData.specs = updateData.specs || "";
-        if ("care" in updateData) updateData.care = updateData.care || "";
-        if (updateData.category) updateData.category = updateData.category.trim();
+        if ("care"  in updateData) updateData.care  = updateData.care  || "";
+        if (updateData.category)   updateData.category = updateData.category.trim();
 
+        // 🔥 Only ONE DB call here
+        const existing = await Product.findById(req.params.id).lean();
+        if (!existing) return res.status(404).json({ message: "Product not found" });
+
+        // Handle variants if present
         if (updateData.variants) {
             const rawVariants = safeParseVariants(updateData.variants);
-            if (rawVariants === null) {
+            if (rawVariants === null)
                 return res.status(400).json({ message: "Invalid variants JSON" });
-            }
-
-            const existing = await Product.findById(req.params.id).lean();
-            if (!existing) return res.status(404).json({ message: "Product not found" });
 
             let variants;
             try {
-                console.log("📂 UPDATE FILES:", req.files);
                 variants = buildVariants(rawVariants, req.files, existing.variants);
             } catch (err) {
-                console.error("🔥 UPDATE VARIANTS ERROR:", err);
                 return res.status(500).json({ message: err.message });
             }
 
-            if (variants.length === 0) {
-                return res.status(400).json({
-                    message: "At least one variant is required"
-                });
-            }
+            if (variants.length === 0)
+                return res.status(400).json({ message: "At least one variant is required" });
 
             updateData.variants = variants;
         }
 
+        // 🔥 SAME CALL → update + return
         const product = await Product.findByIdAndUpdate(
             req.params.id,
-            updateData,
-            { new: true, runValidators: true }
+            { $set: updateData },
+            { new: true, runValidators: true, lean: true }
         );
 
         if (!product) return res.status(404).json({ message: "Product not found" });
-
-        console.log("✅ Product updated:", product._id);
+filterCache.clear();
         res.json(product);
 
     } catch (error) {
         console.error("❌ UPDATE PRODUCT ERROR:", error.message);
-        console.error(error.stack);
         res.status(400).json({ error: error.message });
     }
 };
@@ -301,6 +303,7 @@ export const deleteProduct = async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ message: "Product not found" });
+        filterCache.clear();
         res.json({ message: "Product deleted" });
     } catch (error) {
         console.error("❌ DELETE PRODUCT ERROR:", error.message);
@@ -370,7 +373,6 @@ export const bulkCreateProducts = async (req, res) => {
 
         const created = await Product.insertMany(products);
 
-        console.log(`✅ Bulk created ${created.length} products`);
         res.status(201).json({
             message: `${created.length} products created successfully. Add images via the Edit panel.`,
             count: created.length,

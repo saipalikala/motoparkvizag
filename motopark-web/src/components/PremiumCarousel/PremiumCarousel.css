@@ -1,7 +1,7 @@
 /* ================================
-MOTO PARK — PREMIUM CAROUSEL (CLEANED)
-Optimized for: CLS + LCP
-================================ */
+   MOTO PARK — PREMIUM CAROUSEL
+   Final production build
+   ================================ */
 
 /* ─── SECTION ─── */
 .carousel {
@@ -9,20 +9,16 @@ Optimized for: CLS + LCP
     width: 100vw;
     height: calc(100vh - 110px);
     min-height: clamp(480px, 80vh, 700px);
-    /* ✅ CLS FIX */
     max-height: 900px;
     margin: 0;
     padding: 0;
     left: 50%;
     transform: translateX(-50%);
-    background: #08162d;
+    background: #0b1d3a;
     overflow: hidden;
     cursor: grab;
 }
-
-.carousel:active {
-    cursor: grabbing;
-}
+.carousel:active { cursor: grabbing; }
 
 /* ─── SLIDE ─── */
 .carousel-slide {
@@ -30,13 +26,39 @@ Optimized for: CLS + LCP
     inset: 0;
     width: 100%;
     min-height: clamp(480px, 80vh, 700px);
-    /* ✅ CLS FIX */
     overflow: hidden;
     will-change: transform, opacity;
+    contain: layout style paint;
 }
 
-/* ✅ IMAGE AS BACKGROUND REPLACEMENT */
+/* ─── BG WRAP ─── */
+.carousel-bg-wrap {
+    position: absolute;
+    inset: -10%;
+    width: 120%;
+    height: 120%;
+}
+
+/* ─── BACKGROUND IMAGE ─── */
 .carousel-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+    transform: translateZ(0);
+    /* [U1]: Ken Burns slow zoom — resets naturally on every slide mount */
+    animation: slowZoom 10s ease-out forwards;
+}
+
+/* [U1]: Cinematic Ken Burns — scale 1.0 → 1.08 over 10s */
+@keyframes slowZoom {
+    from { transform: translateZ(0) scale(1.0); }
+    to   { transform: translateZ(0) scale(1.08); }
+}
+
+/* ─── VIDEO BACKGROUND ─── */
+.carousel-bg-video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -44,6 +66,88 @@ Optimized for: CLS + LCP
     object-fit: cover;
     object-position: center;
     z-index: 0;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* [U1]: Ken Burns on video too */
+    animation: slowZoom 10s ease-out forwards, videoFadeIn 0.8s ease forwards;
+}
+
+@keyframes videoFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Collapse parallax padding when slide contains video */
+.carousel-slide:has(.carousel-bg-video) .carousel-bg-wrap {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ─── VIDEO BADGE ─── */
+.carousel-video-badge {
+    position: absolute;
+    top: 36px;
+    left: 48px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 100px;
+    padding: 6px 12px 6px 10px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    pointer-events: none;
+    animation: badgePulse 3s ease-in-out infinite;
+}
+.carousel-video-badge svg { opacity: 0.9; flex-shrink: 0; }
+
+@keyframes badgePulse {
+    0%, 100% { opacity: 0.85; }
+    50%       { opacity: 1; }
+}
+
+/* ─── [U3] MUTE BUTTON ───────────────────────────────────────────────────────
+   Netflix-style frosted pill, top-right of video slides.
+   Positioned to not collide with the slide counter. */
+.carousel-mute-btn {
+    position: absolute;
+    top: 36px;
+    right: 100px; /* left of the counter */
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition:
+        background var(--dur-fast, 160ms) ease,
+        color      var(--dur-fast, 160ms) ease,
+        transform  var(--dur-fast, 160ms) ease;
+}
+.carousel-mute-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    transform: scale(1.1);
+}
+.carousel-mute-btn:active {
+    transform: scale(0.93);
 }
 
 /* ─── OVERLAY ─── */
@@ -53,10 +157,10 @@ Optimized for: CLS + LCP
     z-index: 1;
     background:
         linear-gradient(to bottom,
-            rgba(0, 0, 0, 0.15) 0%,
-            rgba(0, 0, 0, 0.1) 35%,
-            rgba(11, 29, 58, 0.72) 75%,
-            rgba(8, 22, 45, 0.95) 100%);
+            rgba(11, 29, 58, 0.15) 0%,
+            rgba(11, 29, 58, 0.35) 55%,
+            rgba(11, 29, 58, 0.72) 100%);
+    pointer-events: none;
 }
 
 /* ─── CONTENT ─── */
@@ -66,10 +170,9 @@ Optimized for: CLS + LCP
     left: 72px;
     max-width: 540px;
     z-index: 2;
-    color: #ffffff;
+    color: var(--text-primary);
 }
 
-/* EYEBROW */
 .carousel-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -78,79 +181,77 @@ Optimized for: CLS + LCP
     font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #ff6b3d;
+    color: var(--color-accent);
     margin-bottom: 16px;
 }
-
 .carousel-eyebrow::before {
     content: '';
     width: 22px;
     height: 2px;
-    background: #ff6b3d;
+    background: var(--color-accent);
     border-radius: 2px;
 }
 
-/* TITLE */
 .carousel-title {
     font-family: 'Sakana', -apple-system, sans-serif;
     font-size: clamp(38px, 5vw, 68px);
     font-weight: 400;
-    color: #ffffff;
+    color: var(--text-primary);
     letter-spacing: -0.03em;
     line-height: 0.95;
     margin-bottom: 18px;
 }
 
-/* SUBTITLE */
 .carousel-subtitle {
     font-size: clamp(14px, 1.6vw, 17px);
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: 32px;
     max-width: 400px;
 }
 
-/* ─── ACTION BUTTONS ─── */
-.carousel-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
+/* ─── BUTTONS ─── */
+.carousel-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
 .carousel-cta {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #ff6b3d;
+    background: var(--color-accent);
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
     padding: 13px 26px;
-    border-radius: 100px;
+    border-radius: var(--radius-full);
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: opacity var(--dur-fast, 160ms) ease, transform var(--dur-fast, 160ms) ease;
 }
-
-.carousel-cta:hover {
-    opacity: 0.88;
-    transform: translateY(-2px);
-}
+.carousel-cta:hover { opacity: 0.88; transform: translateY(-2px); }
 
 .carousel-cta-ghost {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
     font-size: 13px;
     font-weight: 600;
     padding: 13px 22px;
-    border-radius: 100px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-light);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition:
+        background    var(--dur-fast, 160ms) ease,
+        color         var(--dur-fast, 160ms) ease,
+        border-color  var(--dur-fast, 160ms) ease;
+}
+.carousel-cta-ghost:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* ─── COUNTER ─── */
@@ -161,7 +262,18 @@ Optimized for: CLS + LCP
     z-index: 3;
     display: flex;
     gap: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
 }
+.carousel-counter-sep {
+    width: 16px; height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    align-self: center;
+}
+.carousel-counter-cur   { color: var(--text-primary); font-weight: 700; }
+.carousel-counter-total { color: var(--text-muted); }
 
 /* ─── ARROWS ─── */
 .carousel-arrow {
@@ -169,23 +281,32 @@ Optimized for: CLS + LCP
     top: 50%;
     transform: translateY(-50%);
     z-index: 5;
-    width: 46px;
-    height: 46px;
+    width: 46px; height: 46px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition:
+        background   var(--dur-fast, 160ms) ease,
+        border-color var(--dur-fast, 160ms) ease,
+        color        var(--dur-fast, 160ms) ease,
+        transform    var(--dur-fast, 160ms) ease;
 }
-
-.carousel-arrow--left {
-    left: 28px;
+.carousel-arrow:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    transform: translateY(-50%) scale(1.08);
 }
-
-.carousel-arrow--right {
-    right: 28px;
-}
+.carousel-arrow:active { transform: translateY(-50%) scale(0.95); }
+.carousel-arrow--left  { left: 28px; }
+.carousel-arrow--right { right: 28px; }
 
 /* ─── BOTTOM BAR ─── */
 .carousel-bar {
@@ -196,44 +317,132 @@ Optimized for: CLS + LCP
     z-index: 3;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+.carousel-bar-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 /* ─── DOTS ─── */
-.carousel-dots {
-    display: flex;
-    gap: 8px;
-}
+.carousel-dots { display: flex; gap: 8px; align-items: center; }
 
 .carousel-dot {
     height: 3px;
     width: 32px;
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.15);
     border: none;
+    border-radius: 2px;
     cursor: pointer;
+    transition:
+        width      var(--dur-mid, 300ms) var(--ease-smooth, ease),
+        background var(--dur-mid, 300ms) ease;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+    min-height: 20px; /* accessible tap target */
+}
+.carousel-dot--active       { width: 48px; background: rgba(255, 255, 255, 0.2); }
+.carousel-dot--video:not(.carousel-dot--active) { background: rgba(255, 255, 255, 0.1); }
+
+/* Tiny play ▶ inside inactive video dot */
+.carousel-dot-video-icon {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 2.5px 0 2.5px 4px;
+    border-color: transparent transparent transparent rgba(255, 255, 255, 0.5);
+    pointer-events: none;
 }
 
-.carousel-dot--active {
-    width: 48px;
-    background: rgba(255, 255, 255, 0.3);
+/* Timed fill for image slides */
+.carousel-dot-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%; width: 0%;
+    background: var(--color-accent);
+    border-radius: 2px;
+    animation: dotFill linear forwards;
+}
+@keyframes dotFill {
+    from { width: 0%; }
+    to   { width: 100%; }
+}
+
+/* [B]: Active video dot — solid accent bar, no timer animation */
+.carousel-dot-fill--video-active {
+    width: 100%;
+    animation: none;
+    opacity: 0.7;
+}
+
+/* ─── SKELETON ─── */
+.carousel-skeleton {
+    position: relative;
+    width: 100vw;
+    height: calc(100vh - 110px);
+    min-height: clamp(480px, 80vh, 700px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(
+        90deg,
+        #0b1d3a 25%,
+        #0f2547 50%,
+        #0b1d3a 75%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+@keyframes skeletonShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* ─── MOBILE ─── */
 @media (max-width: 768px) {
-
     .carousel,
     .carousel-slide {
         min-height: clamp(320px, 60vh, 500px);
+        background: #0b1d3a !important;
     }
+    .carousel-content  { left: 20px; right: 20px; bottom: 80px; }
+    .carousel-arrow    { display: none; }
+    .carousel-bar      { left: 20px; right: 20px; }
+    .carousel-counter  { right: 20px; }
+    .carousel-video-badge { left: 20px; top: 20px; }
+    .carousel-mute-btn { right: 20px; top: 68px; } /* stack below badge on mobile */
+}
 
-    .carousel-content {
-        left: 20px;
-        right: 20px;
-        bottom: 80px;
+/* ─── REDUCED MOTION ─── */
+@media (prefers-reduced-motion: reduce) {
+    /* Kill Ken Burns zoom */
+    .carousel-bg-img,
+    .carousel-bg-video {
+        animation: none;
+        transform: translateZ(0);
     }
-
-    .carousel-arrow {
-        display: none;
+    /* Kill badge pulse */
+    .carousel-video-badge {
+        animation: none;
+        opacity: 1;
     }
-
-
+    /* Kill skeleton shimmer */
+    .carousel-skeleton {
+        animation: none;
+        background: #0b1d3a;
+    }
+    /* Kill dot fill animation */
+    .carousel-dot-fill {
+        animation: none;
+        width: 100%;
+    }
+    /* Kill slide transitions (Framer Motion respects this via CSS) */
+    .carousel-slide {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
 }

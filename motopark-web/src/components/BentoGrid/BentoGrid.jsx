@@ -1,156 +1,171 @@
 /* ================================================
-   File: motopark-web/src/components/BentoGrid/BentoGrid.jsx
+   BentoGrid.jsx — Split-Screen Product Theater
+   Concept 03 — light theme, production-ready
 
-   CHANGE: accepts `products` prop instead of calling useProducts().
-   This eliminates the internal dependency on ProductContext for homepage.
-   Still works with ProductContext if used on other pages (backwards compatible).
+   Layout:
+   ┌──────────────────────┬──────────────────┐
+   │                      │  item row 1      │
+   │   BIG FOCAL IMAGE    │  item row 2      │
+   │   + product info     │  item row 3      │
+   │                      │  item row 4      │
+   └──────────────────────┴──────────────────┘
+
+   Interactions:
+   • Hover a row → image + info on left updates instantly
+   • Active row has orange left bar + accent background
+   • Image crossfades with CSS opacity transition
+   • Add-to-cart inline per row, wishlist on left panel
+   • All data wiring identical to original BentoGrid
    ================================================ */
+import { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useProducts } from "@/context/ProductContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useNavigate } from "react-router-dom";
-import "./BentoGrid.css";
 import { API as BASE_URL } from "@/config/api";
+import "./BentoGrid.css";
 
-/* ─── BIKE SVG ILLUSTRATION ─── */
-const BikeSVG = ({ size = "small" }) => {
-    const isHero = size === "hero";
-    const W = isHero ? 480 : 300;
-    const H = isHero ? 290 : 210;
-    const cx1 = isHero ? 128 : 76;
-    const cx2 = isHero ? 362 : 224;
-    const cy = isHero ? 210 : 150;
-    const r = isHero ? 74 : 54;
-    const ri = isHero ? 58 : 42;
-    const hub = isHero ? 13 : 10;
+const EASE = [0.25, 0.46, 0.45, 0.94];
 
-    const spokeOffsets = [
-        [0, -1], [0, 1], [-1, 0], [1, 0],
-        [-0.7, -0.7], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7]
-    ];
+/* ── Image URL resolver (unchanged from original) ── */
+function resolveImage(product) {
+    const raw = product?.images?.[0] || product?.variants?.[0]?.images?.[0];
+    if (!raw) return null;
+    return raw.startsWith("http") ? raw : `${BASE_URL}${raw.startsWith("/") ? "" : "/"}${raw}`;
+}
 
-    const renderWheel = (cx) => (
-        <g key={cx}>
-            <circle cx={cx} cy={cy} r={r} stroke="rgba(255,255,255,0.16)" strokeWidth={isHero ? 9 : 7} fill="none" />
-            <circle cx={cx} cy={cy} r={ri} stroke="rgba(255,255,255,0.07)" strokeWidth="1.5" fill="none" />
-            <circle cx={cx} cy={cy} r={hub} fill="rgba(255,107,61,0.4)" />
-            {spokeOffsets.map(([dx, dy], i) => (
-                <line key={i}
-                    x1={cx + dx * (hub + 2)} y1={cy + dy * (hub + 2)}
-                    x2={cx + dx * (ri - 2)} y2={cy + dy * (ri - 2)}
-                    stroke="rgba(255,255,255,0.13)" strokeWidth="1.2"
-                />
-            ))}
-        </g>
-    );
+/* ── Category label resolver (unchanged) ── */
+function categoryLabel(product) {
+    if (!product?.category) return null;
+    if (typeof product.category === "object") return product.category.name;
+    if (product.category.length !== 24) return product.category;
+    return null;
+}
 
-    if (isHero) return (
-        <svg className="bike-svg hero-bike" viewBox={`0 0 ${W} ${H}`} fill="none">
-            {renderWheel(128)} {renderWheel(362)}
-            <path d="M128 210 L222 102 L316 102 L362 210" stroke="rgba(255,255,255,0.8)" strokeWidth="5.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M222 102 L202 210 L128 210" stroke="rgba(255,255,255,0.4)" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M316 102 L344 175 L362 210" stroke="rgba(255,255,255,0.6)" strokeWidth="4.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M316 102 L336 78 L380 84" stroke="rgba(255,255,255,0.88)" strokeWidth="5.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M222 102 L196 92 L170 93" stroke="rgba(255,255,255,0.88)" strokeWidth="5" fill="none" strokeLinecap="round" />
-            <rect x="196" y="134" width="96" height="56" rx="10" fill="rgba(255,107,61,0.1)" stroke="rgba(255,107,61,0.42)" strokeWidth="1.5" />
-            <path d="M198 188 L168 200 L150 220" stroke="#ff6b3d" strokeWidth="4.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
-            <path d="M316 102 L334 118 L340 140" stroke="rgba(255,107,61,0.5)" strokeWidth="3" fill="none" strokeLinecap="round" />
-        </svg>
-    );
+/* ── Discount % ── */
+function discountPct(price, original) {
+    if (!original || original <= price) return null;
+    return Math.round((1 - price / original) * 100);
+}
 
-    return (
-        <svg className="bike-svg" viewBox={`0 0 ${W} ${H}`} fill="none">
-            {renderWheel(76)} {renderWheel(224)}
-            <path d="M76 150 L140 62 L204 62 L224 150" stroke="rgba(255,255,255,0.78)" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M140 62 L124 150 L76 150" stroke="rgba(255,255,255,0.38)" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M204 62 L213 108 L224 150" stroke="rgba(255,255,255,0.55)" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M204 62 L222 44 L250 48" stroke="rgba(255,255,255,0.88)" strokeWidth="4.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M140 62 L122 55 L108 55" stroke="rgba(255,255,255,0.88)" strokeWidth="4" fill="none" strokeLinecap="round" />
-            <rect x="126" y="94" width="66" height="38" rx="7" fill="rgba(255,107,61,0.1)" stroke="rgba(255,107,61,0.38)" strokeWidth="1.2" />
-            <path d="M122 146 L100 156 L90 168" stroke="#ff6b3d" strokeWidth="3.2" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
-        </svg>
-    );
-};
-
+/* ── Icons ── */
 const HeartIcon = ({ filled }) => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#ff6b3d" : "none"}
-        stroke={filled ? "#ff6b3d" : "currentColor"} strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round">
+    <svg width="17" height="17" viewBox="0 0 24 24"
+        fill={filled ? "#ff6b3d" : "none"}
+        stroke={filled ? "#ff6b3d" : "currentColor"}
+        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
 );
-
 const CartIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
     </svg>
 );
+const ArrowIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+const CheckIcon = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+    </svg>
+);
 
-const BentoCard = ({ product, size = "small" }) => {
-    const { addToCart, cartItems } = useCart();
+/* ── Fallback placeholder SVG ── */
+const PlaceholderSVG = () => (
+    <svg viewBox="0 0 240 240" fill="none" className="bento-placeholder-svg">
+        <circle cx="60"  cy="175" r="48" stroke="rgba(232,84,30,0.12)" strokeWidth="8" />
+        <circle cx="180" cy="175" r="48" stroke="rgba(232,84,30,0.12)" strokeWidth="8" />
+        <path d="M60 175 L108 95 L168 95 L180 175"
+            stroke="rgba(232,84,30,0.28)" strokeWidth="5.5" fill="none"
+            strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M168 95 L184 70 L208 74"
+            stroke="rgba(232,84,30,0.32)" strokeWidth="5" fill="none"
+            strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="100" y="118" width="58" height="32" rx="7"
+            fill="rgba(232,84,30,0.08)" stroke="rgba(232,84,30,0.22)" strokeWidth="1.5" />
+    </svg>
+);
+
+/* ════════════════════════════════
+   LEFT PANEL — big focal display
+════════════════════════════════ */
+const FocalPanel = ({ product, onNavigate }) => {
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-    const navigate = useNavigate();
+    if (!product) return <div className="bsg-focal" />;
 
+    const image      = resolveImage(product);
     const wishlisted = isInWishlist(product._id);
-    const inCart = cartItems.some(i => i._id === product._id);
-
-    const rawImage = product.images?.[0] || product.variants?.[0]?.images?.[0] || null;
-    const image = rawImage
-        ? rawImage.startsWith("http") ? rawImage : `${BASE_URL}${rawImage.startsWith("/") ? "" : "/"}${rawImage}`
-        : null;
-
-    const isHero = size === "hero";
-
-    const categoryLabel = product.category && typeof product.category === "object"
-        ? product.category?.name
-        : (product.category?.length === 24 ? null : product.category);
+    const label      = categoryLabel(product);
+    const disc       = discountPct(product.price, product.originalPrice);
 
     return (
-        <div
-            className={`bento-card ${isHero ? "bento-card--hero" : "bento-card--small"}`}
-            onClick={() => navigate(`/product/${product._id}`)}
-            role="button" tabIndex={0}
-            onKeyDown={(e) => e.key === "Enter" && navigate(`/product/${product._id}`)}>
-            <div className="card-accent" />
-            <div className="card-image">
-                {image
-                    ? <img
-                        src={image}
-                        alt={product.name}
-                        className="card-photo"
-                        loading="lazy"
-                        decoding="async"
-                    />
-                    : <BikeSVG size={size} />
-                }
-            </div>
-            <div className="card-gradient" />
+        <div className="bsg-focal" onClick={onNavigate} role="button" tabIndex={0}
+            onKeyDown={e => e.key === "Enter" && onNavigate()}>
+
+            {/* image crossfade */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={product._id}
+                    className="bsg-focal-img"
+                    initial={{ opacity: 0, scale: 1.04 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ duration: 0.42, ease: EASE }}
+                >
+                    {image
+                        ? <img src={image} alt={product.name} loading="eager" decoding="async" />
+                        : <PlaceholderSVG />
+                    }
+                </motion.div>
+            </AnimatePresence>
+
+            {/* overlay gradient */}
+            <div className="bsg-focal-grad" />
+
+            {/* wishlist */}
             <button
-                className={`card-wishlist ${wishlisted ? "card-wishlist--active" : ""}`}
-                onClick={(e) => { e.stopPropagation(); wishlisted ? removeFromWishlist(product._id) : addToWishlist(product); }}
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}>
+                className={`bsg-wish ${wishlisted ? "bsg-wish--on" : ""}`}
+                onClick={e => { e.stopPropagation(); wishlisted ? removeFromWishlist(product._id) : addToWishlist(product); }}
+                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
                 <HeartIcon filled={wishlisted} />
             </button>
-            {product.featured && <span className="corner-tag">Featured</span>}
-            {product.trending && !product.featured && <span className="corner-tag corner-tag--new">New</span>}
-            <div className="card-info">
-                {categoryLabel && <span className="card-badge">{categoryLabel}</span>}
-                <h3 className="card-name">{product.name}</h3>
-                <div className="card-footer">
-                    <div className="price-row">
-                        <span className="card-price">₹{product.price?.toLocaleString("en-IN")}</span>
-                        {product.originalPrice && (
-                            <span className="price-original">₹{product.originalPrice?.toLocaleString("en-IN")}</span>
-                        )}
-                    </div>
-                    <button
-                        className={`card-cart-btn ${inCart ? "card-cart-btn--added" : ""}`}
-                        onClick={(e) => { e.stopPropagation(); addToCart(product); }}
-                        aria-label="Add to cart">
-                        <CartIcon /><span>{inCart ? "Added" : "Add"}</span>
-                    </button>
+
+            {/* tags */}
+            {disc && <span className="bsg-focal-tag bsg-focal-tag--sale">−{disc}%</span>}
+            {!disc && product.featured && <span className="bsg-focal-tag">Featured</span>}
+
+            {/* bottom info */}
+            <div className="bsg-focal-info">
+                {label && <span className="bsg-focal-cat">{label}</span>}
+                <AnimatePresence mode="wait">
+                    <motion.div key={product._id + "-info"}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.3, ease: EASE }}>
+                        <h3 className="bsg-focal-name">{product.name}</h3>
+                        <div className="bsg-focal-price-row">
+                            <span className="bsg-focal-price">
+                                ₹{product.price?.toLocaleString("en-IN")}
+                            </span>
+                            {product.originalPrice && (
+                                <span className="bsg-focal-price-old">
+                                    ₹{product.originalPrice?.toLocaleString("en-IN")}
+                                </span>
+                            )}
+                        </div>
+                    </motion.div>
+                </AnimatePresence>
+                <div className="bsg-focal-cta" onClick={e => e.stopPropagation()}>
+                    <span className="bsg-focal-hint">View Details →</span>
                 </div>
             </div>
         </div>
@@ -158,58 +173,172 @@ const BentoCard = ({ product, size = "small" }) => {
 };
 
 /* ════════════════════════════════
-   BENTO GRID
-   ✅ Now accepts `products` prop from Home.jsx
-   ✅ Falls back to ProductContext if used standalone
+   RIGHT PANEL — product list rows
 ════════════════════════════════ */
-const BentoGrid = ({ title, type, products: propProducts }) => {
-    /* If products passed as prop (from Home.jsx) use those.
-       Otherwise fall back to ProductContext (for other pages). */
-    const { products: ctxProducts } = useProducts();
-    const allProducts = propProducts || ctxProducts;
+const ListRow = ({ product, active, onHover, onSelect, index }) => {
+    const { addToCart, cartItems } = useCart();
+    const navigate = useNavigate();
+    const image   = resolveImage(product);
+    const inCart  = cartItems.some(i => i._id === product._id);
+    const label   = categoryLabel(product);
+    const disc    = discountPct(product.price, product.originalPrice);
 
-    let items = [];
-    if (type === "featured") items = allProducts.filter(p => p.featured);
-    if (type === "trending") items = allProducts.filter(p => p.trending);
+    const lastTap = useRef(0);
 
-    /* If products came from prop, they're already filtered — use directly */
-    if (propProducts && items.length === 0) items = propProducts;
-
-    const display = items.slice(0, 5);
-    if (display.length === 0) return null;
+    const handleTap = useCallback(() => {
+        const now = Date.now();
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+            if (now - lastTap.current < 350) {
+                // double tap → go to product
+                navigate(`/product/${product._id}`);
+            } else {
+                // single tap → show in hero
+                onSelect();
+            }
+            lastTap.current = now;
+        } else {
+            // desktop: single click goes to product page
+            navigate(`/product/${product._id}`);
+        }
+    }, [navigate, product._id, onSelect]);
 
     return (
-        <section className="bento-section">
-            <div className="bento-container">
-                <header className="bento-header">
-                    <div className="header-left">
-                        <p className="bento-eyebrow">
-                            {type === "featured" ? "Featured Collection" : "Trending Now"}
-                        </p>
-                        <h2 className="bento-title">{title}</h2>
-                        <p className="bento-subtitle">Engineered for riders who demand performance</p>
+        <motion.div
+            className={`bsg-row ${active ? "bsg-row--active" : ""}`}
+            onMouseEnter={onHover}
+            onClick={handleTap}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => e.key === "Enter" && navigate(`/product/${product._id}`)}
+            aria-label={`View ${product.name}`}
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.5, delay: index * 0.07, ease: EASE }}
+        >
+            {/* left accent bar */}
+            <div className="bsg-row-bar" />
+
+            {/* thumbnail */}
+            <div className="bsg-row-thumb">
+                {image
+                    ? <img src={image} alt={product.name} loading="lazy" decoding="async" />
+                    : <PlaceholderSVG />
+                }
+            </div>
+
+            {/* text */}
+            <div className="bsg-row-text">
+                {label && <span className="bsg-row-cat">{label}</span>}
+                <p className="bsg-row-name">{product.name}</p>
+                <div className="bsg-row-meta">
+                    {product.featured && <span className="bsg-row-badge">Featured</span>}
+                    {product.trending && !product.featured && <span className="bsg-row-badge bsg-row-badge--trend">Hot</span>}
+                    {disc && <span className="bsg-row-badge bsg-row-badge--sale">−{disc}%</span>}
+                </div>
+            </div>
+
+            {/* price + add */}
+            <div className="bsg-row-right" onClick={e => e.stopPropagation()}>
+                <div className="bsg-row-prices">
+                    <span className="bsg-row-price">₹{product.price?.toLocaleString("en-IN")}</span>
+                    {product.originalPrice && (
+                        <span className="bsg-row-price-old">₹{product.originalPrice?.toLocaleString("en-IN")}</span>
+                    )}
+                </div>
+                <button
+                    className={`bsg-row-add ${inCart ? "bsg-row-add--done" : ""}`}
+                    onClick={e => { e.stopPropagation(); addToCart(product); }}
+                    aria-label={inCart ? "Added to cart" : "Add to cart"}
+                >
+                    {inCart ? <CheckIcon /> : <CartIcon />}
+                    <span>{inCart ? "Added" : "Add"}</span>
+                </button>
+            </div>
+        </motion.div>
+    );
+};
+
+/* ════════════════════════════════
+   BENTO GRID — main export
+════════════════════════════════ */
+const BentoGrid = ({ title, type, products: propProducts }) => {
+    const { products: ctxProducts } = useProducts();
+    const navigate = useNavigate();
+
+    /* ── same filter logic as original ── */
+    const allProducts = propProducts ?? ctxProducts;
+    let items = type === "featured"
+        ? allProducts.filter(p => p.featured)
+        : type === "trending"
+            ? allProducts.filter(p => p.trending)
+            : [];
+    if (propProducts && items.length === 0) items = propProducts;
+    const display = items.slice(0, 5);
+
+    const [activeIdx, setActiveIdx] = useState(0);
+    const handleHover = useCallback((i) => setActiveIdx(i), []);
+
+    if (display.length === 0) return null;
+
+    const eyebrow = type === "featured" ? "Featured Collection" : "Trending Now";
+    const focused = display[activeIdx] ?? display[0];
+
+    return (
+        <section className="bsg-section">
+            <div className="bsg-container">
+
+                {/* ── Header ── */}
+                <motion.header
+                    className="bsg-header"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.6, ease: EASE }}
+                >
+                    <div className="bsg-header-left">
+                        <p className="bsg-eyebrow">{eyebrow}</p>
+                        <h2 className="bsg-title">{title}</h2>
+                        <p className="bsg-subtitle">Engineered for riders who demand performance</p>
                     </div>
-                    <a href="/store" className="view-all-btn">
-                        View All
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11"
-                                stroke="white" strokeWidth="1.7"
-                                strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                    <a href="/store" className="bsg-view-all" aria-label="View all products">
+                        View All <ArrowIcon />
                     </a>
-                </header>
-                <div className="bento-grid">
-                    <div className="bento-hero">
-                        <BentoCard product={display[0]} size="hero" />
-                    </div>
-                    <div className="bento-small">
-                        {display.slice(1).map(product => (
-                            <div className="bento-item" key={product._id}>
-                                <BentoCard product={product} size="small" />
-                            </div>
+                </motion.header>
+
+                {/* ── Theater split ── */}
+                <motion.div
+                    className="bsg-theater"
+                    initial={{ opacity: 0, y: 32 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
+                >
+                    {/* LEFT — focal panel */}
+                    <FocalPanel
+                        product={focused}
+                        onNavigate={() => navigate(`/product/${focused._id}`)}
+                    />
+
+                    {/* DIVIDER */}
+                    <div className="bsg-divider" />
+
+                    {/* RIGHT — list */}
+                    <div className="bsg-list">
+                        {display.map((product, i) => (
+<ListRow
+    key={product._id}
+    product={product}
+    active={i === activeIdx}
+    onHover={() => handleHover(i)}
+    onSelect={() => handleHover(i)}
+    index={i}
+/>
                         ))}
                     </div>
-                </div>
+                </motion.div>
+
             </div>
         </section>
     );

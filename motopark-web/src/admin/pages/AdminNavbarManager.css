@@ -20,7 +20,7 @@
 
 /* ─── CARD ─── */
 .anm-card {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 22px;
@@ -269,7 +269,7 @@
 
 .anm-link-input:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .anm-link-input:disabled {
@@ -352,7 +352,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 14px;
     padding: 14px 20px;

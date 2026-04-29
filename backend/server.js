@@ -1,6 +1,14 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config(); 
+import http from "http";
 
+
+console.log({
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+  CLOUDINARY_URL: process.env.CLOUDINARY_URL
+});
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import express from "express";
 import cors from "cors";
@@ -25,9 +33,8 @@ import storeConfigRoutes from "./routes/storeConfigRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import homeRoutes from "./routes/homeDataRoutes.js";
 import homeDataRoutes from "./routes/homeDataRoutes.js";
-
+import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
 /* ── SECURITY MIDDLEWARE ── */
 import {
    apiLimiter,
@@ -101,7 +108,6 @@ app.get("/api/health", (req, res) => {
    API ROUTES
 ════════════════════════════════ */
 app.use("/api/offers", offerRoutes);
-app.use("/api/home-data", homeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/navbar", navbarRoutes);
 app.use("/api/carousel", carouselRoutes);
@@ -120,7 +126,7 @@ app.use("/api/users", authLimiter, userRoutes);
 app.use("/api/home-data", homeDataRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRouter);
-
+app.use("/api/video-showcase", videoShowcaseRoutes);
 /* ════════════════════════════════
    ERROR HANDLING (must be last)
 ════════════════════════════════ */
@@ -152,16 +158,20 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
    console.log(`✅ Server running on port ${PORT}`);
 
-   const BACKEND_URL =
-      process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
-   setInterval(async () => {
-      try {
-         const res = await fetch(`${BACKEND_URL}/api/health`);
-         const data = await res.json();
-         console.log(`🏓 Keep-alive ping OK — ${data.timestamp}`);
-      } catch (e) {
-         console.warn("⚠️  Keep-alive ping failed:", e.message);
-      }
-   }, 14 * 60 * 1000);
+
+const BACKEND_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
+const keepAlive = () => {
+    const url = new URL(`${BACKEND_URL}/api/health`);
+    const req = http.get({ hostname: url.hostname, path: url.pathname, port: url.port || 80 }, (res) => {
+        res.resume(); // drain response
+        console.log(`🏓 Keep-alive OK — ${new Date().toISOString()}`);
+    });
+    req.on("error", (e) => console.warn("⚠️  Keep-alive failed:", e.message));
+    req.setTimeout(5000, () => { req.destroy(); });
+};
+
+setInterval(keepAlive, 14 * 60 * 1000);
 });
+

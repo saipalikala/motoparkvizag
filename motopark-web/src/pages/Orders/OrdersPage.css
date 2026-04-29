@@ -66,7 +66,7 @@
 
 /* ─── LOOKUP CARD ─── */
 .op-lookup-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 20px;
     padding: 32px 28px;
@@ -121,7 +121,7 @@
 
 .op-phone-wrap:focus-within {
     border-color: rgba(255, 107, 61, .5);
-    background: #fff;
+    background: #fff;;
 }
 
 .op-phone-wrap--error {
@@ -139,7 +139,7 @@
 
 .op-phone-input {
     flex: 1;
-    background: transparent;
+    background: #fff;
     border: none;
     outline: none;
     padding: 14px 16px;
@@ -227,7 +227,7 @@
 
 /* ─── NO ORDERS ─── */
 .op-no-orders {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 20px;
     padding: 48px 24px;
@@ -283,7 +283,7 @@
 
 /* ─── ORDER CARD ─── */
 .op-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 18px 20px 14px;
@@ -492,7 +492,7 @@
     height: 10px;
     border-radius: 50%;
     border: 2px solid rgba(11, 29, 58, .15);
-    background: #fff;
+    background: #fff;;
     flex-shrink: 0;
     transition: border-color .3s, background .3s;
 }

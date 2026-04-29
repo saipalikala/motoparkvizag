@@ -1,6 +1,5 @@
-import { Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
-
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import OfferBar from "@/components/OfferBar/OfferBar";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
@@ -35,15 +34,27 @@ const AdminCategories = lazy(() => import("@/admin/pages/AdminCategories"));
 const AdminOrders = lazy(() => import("@/admin/pages/AdminOrders"));
 const AdminHomeLayout = lazy(() => import("@/admin/pages/AdminHomeLayout"));
 const InventoryManager = lazy(() => import("@/admin/pages/InventoryManager"));
+const AdminVideoShowcase  = lazy(() => import("@/admin/pages/AdminVideoShowcase"));
 
+// Prefetch secondary routes after page is fully idle
 if (typeof window !== "undefined") {
-    window.addEventListener("load", () => {
-        setTimeout(() => {
-            import("@/pages/Cart/Cart");
-            import("@/pages/Checkout/Checkout");
-            import("@/pages/ProductDetail/ProductDetail");
-        }, 2000); // 2s delay — after FCP, don't compete with render
+  const prefetch = () => {
+    // Use requestIdleCallback to not compete with paint
+    const schedule = window.requestIdleCallback || ((fn) => setTimeout(fn, 2000));
+    schedule(() => {
+      Promise.allSettled([
+        import("@/pages/Cart/Cart"),
+        import("@/pages/Checkout/Checkout"),
+        import("@/pages/ProductDetail/ProductDetail"),
+      ]);
     });
+  };
+
+  if (document.readyState === "complete") {
+    prefetch();
+  } else {
+    window.addEventListener("load", prefetch, { once: true });
+  }
 }
 const PageLoader = () => (
     <div className="page-loading">
@@ -85,24 +96,26 @@ function App() {
                     <Route path="/account" element={<AccountPage />} />
 
                     <Route path="/admin/login" element={<AdminLogin />} />
-                    <Route path="/admin" element={
-                        <ProtectedRoute>
-                            <AdminLayout />
-                        </ProtectedRoute>
-                    }>
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="offers" element={<OffersAdmin />} />
-                        <Route path="navbar" element={<AdminNavbarManager />} />
-                        <Route path="carousel" element={<AdminCarouselManager />} />
-                        <Route path="products" element={<AdminProducts />} />
-                        <Route path="/admin/home-layout" element={<AdminHomeLayout />} />
-                        <Route path="/admin/collections" element={<AdminCollections />} />
-                        <Route path="/admin/home-builder" element={<HomeBuilder />} />
-                        <Route path="/admin/media" element={<AdminMedia />} />
-                        <Route path="/admin/categories" element={<AdminCategories />} />
-                        <Route path="/admin/orders" element={<AdminOrders />} />
-                        <Route path="/admin/inventory" element={<InventoryManager />} />
-                    </Route>
+<Route path="/admin" element={
+  <ProtectedRoute>
+    <AdminLayout />
+  </ProtectedRoute>
+}>
+  <Route index element={<Navigate to="dashboard" replace />} />
+  <Route path="dashboard"      element={<Dashboard />} />
+  <Route path="offers"         element={<OffersAdmin />} />
+  <Route path="navbar"         element={<AdminNavbarManager />} />
+  <Route path="carousel"       element={<AdminCarouselManager />} />
+  <Route path="products"       element={<AdminProducts />} />
+  <Route path="home-layout"    element={<AdminHomeLayout />} />
+  <Route path="collections"    element={<AdminCollections />} />
+  <Route path="home-builder"   element={<HomeBuilder />} />
+  <Route path="media"          element={<AdminMedia />} />
+  <Route path="categories"     element={<AdminCategories />} />
+  <Route path="orders"         element={<AdminOrders />} />
+  <Route path="inventory"      element={<InventoryManager />} />
+  <Route path="video-showcase" element={<AdminVideoShowcase />} />
+</Route>
                 </Routes>
             </Suspense>
 

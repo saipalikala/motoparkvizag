@@ -34,7 +34,7 @@
 .od-cancel-btn {
     padding: 10px 20px;
     border: 1.5px solid #e53e3e;
-    background: transparent;
+    background: #fff;
     color: #e53e3e;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -108,7 +108,7 @@
 
 .od-modal-dismiss {
     padding: 10px 20px;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid #ccc;
     border-radius: 8px;
     font-weight: 600;
@@ -183,7 +183,7 @@
     font-size: 13px;
     font-weight: 600;
     color: rgba(255, 255, 255, .5);
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     margin-bottom: 16px;
@@ -230,7 +230,7 @@
 
 /* ─── TIMELINE CARD ─── */
 .od-timeline-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 20px;
     padding: 24px;
@@ -339,7 +339,7 @@
 
 .od-step--current .od-step-circle {
     border-color: #ff6b3d;
-    background: #fff;
+    background: #fff;;
     color: #ff6b3d;
     box-shadow: 0 0 0 5px rgba(255, 107, 61, .12);
     animation: odPulse 2s ease-in-out infinite;
@@ -469,7 +469,7 @@
 
 /* ─── CARD ─── */
 .od-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 20px;
@@ -680,7 +680,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #0b1d3a;
-    background: #fff;
+    background: #fff;;
     border: 1.5px solid rgba(11, 29, 58, .12);
     padding: 11px 20px;
     border-radius: 100px;

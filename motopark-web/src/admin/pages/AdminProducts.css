@@ -31,7 +31,7 @@
     padding: 9px 36px;
     border: 1.5px solid rgba(11, 29, 58, .1);
     border-radius: 100px;
-    background: #fff;
+    background: #fff;;
     font-size: 13px;
     color: #0b1d3a;
     outline: none;
@@ -96,7 +96,7 @@
 }
 
 .ap-table-wrap {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 16px;
     overflow: hidden;
@@ -305,7 +305,7 @@
     bottom: 0;
     z-index: 41;
     width: min(520px, 95vw);
-    background: #fff;
+    background: #fff;;
     display: flex;
     flex-direction: column;
     box-shadow: -8px 0 40px rgba(0, 0, 0, .12);
@@ -373,7 +373,7 @@
     padding: 8px 12px;
     border-radius: 8px;
     border: none;
-    background: transparent;
+    background: #fff;
     font-size: 13px;
     font-weight: 500;
     color: #6e6e73;
@@ -386,7 +386,7 @@
 }
 
 .ap-tab--active {
-    background: #fff;
+    background: #fff;;
     color: #0b1d3a;
     font-weight: 600;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
@@ -456,7 +456,7 @@
 .ap-field select:focus,
 .ap-field textarea:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .ap-field--color input[type=color] {
@@ -484,7 +484,7 @@
 
 .ap-img-upload:hover {
     border-color: rgba(255, 107, 61, .4);
-    background: #fff;
+    background: #fff;;
 }
 
 .ap-img-grid {
@@ -581,7 +581,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: 1.5px dashed rgba(11, 29, 58, .15);
     padding: 7px 14px;
     border-radius: 10px;
@@ -617,7 +617,7 @@
     height: 28px;
     border-radius: 50%;
     border: 1px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #aeaeb2;
     display: flex;
     align-items: center;
@@ -638,7 +638,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #0b1d3a;
-    background: transparent;
+    background: #fff;
     border: 1.5px dashed rgba(11, 29, 58, .15);
     padding: 11px 20px;
     border-radius: 12px;
@@ -711,7 +711,7 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #fff;
+    background: #fff;;
     transition: transform .2s;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
 }
@@ -733,7 +733,7 @@
     padding: 12px;
     border: 1.5px solid rgba(11, 29, 58, .12);
     border-radius: 100px;
-    background: transparent;
+    background: #fff;
     font-size: 13px;
     font-weight: 600;
     color: #0b1d3a;
@@ -778,7 +778,7 @@
     padding: 12px 16px;
     border: 1.5px solid #e0e0e0;
     border-radius: 8px;
-    background: #fff;
+    background: #fff;;
     cursor: pointer;
     text-align: left;
     display: flex;
@@ -830,7 +830,7 @@ images all work same as today */
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    background: transparent;
+    background: #fff;
     transition: all 0.15s;
 }
 
@@ -850,7 +850,7 @@ images all work same as today */
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    background: transparent;
+    background: #fff;
     transition: all 0.15s;
 }
 
@@ -877,7 +877,7 @@ images all work same as today */
 }
 
 .ap-bulk-status--err {
-    background: #fff1f2;
+    background: #fff;1f2;
     color: #dc2626;
     border: 1px solid #fecaca;
 }
@@ -894,7 +894,7 @@ images all work same as today */
     padding: 12px 16px;
     border: 1.5px solid #e0e0e0;
     border-radius: 8px;
-    background: #fff;
+    background: #fff;;
     cursor: pointer;
     text-align: left;
     display: flex;

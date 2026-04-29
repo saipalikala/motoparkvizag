@@ -8,7 +8,7 @@
 }
 
 .am-upload-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 22px;
@@ -107,7 +107,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, .12);
     padding: 8px 14px;
     border-radius: 100px;
@@ -169,7 +169,7 @@
 }
 
 .am-search {
-    background: #fff;
+    background: #fff;;
     border: 1.5px solid rgba(11, 29, 58, .1);
     border-radius: 100px;
     padding: 8px 14px;
@@ -199,7 +199,7 @@
 }
 
 .am-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 14px;
     overflow: hidden;
@@ -249,7 +249,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #fff;
+    background: #fff;;
     color: #0b1d3a;
     font-size: 12px;
     font-weight: 700;

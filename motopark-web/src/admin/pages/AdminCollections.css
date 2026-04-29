@@ -9,7 +9,7 @@
 
 .ac-create-card,
 .ac-list-card {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 22px;
@@ -64,7 +64,7 @@
 
 .ac-create-input:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .ac-create-btn {
@@ -193,7 +193,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     transition: color .2s;
@@ -230,7 +230,7 @@
 
 /* PICKER */
 .ac-picker-panel {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     overflow: hidden;
@@ -372,7 +372,7 @@
 
 /* ORDER */
 .ac-order-panel {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     overflow: hidden;
@@ -444,7 +444,7 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    background: #fff;
+    background: #fff;;
     overflow: hidden;
     flex-shrink: 0;
 }
@@ -471,7 +471,7 @@
     height: 24px;
     border-radius: 50%;
     border: 1px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #aeaeb2;
     display: flex;
     align-items: center;

@@ -59,7 +59,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    background: #fff4f0;
+    background: #fff;;
     border: 1px solid #ffd4c2;
     color: #cc4a1a;
     font-size: 11px;
@@ -187,7 +187,7 @@
 }
 
 .pf-check-list::-webkit-scrollbar-track {
-    background: transparent;
+    background: #fff;
 }
 
 .pf-check-list::-webkit-scrollbar-thumb {
@@ -219,7 +219,7 @@
     justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
-    background: #fff;
+    background: #fff;;
 }
 
 .pf-checkbox--checked {
@@ -251,7 +251,7 @@
     padding: 5px 12px;
     border-radius: 7px;
     border: 1px solid #e0e0e0;
-    background: #fff;
+    background: #fff;;
     color: #2a2a2a;
     cursor: pointer;
     transition: all 0.15s;

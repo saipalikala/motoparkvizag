@@ -1,0 +1,141 @@
+/* ================================================================
+   MOTOPARK ADMIN — DESIGN TOKENS
+   Single source of truth for all admin UI visual properties.
+   Import this ONCE in AdminLayout.css (already imported via AdminLayout).
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── BRAND ── */
+  --mp-accent:          #ff6b3d;
+  --mp-accent-hover:    #e85a2a;
+  --mp-accent-dim:      rgba(255, 107, 61, 0.12);
+  --mp-accent-glow:     rgba(255, 107, 61, 0.25);
+  --mp-navy:            #0b1d3a;
+
+  /* ── SIDEBAR ── */
+  --sb-bg:              #0a1628;
+  --sb-bg2:             #06101e;
+  --sb-width:           240px;
+  --sb-border:          rgba(255, 255, 255, 0.06);
+  --sb-text-dim:        rgba(255, 255, 255, 0.36);
+  --sb-text-mid:        rgba(255, 255, 255, 0.60);
+  --sb-text-full:       #ffffff;
+  --sb-hover:           rgba(255, 255, 255, 0.05);
+  --sb-active-bg:       rgba(255, 107, 61, 0.13);
+
+  /* ── TOPBAR ── */
+  --tb-h:               58px;
+  --tb-bg:              rgba(255, 255, 255, 0.97);
+  --tb-border:          rgba(11, 29, 58, 0.07);
+
+  /* ── CONTENT SURFACES ── */
+  --page-bg:            #f4f5f7;
+  --surface:            #ffffff;
+  --surface-hover:      #fafafa;
+  --surface-raised:     #ffffff;
+
+  /* ── TEXT ── */
+  --t-primary:          #0b1d3a;
+  --t-secondary:        #6b7280;
+  --t-tertiary:         #9ca3af;
+  --t-inverse:          #ffffff;
+
+  /* ── BORDERS ── */
+  --border-subtle:      rgba(11, 29, 58, 0.06);
+  --border-default:     rgba(11, 29, 58, 0.10);
+  --border-strong:      rgba(11, 29, 58, 0.18);
+  --border-accent:      rgba(255, 107, 61, 0.35);
+
+  /* ── SEMANTIC COLORS ── */
+  --green:              #16a34a;
+  --green-bg:           #dcfce7;
+  --green-text:         #15803d;
+  --amber:              #d97706;
+  --amber-bg:           #fef3c7;
+  --amber-text:         #92400e;
+  --red:                #dc2626;
+  --red-bg:             #fee2e2;
+  --red-text:           #b91c1c;
+  --blue:               #2563eb;
+  --blue-bg:            #dbeafe;
+  --blue-text:          #1d4ed8;
+  --purple:             #7c3aed;
+  --purple-bg:          #ede9fe;
+  --purple-text:        #6d28d9;
+
+  /* ── SHADOWS ── */
+  --shadow-xs:          0 1px 2px rgba(11, 29, 58, 0.05);
+  --shadow-sm:          0 2px 8px rgba(11, 29, 58, 0.06);
+  --shadow-md:          0 4px 16px rgba(11, 29, 58, 0.08);
+  --shadow-lg:          0 8px 28px rgba(11, 29, 58, 0.10);
+  --shadow-xl:          0 16px 48px rgba(11, 29, 58, 0.14);
+  --shadow-accent:      0 4px 20px rgba(255, 107, 61, 0.28);
+
+  /* ── RADIUS ── */
+  --r-sm:               6px;
+  --r-md:               10px;
+  --r-lg:               14px;
+  --r-xl:               18px;
+  --r-full:             9999px;
+
+  /* ── SPACING (8px grid) ── */
+  --sp-1:               4px;
+  --sp-2:               8px;
+  --sp-3:               12px;
+  --sp-4:               16px;
+  --sp-5:               20px;
+  --sp-6:               24px;
+  --sp-8:               32px;
+  --sp-10:              40px;
+  --sp-12:              48px;
+
+  /* ── TYPOGRAPHY ── */
+  --font-sans:          'DM Sans', -apple-system, 'Helvetica Neue', sans-serif;
+  --font-mono:          'DM Mono', 'JetBrains Mono', monospace;
+
+  --text-xs:            11px;
+  --text-sm:            12px;
+  --text-base:          13px;
+  --text-md:            14px;
+  --text-lg:            16px;
+  --text-xl:            20px;
+  --text-2xl:           24px;
+  --text-3xl:           30px;
+
+  /* ── EASING ── */
+  --ease-out:           cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring:        cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-out:        cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── TIMING ── */
+  --t-fast:             100ms;
+  --t-mid:              180ms;
+  --t-slow:             300ms;
+
+  /* ── Z-INDEX ── */
+  --z-base:             0;
+  --z-raised:           10;
+  --z-topbar:           20;
+  --z-modal-bg:         40;
+  --z-sidebar:          50;
+  --z-modal:            60;
+  --z-toast:            70;
+}
+
+/* ── DARK THEME OVERRIDES ── */
+[data-theme="dark"] {
+  --page-bg:            #0d1117;
+  --surface:            #161b22;
+  --surface-hover:      #1c2128;
+  --surface-raised:     #21262d;
+  --t-primary:          #e6edf3;
+  --t-secondary:        #8b949e;
+  --t-tertiary:         #6e7681;
+  --tb-bg:              rgba(22, 27, 34, 0.97);
+  --tb-border:          rgba(255, 255, 255, 0.07);
+  --border-subtle:      rgba(255, 255, 255, 0.05);
+  --border-default:     rgba(255, 255, 255, 0.09);
+  --border-strong:      rgba(255, 255, 255, 0.15);
+}

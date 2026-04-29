@@ -1,365 +1,392 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
+// import DataTable from "../components/DataTable";
+// import { useToast } from "../components/ToastProvider";
+import { API } from "@/config/api";
 import "./AdminOrders.css";
 
-import { API } from "@/config/api";
 const TOKEN = () => localStorage.getItem("adminToken");
-const AUTH = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });
+const AUTH  = () => ({ Authorization: `Bearer ${TOKEN()}`, "Content-Type": "application/json" });
 
 const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
-const statusColor = s => ({ pending: "amber", confirmed: "blue", shipped: "purple", delivered: "green", cancelled: "red" }[s] || "gray");
 
-const SearchIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>;
-const RefreshIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>;
-const ChevronDown = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>;
-const CloseIcon = () => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 2l8 8M10 2l-8 8" /></svg>;
-const PrintIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>;
+const STATUS_CLASS = {
+    pending:    "badge--amber",
+    confirmed:  "badge--blue",
+    shipped:    "badge--purple",
+    delivered:  "badge--green",
+    cancelled:  "badge--red",
+};
 
-/* ─── PRINT SLIP ─── */
+/* ── Icons ── */
+const PrintIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>;
+const CloseIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>;
+const RefreshIcon  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
+const ChevronIcon  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>;
+
+/* ── Status select (inside panel) ── */
+const StatusSelect = memo(({ orderId, current, onUpdate }) => {
+    const [loading, setLoading] = useState(false);
+    const toast = useToast();
+
+    const change = async (e) => {
+        const newStatus = e.target.value;
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/orders/${orderId}/status`, {
+                method: "PUT",
+                headers: AUTH(),
+                body: JSON.stringify({ status: newStatus }),
+            });
+            if (!res.ok) throw new Error("Failed");
+            onUpdate(orderId, newStatus);
+            toast.success("Status updated", `Order marked as ${newStatus}.`);
+        } catch {
+            toast.error("Update failed", "Could not change order status.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="ao-status-select-wrap">
+            <select
+                className={`ao-status-select ao-status-select--${current ?? "pending"}`}
+                value={current ?? "pending"}
+                onChange={change}
+                disabled={loading}
+                aria-label="Order status"
+            >
+                {STATUSES.map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+            </select>
+            <ChevronIcon />
+        </div>
+    );
+});
+StatusSelect.displayName = "StatusSelect";
+
+/* ── Print slip ── (unchanged logic from original) ── */
 const printOrderSlip = (order) => {
     const addr = order.shippingAddress || {};
     const date = new Date(order.createdAt).toLocaleString("en-IN", {
         day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit"
+        hour: "2-digit", minute: "2-digit",
     });
-
     const itemsHTML = (order.items || []).map(item => `
         <tr>
             <td style="padding:8px 4px;border-bottom:1px solid #f0f0f0;">
                 <strong>${item.name}</strong><br/>
                 <small style="color:#666;">
                     ${item.selectedColor ? `Color: ${item.selectedColor} &nbsp;` : ""}
-                    ${item.selectedSize ? `Size: ${item.selectedSize} &nbsp;` : ""}
+                    ${item.selectedSize  ? `Size: ${item.selectedSize} &nbsp;`  : ""}
                     Qty: ${item.quantity}
                 </small>
             </td>
-            <td style="padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:right;white-space:nowrap;">
+            <td style="padding:8px 4px;border-bottom:1px solid #f0f0f0;text-align:right;">
                 ₹${(item.price * item.quantity).toLocaleString("en-IN")}
             </td>
         </tr>
     `).join("");
 
-    const slipHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8"/>
-            <title>Order Slip #${order._id?.slice(-8).toUpperCase()}</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: white; }
-                .slip { max-width: 420px; margin: 0 auto; padding: 24px 20px; }
-
-                /* HEADER */
-                .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #ff6b3d; }
-                .brand { font-size: 22px; font-weight: 800; color: #ff6b3d; letter-spacing: -0.5px; }
-                .brand span { color: #1a1a1a; }
-                .order-id { text-align: right; }
-                .order-id .id { font-size: 16px; font-weight: 700; font-family: monospace; }
-                .order-id .date { font-size: 11px; color: #666; margin-top: 2px; }
-
-                /* STATUS BADGE */
-                .status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-                .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: #fff3e8; color: #ff6b3d; border: 1px solid #ff6b3d; }
-
-                /* SECTIONS */
-                .section { margin-bottom: 16px; }
-                .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #999; margin-bottom: 6px; }
-                .section-body { background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 10px 12px; }
-
-                /* CUSTOMER */
-                .customer-name { font-size: 15px; font-weight: 700; }
-                .customer-phone { color: #555; margin-top: 2px; }
-                .customer-address { color: #555; margin-top: 4px; line-height: 1.5; }
-
-                /* ITEMS TABLE */
-                table { width: 100%; border-collapse: collapse; }
-
-                /* TOTAL */
-                .total-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #1a1a1a; color: white; border-radius: 8px; margin-top: 8px; }
-                .total-label { font-size: 13px; font-weight: 600; }
-                .total-amount { font-size: 18px; font-weight: 800; }
-
-                /* PAYMENT */
-                .payment-row { display: flex; justify-content: space-between; padding: 8px 12px; background: #f8f8f8; border-radius: 6px; margin-top: 6px; font-size: 12px; color: #555; }
-
-                /* FOOTER */
-                .footer { margin-top: 20px; padding-top: 16px; border-top: 1px dashed #ddd; text-align: center; }
-                .footer p { font-size: 11px; color: #999; line-height: 1.6; }
-                .footer .thankyou { font-size: 13px; font-weight: 700; color: #ff6b3d; margin-bottom: 4px; }
-
-                /* BARCODE PLACEHOLDER */
-                .barcode { font-family: monospace; font-size: 10px; color: #ccc; letter-spacing: 4px; margin-top: 8px; }
-
-                @media print {
-                    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                    .slip { padding: 0; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="slip">
-
-                <!-- HEADER -->
-                <div class="header">
-                    <div>
-                        <div class="brand">Moto<span>Park</span></div>
-                        <div style="font-size:11px;color:#999;margin-top:2px;">motoparkvizag.in</div>
-                    </div>
-                    <div class="order-id">
-                        <div class="id">#${order._id?.slice(-8).toUpperCase()}</div>
-                        <div class="date">${date}</div>
-                    </div>
-                </div>
-
-                <!-- STATUS -->
-                <div class="status-row">
-                    <span style="font-size:12px;color:#666;">Status:</span>
-                    <span class="status-badge">${order.status || "pending"}</span>
-                </div>
-
-                <!-- CUSTOMER -->
-                <div class="section">
-                    <div class="section-title">Ship To</div>
-                    <div class="section-body">
-                        <div class="customer-name">${addr.name || "—"}</div>
-                        <div class="customer-phone">📞 ${addr.phone || "—"}</div>
-                        ${addr.email ? `<div class="customer-phone">✉ ${addr.email}</div>` : ""}
-                        <div class="customer-address">
-                            ${addr.address || ""}<br/>
-                            ${addr.city || ""}, ${addr.state || ""} – ${addr.pincode || ""}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ITEMS -->
-                <div class="section">
-                    <div class="section-title">Items (${order.items?.length || 0})</div>
-                    <div class="section-body" style="padding:0 12px;">
-                        <table>${itemsHTML}</table>
-                    </div>
-                </div>
-
-                <!-- TOTAL -->
-                <div class="total-row">
-                    <span class="total-label">Total Amount</span>
-                    <span class="total-amount">₹${order.total?.toLocaleString("en-IN")}</span>
-                </div>
-                <div class="payment-row">
-                    <span>Payment Method</span>
-                    <strong>${(order.paymentMethod || "—").toUpperCase()}</strong>
-                </div>
-
-                <!-- FOOTER -->
-                <div class="footer">
-                    <div class="thankyou">Thank you for your order! 🏍️</div>
-                    <p>Please handle with care · Free returns within 30 days<br/>
-                    Support: support@motoparkvizag.in</p>
-                    <div class="barcode">${order._id}</div>
-                </div>
-
-            </div>
-        </body>
-        </html>
-    `;
-
-    const win = window.open("", "_blank", "width=500,height=700");
-    win.document.write(slipHTML);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 500);
-};
-
-const StatusSelect = ({ orderId, current, onUpdate }) => {
-    const [open, setOpen] = useState(false);
-    const [saving, setSaving] = useState(false);
-
-    const update = async (status) => {
-        setOpen(false); setSaving(true);
-        try {
-            await fetch(`${API}/orders/${orderId}/status`, { method: "PUT", headers: AUTH(), body: JSON.stringify({ status }) });
-            onUpdate(orderId, status);
-        } catch (e) { console.error(e); }
-        finally { setSaving(false); }
-    };
-
-    return (
-        <div className="ao-status-wrap" onClick={e => e.stopPropagation()}>
-            <button className={`ao-status ao-status--${statusColor(current)}`} onClick={() => setOpen(o => !o)}>
-                {saving ? "…" : current || "pending"} <ChevronDown />
-            </button>
-            {open && (
-                <div className="ao-dropdown">
-                    {STATUSES.map(s => (
-                        <button key={s} className={`ao-dropdown-opt ${s === current ? "ao-dropdown-opt--active" : ""}`} onClick={() => update(s)}>
-                            <span className={`ao-dot ao-dot--${statusColor(s)}`} />{s}
-                        </button>
-                    ))}
-                </div>
-            )}
+    const w = window.open("", "_blank", "width=480,height=700");
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <title>Order #${order._id?.slice(-8).toUpperCase()}</title>
+        <style>
+            *{margin:0;padding:0;box-sizing:border-box}
+            body{font-family:'Segoe UI',sans-serif;font-size:13px;color:#1a1a1a;background:#fff}
+            .slip{max-width:420px;margin:0 auto;padding:24px 20px}
+            .header{display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #ff6b3d}
+            .brand{font-size:22px;font-weight:800;color:#ff6b3d}
+            .brand span{color:#1a1a1a}
+            .section{margin-bottom:14px}
+            .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#999;margin-bottom:5px}
+            .section-body{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:10px 12px}
+            table{width:100%;border-collapse:collapse}
+            .total-row{display:flex;justify-content:space-between;padding:10px 12px;background:#1a1a1a;color:#fff;border-radius:8px;margin-top:8px}
+            .total-amount{font-size:18px;font-weight:800}
+            .footer{margin-top:18px;padding-top:14px;border-top:1px dashed #ddd;text-align:center;font-size:11px;color:#999}
+            @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+        </style></head><body><div class="slip">
+        <div class="header">
+            <div><div class="brand">Moto<span>Park</span></div><div style="font-size:11px;color:#999;margin-top:2px">motoparkvizag.in</div></div>
+            <div style="text-align:right"><div style="font-size:15px;font-weight:700;font-family:monospace">#${order._id?.slice(-8).toUpperCase()}</div><div style="font-size:11px;color:#666">${date}</div></div>
         </div>
-    );
+        <div class="section"><div class="section-title">Ship To</div>
+        <div class="section-body">
+            <strong>${addr.name || "—"}</strong><br>
+            📞 ${addr.phone || "—"}<br>
+            ${addr.address || ""},${addr.city || ""},${addr.state || ""} – ${addr.pincode || ""}
+        </div></div>
+        <div class="section"><div class="section-title">Items (${order.items?.length || 0})</div>
+        <div class="section-body" style="padding:0 12px"><table>${itemsHTML}</table></div></div>
+        <div class="total-row"><span>Total Amount</span><span class="total-amount">₹${order.total?.toLocaleString("en-IN")}</span></div>
+        <div class="footer"><p>Thank you for shopping with MotoPark! 🏍</p></div>
+        </div></body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 400);
 };
 
-const OrderPanel = ({ order, onClose, onUpdate }) => {
+/* ── Order detail panel ── */
+const OrderPanel = memo(({ order, onClose, onUpdate }) => {
+    const panelRef = useRef(null);
+
+    // Focus trap
+    useEffect(() => {
+        if (order) panelRef.current?.focus();
+    }, [order]);
+
     if (!order) return null;
     const addr = order.shippingAddress || {};
+
     return (
         <>
-            <div className="ao-overlay" onClick={onClose} />
-            <div className="ao-panel">
+            {/* Backdrop */}
+            <div className="ao-panel-backdrop" onClick={onClose} aria-hidden="true" />
+
+            {/* Panel */}
+            <aside
+                ref={panelRef}
+                className="ao-panel"
+                role="dialog"
+                aria-label="Order details"
+                aria-modal="true"
+                tabIndex={-1}
+            >
                 <div className="ao-panel-header">
                     <div>
-                        <h2>Order #{order._id?.slice(-8).toUpperCase()}</h2>
-                        <p>{new Date(order.createdAt).toLocaleString("en-IN")}</p>
+                        <div className="ao-panel-title">
+                            Order <code>#{order._id?.slice(-8).toUpperCase()}</code>
+                        </div>
+                        <div className="ao-panel-date">
+                            {new Date(order.createdAt).toLocaleString("en-IN", {
+                                day: "numeric", month: "short", year: "numeric",
+                                hour: "2-digit", minute: "2-digit",
+                            })}
+                        </div>
                     </div>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        {/* PRINT BUTTON */}
+                    <div className="ao-panel-actions">
                         <button
-                            className="ao-print-btn"
+                            className="btn btn--ghost btn--sm"
                             onClick={() => printOrderSlip(order)}
-                            title="Print Order Slip"
+                            aria-label="Print order slip"
                         >
-                            <PrintIcon /> Print Slip
+                            <PrintIcon /> Print
                         </button>
-                        <button className="ao-panel-close" onClick={onClose}><CloseIcon /></button>
+                        <button className="btn btn--icon btn--ghost" onClick={onClose} aria-label="Close panel">
+                            <CloseIcon />
+                        </button>
                     </div>
                 </div>
+
                 <div className="ao-panel-body">
-                    <div className="ao-section"><h3>Status</h3>
+                    {/* Status */}
+                    <div className="ao-section">
+                        <div className="ao-section-title">Status</div>
                         <StatusSelect orderId={order._id} current={order.status} onUpdate={onUpdate} />
                     </div>
-                    <div className="ao-section"><h3>Customer</h3>
+
+                    {/* Customer */}
+                    <div className="ao-section">
+                        <div className="ao-section-title">Customer</div>
                         <div className="ao-detail-grid">
-                            <span>Name</span><strong>{addr.name || "—"}</strong>
-                            <span>Phone</span><strong>{addr.phone || "—"}</strong>
+                            <span>Name</span>    <strong>{addr.name  || "—"}</strong>
+                            <span>Phone</span>   <strong>{addr.phone || "—"}</strong>
                             {addr.email && <><span>Email</span><strong>{addr.email}</strong></>}
                         </div>
                     </div>
-                    <div className="ao-section"><h3>Delivery Address</h3>
-                        <p className="ao-address">{addr.address}, {addr.city}<br />{addr.state} – {addr.pincode}</p>
+
+                    {/* Address */}
+                    <div className="ao-section">
+                        <div className="ao-section-title">Delivery Address</div>
+                        <p className="ao-address">
+                            {addr.address}, {addr.city}<br />
+                            {addr.state} – {addr.pincode}
+                        </p>
                     </div>
-                    <div className="ao-section"><h3>Items ({order.items?.length || 0})</h3>
+
+                    {/* Items */}
+                    <div className="ao-section">
+                        <div className="ao-section-title">Items ({order.items?.length || 0})</div>
                         <div className="ao-items">
                             {(order.items || []).map((item, i) => (
                                 <div className="ao-item" key={i}>
-                                    <div>
+                                    <div className="ao-item-info">
                                         <span className="ao-item-name">{item.name}</span>
                                         <span className="ao-item-meta">
                                             {item.selectedColor && `${item.selectedColor} · `}
-                                            {item.selectedSize && `Size ${item.selectedSize} · `}
+                                            {item.selectedSize  && `Size ${item.selectedSize} · `}
                                             Qty {item.quantity}
                                         </span>
                                     </div>
-                                    <span className="ao-item-price">₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
+                                    <span className="ao-item-price">
+                                        ₹{(item.price * item.quantity).toLocaleString("en-IN")}
+                                    </span>
                                 </div>
                             ))}
                         </div>
                     </div>
+
+                    {/* Total */}
                     <div className="ao-panel-total">
-                        <span>Payment</span><span className="ao-payment-val">{order.paymentMethod || "—"}</span>
-                        <span>Total</span><strong>₹{order.total?.toLocaleString("en-IN")}</strong>
+                        <div className="ao-total-row">
+                            <span>Payment</span>
+                            <span className="ao-payment-val">{order.paymentMethod || "—"}</span>
+                        </div>
+                        <div className="ao-total-row ao-total-row--final">
+                            <span>Total</span>
+                            <strong>₹{order.total?.toLocaleString("en-IN")}</strong>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </aside>
         </>
     );
-};
+});
+OrderPanel.displayName = "OrderPanel";
 
+/* ================================================================
+   ADMIN ORDERS PAGE
+   ================================================================ */
 const AdminOrders = () => {
-    const [orders, setOrders] = useState([]);
+    const [orders,  setOrders]  = useState([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("all");
     const [selected, setSelected] = useState(null);
+    const toast = useToast();
 
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/orders`, { headers: AUTH() });
+            const res  = await fetch(`${API}/orders`, { headers: AUTH() });
             const data = await res.json();
-            setOrders(data.orders || data || []);
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
-    };
+            setOrders(data.orders ?? data ?? []);
+        } catch {
+            toast.error("Load failed", "Could not fetch orders.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => { load(); }, [load]);
 
-    const updateStatus = (id, status) => {
-        setOrders(os => os.map(o => o._id === id ? { ...o, status } : o));
-        setSelected(s => s?._id === id ? { ...s, status } : s);
-    };
+    const updateStatus = useCallback((id, status) => {
+        setOrders((os) => os.map((o) => o._id === id ? { ...o, status } : o));
+        setSelected((s) => s?._id === id ? { ...s, status } : s);
+    }, []);
 
-    const filtered = orders.filter(o => {
-        const name = o.shippingAddress?.name?.toLowerCase() || "";
-        const id = o._id?.toLowerCase() || "";
-        return (name.includes(search.toLowerCase()) || id.includes(search.toLowerCase()))
-            && (filter === "all" || o.status === filter || (filter === "pending" && !o.status));
-    });
-
+    /* ── Summary stats ── */
     const stats = {
-        total: orders.length,
-        pending: orders.filter(o => !o.status || o.status === "pending").length,
-        shipped: orders.filter(o => o.status === "shipped").length,
-        delivered: orders.filter(o => o.status === "delivered").length,
+        total:     orders.length,
+        pending:   orders.filter((o) => !o.status || o.status === "pending").length,
+        shipped:   orders.filter((o) => o.status === "shipped").length,
+        delivered: orders.filter((o) => o.status === "delivered").length,
     };
+
+    /* ── Table columns ── */
+    const columns = [
+        {
+            key: "orderId", label: "Order ID",
+            render: (_, row) => (
+                <code className="ao-oid">#{row._id?.slice(-8).toUpperCase()}</code>
+            ),
+        },
+        {
+            key: "customer", label: "Customer", sortable: true,
+            render: (_, row) => (
+                <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>
+                        {row.shippingAddress?.name || "—"}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--t-secondary)" }}>
+                        {row.shippingAddress?.city || ""}
+                    </div>
+                </div>
+            ),
+        },
+        {
+            key: "items", label: "Items", width: 70,
+            render: (_, row) => `${row.items?.length || 0}`,
+        },
+        {
+            key: "total", label: "Total", sortable: true, width: 110,
+            render: (_, row) => (
+                <strong>₹{row.total?.toLocaleString("en-IN")}</strong>
+            ),
+        },
+        {
+            key: "paymentMethod", label: "Payment", width: 100,
+            render: (v) => <span className="ao-pay">{v || "—"}</span>,
+        },
+        {
+            key: "createdAt", label: "Date", sortable: true, width: 110,
+            render: (v) => new Date(v).toLocaleDateString("en-IN"),
+        },
+        {
+            key: "status", label: "Status", width: 130,
+            render: (v) => (
+                <span className={`badge ${STATUS_CLASS[v] ?? "badge--gray"}`}>
+                    {v ?? "pending"}
+                </span>
+            ),
+        },
+    ];
 
     return (
-        <div className="ao-page">
-            {/* STATS */}
-            <div className="ao-stats">
-                {[["Total", stats.total, "navy"], ["Pending", stats.pending, "amber"], ["Shipped", stats.shipped, "purple"], ["Delivered", stats.delivered, "green"]].map(([l, v, c]) => (
-                    <div key={l} className={`ao-stat ao-stat--${c}`}>
-                        <span className="ao-stat-val">{v}</span>
-                        <span className="ao-stat-label">{l}</span>
+        <div className="page ao-page">
+            {/* Header */}
+            <div className="page__header">
+                <div>
+                    <h1 className="page__title">Orders</h1>
+                    <p className="page__sub">Manage and track all customer orders</p>
+                </div>
+                <button className="btn btn--ghost" onClick={load} aria-label="Refresh orders">
+                    <RefreshIcon /> Refresh
+                </button>
+            </div>
+
+            {/* Mini stat pills */}
+            <div className="ao-stat-pills">
+                {[
+                    { label: "Total",     val: stats.total,     cls: "" },
+                    { label: "Pending",   val: stats.pending,   cls: "ao-pill--amber" },
+                    { label: "Shipped",   val: stats.shipped,   cls: "ao-pill--purple" },
+                    { label: "Delivered", val: stats.delivered, cls: "ao-pill--green" },
+                ].map(({ label, val, cls }) => (
+                    <div key={label} className={`ao-pill ${cls}`}>
+                        <span className="ao-pill-val">{val}</span>
+                        <span className="ao-pill-label">{label}</span>
                     </div>
                 ))}
             </div>
 
-            {/* TOOLBAR */}
-            <div className="ao-toolbar">
-                <div className="ao-search-wrap">
-                    <SearchIcon />
-                    <input className="ao-search" placeholder="Search name or order ID…" value={search} onChange={e => setSearch(e.target.value)} />
-                </div>
-                <div className="ao-filters">
-                    {["all", ...STATUSES].map(s => (
-                        <button key={s} className={`ao-fpill ${filter === s ? "ao-fpill--active" : ""}`} onClick={() => setFilter(s)}>
-                            {s === "all" ? "All" : s}
-                        </button>
-                    ))}
-                </div>
-                <button className="ao-refresh" onClick={load} title="Refresh"><RefreshIcon /></button>
-            </div>
+            {/* Table */}
+            <DataTable
+                columns={columns}
+                data={orders.map((o) => ({ ...o, id: o._id }))}
+                keyField="id"
+                loading={loading}
+                searchKeys={["shippingAddress.name", "_id"]}
+                filters={[{
+                    key: "status",
+                    label: "All Statuses",
+                    options: STATUSES.map((s) => ({
+                        value: s,
+                        label: s.charAt(0).toUpperCase() + s.slice(1),
+                    })),
+                }]}
+                emptyTitle="No orders found"
+                emptyMessage="Try adjusting your search or status filter."
+                pageSize={15}
+                onRowClick={setSelected}
+            />
 
-            {/* TABLE */}
-            <div className="ao-table-wrap">
-                {loading ? <div className="ao-loading">Loading orders…</div>
-                    : filtered.length === 0 ? <div className="ao-empty">No orders found</div>
-                        : (
-                            <table className="ao-table">
-                                <thead><tr>
-                                    <th>Order ID</th><th>Customer</th><th>City</th>
-                                    <th>Items</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th>
-                                </tr></thead>
-                                <tbody>
-                                    {filtered.map(order => (
-                                        <tr key={order._id} className="ao-row" onClick={() => setSelected(order)}>
-                                            <td><code className="ao-oid">#{order._id?.slice(-8).toUpperCase()}</code></td>
-                                            <td><strong>{order.shippingAddress?.name || "—"}</strong></td>
-                                            <td>{order.shippingAddress?.city || "—"}</td>
-                                            <td>{order.items?.length || 0} item{order.items?.length !== 1 ? "s" : ""}</td>
-                                            <td><strong>₹{order.total?.toLocaleString("en-IN")}</strong></td>
-                                            <td><span className="ao-pay">{order.paymentMethod || "—"}</span></td>
-                                            <td>{new Date(order.createdAt).toLocaleDateString("en-IN")}</td>
-                                            <td><StatusSelect orderId={order._id} current={order.status} onUpdate={updateStatus} /></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-            </div>
-
-            <OrderPanel order={selected} onClose={() => setSelected(null)} onUpdate={updateStatus} />
+            {/* Detail panel */}
+            <OrderPanel
+                order={selected}
+                onClose={() => setSelected(null)}
+                onUpdate={updateStatus}
+            />
         </div>
     );
 };

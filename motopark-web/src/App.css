@@ -1,21 +1,18 @@
+/* ================================================
+   MOTO PARK — APP GLOBAL STYLES
+   Uses design tokens from index.css
+   ================================================ */
+@font-face {
+  font-family: 'Sakana';
+  src: url('/assets/fonts/Sakana.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: #ffffff;
-}
-
-#root {
-  width: 100%;
-  min-height: 100vh;
-}
-
-
-* {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -25,24 +22,50 @@ html {
 }
 
 body {
+  margin: 0;
+  background: var(--clr-bg);
+  color: var(--clr-text-primary);
   overflow-x: hidden;
+  font-family: var(--font-body);
 }
 
-/* Add to App.css */
+h1, h2, h3, h4, h5, h6 {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-head);
+  letter-spacing: 0.02em;
+}
+
+
+h1, h2, h3, h4, h5, h6,
+[class*="title"],
+[class*="heading"] {
+  font-family: var(--font-head);
+  letter-spacing: 0.04em;
+  color: inherit;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+/* 🔥 AUTO HEADING DETECTION SYSTEM */
+
+
+/* ── Page Loader ── */
 .page-loading {
   height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #0b1d3a;
 }
 
 .page-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #f0f0f0;
-  border-top-color: #ff6b3d;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.8s var(--ease-out) infinite;
 }
 
 @keyframes spin {
@@ -50,3 +73,95 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* ── Smooth page transitions ── */
+.app-container {
+  min-height: 100vh;
+}
+
+/* ── Product Spotlight Overlay ── */
+.spotlight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0);
+  pointer-events: none;
+  transition: background 0.5s var(--ease-smooth);
+}
+
+.spotlight-overlay--active {
+background: rgba(11, 29, 58, 0.75);
+  pointer-events: all;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.spotlight-product {
+  position: fixed;
+  z-index: 1000;
+  transition: all 0.5s var(--ease-smooth);
+}
+
+/* ================================================
+   tokens.css — Light Premium Theme
+   Drop into index.css / App.css BEFORE component CSS.
+   All components reference these variables.
+   ================================================ */
+
+:root {
+  --clr-text-primary-dark: #e6e9f0;
+--clr-text-secondary-dark: #9aa4b2;
+--clr-text-muted-dark: #6b7280;
+    --font-head: 'Sakana', sans-serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --clr-bg: #0b1d3a;        /* ← change this */
+    --clr-bg-alt: #0e2545;
+    --clr-surface: #0f172a;
+    --clr-bg-subtle:     #eef0f4;
+
+    /* ── ACCENT ── */
+    --clr-accent:        #e8541e;
+    --clr-accent-light:  #fff2ed;
+    --clr-accent-hover:  #cc4518;
+    --clr-accent-muted:  rgba(232, 84, 30, 0.10);
+
+    /* ── TEXT ── */
+    --clr-text-primary: #111111;
+    --clr-text-body:     #374151;
+    --clr-text-muted:    #6b7280;
+    --clr-text-faint:    #9ca3af;
+    --clr-text-on-accent:#ffffff;
+
+    /* ── BORDERS ── */
+    --clr-border:        rgba(0, 0, 0, 0.07);
+    --clr-border-strong: rgba(0, 0, 0, 0.13);
+    --clr-border-accent: rgba(232, 84, 30, 0.28);
+
+    /* ── SHADOWS ── */
+    --shadow-xs:   0 1px 3px rgba(0,0,0,0.05);
+    --shadow-sm:   0 2px 8px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:   0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-lg:   0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-xl:   0 16px 48px rgba(0,0,0,0.11), 0 4px 12px rgba(0,0,0,0.05);
+    --shadow-hover:0 12px 40px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-accent:0 8px 24px rgba(232,84,30,0.22);
+
+    /* ── RADII ── */
+    --radius-sm:   6px;
+    --radius-md:   10px;
+    --radius-lg:   16px;
+    --radius-xl:   24px;
+    --radius-full: 9999px;
+
+    /* ── LAYOUT ── */
+    --container-max: 1320px;
+    --section-pad-x: clamp(20px, 5vw, 80px);
+    --section-pad-y: clamp(64px, 8vw, 100px);
+
+    /* ── ANIMATION ── */
+    --ease:     cubic-bezier(0.22, 1, 0.36, 1);
+    --dur-fast: 180ms;
+    --dur-mid:  300ms;
+    --dur-slow: 500ms;
+}
+

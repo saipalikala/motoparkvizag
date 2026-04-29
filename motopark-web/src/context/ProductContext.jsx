@@ -1,93 +1,138 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+/**
+ * ProductContext — lightweight global layer
+ *
+ * WHAT CHANGED AND WHY:
+ * - Removed the 200-product global fetch entirely. Pages own their own data.
+ * - Context now only holds: featured (≤8), trending (≤8), newArrivals (≤8).
+ *   These are the only fields legitimately needed across multiple pages
+ *   (Home, Navbar search suggestions, etc.)
+ * - Total payload: ~24 products instead of 200. ~88% less data on initial load.
+ * - Cache TTL kept at 5 min in sessionStorage.
+ * - refreshProducts() API preserved for admin panel compatibility.
+ */
+
+import {
+  createContext, useContext, useState,
+  useEffect, useCallback, useRef, useMemo
+} from "react";
 import { API } from "@/config/api";
 
 const ProductContext = createContext();
-
 export const useProducts = () => useContext(ProductContext);
 
-const PRODUCTS_API = `${API}/products?limit=200`;
-
-const CACHE_KEY = "mp_products";
+const CACHE_KEY = "mp_feat_v2";       // new key — invalidates old 200-product cache
 const CACHE_TTL = 5 * 60 * 1000;
 
-const getCache = () => {
+const readCache = () => {
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const { data, time } = JSON.parse(raw);
-    if (Date.now() - time > CACHE_TTL) return null;
-    return data;
+    return Date.now() - time < CACHE_TTL ? data : null;
   } catch { return null; }
 };
 
-const setCache = (data) => {
+const writeCache = (data) => {
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, time: Date.now() }));
   } catch { }
 };
 
 export const ProductProvider = ({ children }) => {
+  const cached = readCache();
 
-  const [products, setProducts] = useState(() => getCache() || []);
-  const [loading, setLoading] = useState(() => !getCache());
-  const [error, setError] = useState(null);
+  const [featured,    setFeatured]    = useState(cached?.featured    || []);
+  const [trending,    setTrending]    = useState(cached?.trending    || []);
+  const [newArrivals, setNewArrivals] = useState(cached?.newArrivals || []);
+  const [loading,     setLoading]     = useState(!cached);
+  const [error,       setError]       = useState(null);
   const isMounted = useRef(true);
+  const fetchingRef = useRef(false); 
 
-  // ✅ fetchProducts FIRST
-  // REMOVE
-  const fetchProducts = useCallback(async (force = false) => {
-    if (!force) {
-      const cached = getCache();
-      if (cached) {
-        setProducts(cached);
-        setLoading(false);
-        return;
-      }
+const fetchHighlights = useCallback(async (force = false) => {
+  if (fetchingRef.current) return;   // ← deduplicate concurrent calls
+  if (!force) {
+    const c = readCache();
+    if (c) {
+      setFeatured(c.featured);
+      setTrending(c.trending);
+      setNewArrivals(c.newArrivals);
+      setLoading(false);
+      return;
     }
-    try {
-      setLoading(true);
-      const res = await fetch(PRODUCTS_API);
-      if (!res.ok) throw new Error("Failed to fetch products");
-      const data = await res.json();
-      const normalized = (data.products || []).map(p => ({
+  }
+
+  fetchingRef.current = true;        // ← lock
+  const ctrl = new AbortController();
+  setLoading(true);
+
+  try {
+      // Three targeted requests — each returns ≤8 lean documents
+      const [featRes, trendRes, newRes] = await Promise.all([
+        fetch(`${API}/products?flags=featured&limit=8`,    { signal: ctrl.signal }),
+        fetch(`${API}/products?flags=trending&limit=8`,    { signal: ctrl.signal }),
+        fetch(`${API}/products?flags=newArrival&limit=8`,  { signal: ctrl.signal }),
+      ]);
+
+      if (!featRes.ok || !trendRes.ok || !newRes.ok) throw new Error("Fetch failed");
+
+      const [featData, trendData, newData] = await Promise.all([
+        featRes.json(), trendRes.json(), newRes.json(),
+      ]);
+
+      const normalize = (arr) => (arr || []).map(p => ({
         ...p,
-        images: p?.variants?.[0]?.images || []
+        images: p?.variants?.[0]?.images || [],
       }));
-      setCache(normalized);
+
+      const payload = {
+        featured:    normalize(featData.products),
+        trending:    normalize(trendData.products),
+        newArrivals: normalize(newData.products),
+      };
+
+      writeCache(payload);
+
       if (isMounted.current) {
-        setProducts(normalized);
+        setFeatured(payload.featured);
+        setTrending(payload.trending);
+        setNewArrivals(payload.newArrivals);
         setError(null);
       }
     } catch (err) {
-      console.error("ProductContext fetch error:", err);
+      if (err.name === "AbortError") return;
       if (isMounted.current) setError(err.message);
-    } finally {
-      if (isMounted.current) setLoading(false);
-    }
-  }, []);
-
-  // ✅ clearCache AFTER fetchProducts
-  const clearCache = useCallback(() => {
-    sessionStorage.removeItem(CACHE_KEY);
-    fetchProducts(true);
-  }, [fetchProducts]);
+    }finally {
+    fetchingRef.current = false;     // ← always unlock
+    if (isMounted.current) setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     isMounted.current = true;
-    fetchProducts();
+    fetchHighlights();
     return () => { isMounted.current = false; };
-  }, [fetchProducts]);
+  }, [fetchHighlights]);
+
+  // Stable value object — only changes when data actually changes
+  const value = useMemo(() => ({
+    // Legacy field for any component still reading `products`
+    // points to featured so nothing breaks
+    products:       featured,
+    featured,
+    trending,
+    newArrivals,
+    loading,
+    error,
+    refreshProducts: () => fetchHighlights(true),
+    clearCache: () => {
+      sessionStorage.removeItem(CACHE_KEY);
+      fetchHighlights(true);
+    },
+  }), [featured, trending, newArrivals, loading, error, fetchHighlights]);
 
   return (
-    <ProductContext.Provider
-      value={{
-        products,
-        loading,
-        error,
-        refreshProducts: () => fetchProducts(true),
-        clearCache,
-      }}
-    >
+    <ProductContext.Provider value={value}>
       {children}
     </ProductContext.Provider>
   );

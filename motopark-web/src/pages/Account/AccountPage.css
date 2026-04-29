@@ -77,7 +77,7 @@
     padding: 9px 18px;
     border-radius: 100px;
     border: 1.5px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;
@@ -103,7 +103,7 @@
 .acc-body {}
 
 .acc-section {
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 18px;
     padding: 24px;
@@ -176,7 +176,7 @@
 .acc-field select:focus,
 .acc-field textarea:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .acc-field--readonly input {
@@ -276,7 +276,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, .1);
     padding: 10px 18px;
     border-radius: 100px;
@@ -350,7 +350,7 @@
     height: 28px;
     border-radius: 50%;
     border: 1px solid rgba(11, 29, 58, .1);
-    background: #fff;
+    background: #fff;;
     color: #aeaeb2;
     display: flex;
     align-items: center;
@@ -428,7 +428,7 @@
     padding: 11px;
     border: 1.5px solid rgba(11, 29, 58, .12);
     border-radius: 100px;
-    background: transparent;
+    background: #fff;
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;

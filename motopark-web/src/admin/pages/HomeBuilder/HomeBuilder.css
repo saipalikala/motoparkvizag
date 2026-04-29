@@ -110,7 +110,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 14px;
     padding: 14px 16px;
@@ -215,7 +215,7 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #fff;
+    background: #fff;;
     transition: transform .2s;
     box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
 }
@@ -237,7 +237,7 @@
 }
 
 .settings-modal {
-    background: #fff;
+    background: #fff;;
     border-radius: 20px;
     padding: 28px;
     width: min(440px, 95vw);
@@ -278,7 +278,7 @@
 
 .settings-modal input:focus {
     border-color: rgba(255, 107, 61, .45);
-    background: #fff;
+    background: #fff;;
 }
 
 .modal-actions {
@@ -292,7 +292,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: 1.5px solid rgba(11, 29, 58, .12);
     padding: 9px 18px;
     border-radius: 100px;
@@ -320,7 +320,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fff;
+    background: #fff;;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 14px;
     padding: 14px 20px;

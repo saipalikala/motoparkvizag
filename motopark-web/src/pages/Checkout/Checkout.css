@@ -125,7 +125,7 @@
 
 /* ─── STEPS BAR ─── */
 .co-steps-bar {
-    background: #ffffff;
+    background: #fff;
     border-bottom: 1px solid rgba(11, 29, 58, .07);
     padding: 0 48px;
     display: flex;
@@ -149,7 +149,7 @@
     height: 28px;
     border-radius: 50%;
     border: 2px solid rgba(11, 29, 58, .15);
-    background: transparent;
+    background: #fff;
     color: #aeaeb2;
     font-size: 12px;
     font-weight: 700;
@@ -216,7 +216,7 @@
    FORM SECTIONS
 ════════════════════════════════ */
 .co-section {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 20px;
     padding: 28px 24px;
@@ -291,7 +291,7 @@
 .co-field textarea:focus,
 .co-field select:focus {
     border-color: rgba(255, 107, 61, .5);
-    background: #ffffff;
+    background: #fff;
 }
 
 .co-field select {
@@ -356,7 +356,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #6e6e73;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     letter-spacing: .01em;
@@ -391,12 +391,12 @@
 }
 
 .co-payment-option:hover {
-    background: #fff;
+    background: #fff;;
     border-color: rgba(11, 29, 58, .2);
 }
 
 .co-payment-option--active {
-    background: #fff;
+    background: #fff;;
     border-color: rgba(255, 107, 61, .5);
     box-shadow: 0 0 0 3px rgba(255, 107, 61, .08);
 }
@@ -496,7 +496,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #ff6b3d;
-    background: transparent;
+    background: #fff;
     border: none;
     cursor: pointer;
     letter-spacing: 0;
@@ -626,7 +626,7 @@
 }
 
 .co-summary-inner {
-    background: #ffffff;
+    background: #fff;
     border: 1px solid rgba(11, 29, 58, .07);
     border-radius: 20px;
     padding: 22px;
