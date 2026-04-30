@@ -79,6 +79,10 @@ export default function VideoShowcase() {
   const [activeIdx,  setActiveIdx]  = useState(0);
   const [isMuted,    setIsMuted]    = useState(true);
   const [mobile,     setMobile]     = useState(false);
+  const isMobileRef = useRef(false);
+useEffect(() => {
+  isMobileRef.current = mobile;
+}, [mobile]);
 
   const sectionRef   = useRef(null);
   const videoRefs    = useRef([]);
@@ -111,19 +115,22 @@ useEffect(() => {
 }, []);
 
   /* ── Framer scroll ── */
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
+const { scrollYProgress } = useScroll({
+  target: sectionRef,
+  offset: ["start end", "end start"],
+});
 
-  const smooth = useSpring(scrollYProgress, {
-    stiffness: 70, damping: 22, restDelta: 0.0005,
-  });
+const smooth = useSpring(scrollYProgress, {
+  stiffness: mobile ? 0 : 70,
+  damping:   mobile ? 1 : 22,
+  restDelta: 0.0005,
+});
 
-  const videoScale     = useTransform(smooth, [0, 1], [1.0, 1.13]);
-  const overlayOpacity = useTransform(smooth, [0, 0.15, 0.5, 0.85, 1], [0.92, 0.62, 0.48, 0.62, 0.92]);
-  const contentY       = useTransform(smooth, [0, 1], ["6%", "-14%"]);
-  const textOpacity    = useTransform(smooth, [0, 0.07, 0.78, 0.96], [0, 1, 1, 0]);
+// Static values for mobile — no transforms, no GPU layers
+const videoScale     = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [1.0, 1.13]);
+const overlayOpacity = useTransform(smooth, [0, 1], mobile ? [0.55, 0.55]   : [0.92, 0.48]);
+const contentY       = useTransform(smooth, [0, 1], mobile ? ["0%", "0%"]   : ["6%", "-14%"]);
+const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [0, 1]);
 
   /* ── Mobile detection ── */
   useEffect(() => {

@@ -117,7 +117,9 @@ export const getProducts = async (req, res) => {
             Product.countDocuments(query)
         ]);
 
-        res.json({ products, total, page: Number(page), pages: Math.ceil(total / limit) });
+        res
+  .set("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
+  .json({ products, total, page: Number(page), pages: Math.ceil(total / limit) });
 
     } catch (error) {
         console.error("❌ GET PRODUCTS ERROR:", error);

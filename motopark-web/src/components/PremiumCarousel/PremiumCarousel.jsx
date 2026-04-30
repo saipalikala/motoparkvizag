@@ -520,7 +520,7 @@ useEffect(() => {
             <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                     key={slideKey}
-                    className="carousel-slide"
+                    className={`carousel-slide carousel-slide--active`}
                     custom={direction}
                     variants={SLIDE_VARIANTS}
                     initial="enter"

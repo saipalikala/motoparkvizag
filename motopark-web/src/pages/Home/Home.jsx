@@ -10,7 +10,7 @@
    ✅ Each section renders exactly once
    ✅ Clean lazy loading with stable Suspense fallbacks
    ================================================ */
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useMemo } from "react"; // add useMemo
 import { useProducts } from "@/context/ProductContext";
 import "./Home.css";
 
@@ -55,11 +55,14 @@ const BentoSkeleton = () => (
    See: src/App.jsx  →  useSmoothScroll()
 ════════════════════════════════ */
 function Home() {
-const { featured, trending, newArrivals, loading } = useProducts();
+  const { featured, trending, newArrivals, loading } = useProducts();
 
-    const showcaseProducts = [...featured, ...trending]
-        .filter((p, i, arr) => arr.findIndex(x => x._id === p._id) === i)
-        .slice(0, 8);
+  const showcaseProducts = useMemo(() =>
+    [...featured, ...trending]
+      .filter((p, i, arr) => arr.findIndex(x => x._id === p._id) === i)
+      .slice(0, 8),
+    [featured, trending]
+  );
 
     return (
         <div className="home-page">

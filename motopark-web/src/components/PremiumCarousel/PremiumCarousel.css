@@ -27,8 +27,11 @@
     width: 100%;
     min-height: clamp(480px, 80vh, 700px);
     overflow: hidden;
-    will-change: transform, opacity;
+    /* REMOVED: will-change: transform, opacity; */
     contain: layout style paint;
+}
+.carousel-slide--active {
+    will-change: transform, opacity;
 }
 
 /* ─── BG WRAP ─── */
@@ -47,10 +50,12 @@
     object-position: center;
     z-index: 0;
     transform: translateZ(0);
-    /* [U1]: Ken Burns slow zoom — resets naturally on every slide mount */
-    animation: slowZoom 10s ease-out forwards;
+    animation: none;
 }
-
+.carousel-slide--active .carousel-bg-img,
+.carousel-slide--active .carousel-bg-video {
+    animation: slowZoom 10s ease-out forwards, videoFadeIn 0.8s ease forwards;
+}
 /* [U1]: Cinematic Ken Burns — scale 1.0 → 1.08 over 10s */
 @keyframes slowZoom {
     from { transform: translateZ(0) scale(1.0); }
@@ -66,12 +71,9 @@
     object-fit: cover;
     object-position: center;
     z-index: 0;
-    will-change: transform, opacity;
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    /* [U1]: Ken Burns on video too */
-    animation: slowZoom 10s ease-out forwards, videoFadeIn 0.8s ease forwards;
 }
 
 @keyframes videoFadeIn {
@@ -404,26 +406,21 @@
 
 /* ─── MOBILE ─── */
 @media (max-width: 768px) {
-    .carousel,
-    .carousel-slide {
-        min-height: clamp(320px, 60vh, 500px);
-        background: #0b1d3a !important;
+    .carousel-slide--active .carousel-bg-img,
+    .carousel-slide--active .carousel-bg-video {
+        animation: videoFadeIn 0.4s ease forwards;
     }
-    .carousel-content  { left: 20px; right: 20px; bottom: 80px; }
-    .carousel-arrow    { display: none; }
-    .carousel-bar      { left: 20px; right: 20px; }
-    .carousel-counter  { right: 20px; }
-    .carousel-video-badge { left: 20px; top: 20px; }
-    .carousel-mute-btn { right: 20px; top: 68px; } /* stack below badge on mobile */
 }
 
 /* ─── REDUCED MOTION ─── */
 @media (prefers-reduced-motion: reduce) {
     /* Kill Ken Burns zoom */
     .carousel-bg-img,
-    .carousel-bg-video {
-        animation: none;
-        transform: translateZ(0);
+.carousel-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: translateZ(0);
     }
     /* Kill badge pulse */
     .carousel-video-badge {

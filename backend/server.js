@@ -1,20 +1,11 @@
 import dotenv from "dotenv";
-dotenv.config(); 
-import http from "http";
+dotenv.config();
 
-
-// console.log({
-//   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
-//   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-//   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-//   CLOUDINARY_URL: process.env.CLOUDINARY_URL
-// });
-import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import express from "express";
 import cors from "cors";
 import path from "path";
 import compression from "compression";
-import rateLimit from "express-rate-limit"; // ✅ already installed
+import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
 
@@ -35,73 +26,94 @@ import userRoutes from "./routes/userRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import homeDataRoutes from "./routes/homeDataRoutes.js";
 import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
+import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
+
 /* ── SECURITY MIDDLEWARE ── */
 import {
-   apiLimiter,
-   otpLimiter,
-   authLimiter,
-   uploadLimiter,
-   globalErrorHandler,
-   notFound,
-   helmet,
+  apiLimiter,
+  otpLimiter,
+  authLimiter,
+  uploadLimiter,
+  globalErrorHandler,
+  notFound,
+  helmet,
 } from "./middleware/security.js";
 
-connectDB();
+/* ════════════════════════════════
+   PROCESS-LEVEL SAFETY
+   — log errors but DO NOT exit on
+     unhandled rejections (Railway
+     will restart if truly fatal)
+════════════════════════════════ */
+process.on("unhandledRejection", (reason) => {
+  console.error("💥 Unhandled Rejection:", reason?.message || reason);
+  console.error(reason?.stack || "(no stack)");
+  // ✅ DO NOT process.exit() here — let the server keep running
+});
 
+process.on("uncaughtException", (err) => {
+  console.error("💥 Uncaught Exception:", err.message);
+  console.error(err.stack);
+  // ✅ Only exit for truly unrecoverable errors.
+  //    On Railway the platform will auto-restart the container.
+  //    Exiting here causes the 502 you were seeing.
+  //    Keep this line ONLY if you want Railway to force-restart:
+  // process.exit(1);
+});
+
+/* ════════════════════════════════
+   APP SETUP
+════════════════════════════════ */
 const app = express();
 
 /* ── Payment rate limiter ── */
 const paymentLimiter = rateLimit({
-   windowMs: 60 * 1000,
-   max: 10, // max 10 payment attempts per minute per IP
-   message: { message: "Too many payment attempts. Please wait." },
-   standardHeaders: true,
-   legacyHeaders: false,
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { message: "Too many payment attempts. Please wait." },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-/* ════════════════════════════════
-   MIDDLEWARE
-════════════════════════════════ */
-
-// ✅ CORS — only allow your frontend domains
-app.use(cors({
-   origin: [
+/* ── CORS ── */
+app.use(
+  cors({
+    origin: [
       "http://localhost:5173",
       "https://motoparkvizag.in",
-      "https://www.motoparkvizag.in"
-   ],
-   credentials: true,
-}));
+      "https://www.motoparkvizag.in",
+    ],
+    credentials: true,
+  })
+);
 
 app.use(
-   helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: false,
-   })
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  })
 );
 
 app.use(compression());
-
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-
 app.use("/api", apiLimiter);
 
 /* ── STATIC ── */
 app.use(
-   "/uploads",
-   express.static(path.join(process.cwd(), "uploads"), {
-      maxAge: "7d",
-      etag: true,
-      lastModified: true,
-   })
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"), {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true,
+  })
 );
 
 /* ════════════════════════════════
    HEALTH CHECK
 ════════════════════════════════ */
 app.get("/api/health", (req, res) => {
-   res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 /* ════════════════════════════════
@@ -119,14 +131,14 @@ app.use("/api/media", mediaRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/store-config", storeConfigRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/payment", paymentLimiter, paymentRoutes); // ✅ payment rate limiter added
-
+app.use("/api/payment", paymentLimiter, paymentRoutes);
 app.use("/api/users/otp", otpLimiter);
 app.use("/api/users", authLimiter, userRoutes);
 app.use("/api/home-data", homeDataRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRouter);
 app.use("/api/video-showcase", videoShowcaseRoutes);
+
 /* ════════════════════════════════
    ERROR HANDLING (must be last)
 ════════════════════════════════ */
@@ -134,44 +146,32 @@ app.use(notFound);
 app.use(globalErrorHandler);
 
 /* ════════════════════════════════
-   CRASH PROTECTION
-════════════════════════════════ */
-process.on("unhandledRejection", (reason, promise) => {
-   console.error("💥 Unhandled Promise Rejection");
-   console.error("   Reason :", reason);
-   console.error("   Message:", reason?.message || reason);
-   console.error("   Stack  :", reason?.stack || "(no stack)");
-   console.error("   Promise:", promise);
-});
-
-process.on("uncaughtException", (err) => {
-   console.error("💥 Uncaught Exception:", err.message);
-   console.error(err.stack);
-   process.exit(1);
-});
-
-/* ════════════════════════════════
-   START SERVER
+   START — DB first, then listen
+   This guarantees Railway's health
+   check hits a live server only
+   after MongoDB is ready.
 ════════════════════════════════ */
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-   console.log(`✅ Server running on port ${PORT}`);
+const start = async () => {
+  try {
+    console.log("⏳ Connecting to MongoDB...");
+    await connectDB(); // ✅ await DB before binding port
+    console.log("✅ MongoDB connected");
 
-
-
-const BACKEND_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-
-const keepAlive = () => {
-    const url = new URL(`${BACKEND_URL}/api/health`);
-    const req = http.get({ hostname: url.hostname, path: url.pathname, port: url.port || 80 }, (res) => {
-        res.resume(); // drain response
-        console.log(`🏓 Keep-alive OK — ${new Date().toISOString()}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      // ✅ "0.0.0.0" ensures Railway's internal router can reach the process
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
     });
-    req.on("error", (e) => console.warn("⚠️  Keep-alive failed:", e.message));
-    req.setTimeout(5000, () => { req.destroy(); });
+  } catch (err) {
+    // DB failed to connect — log clearly so you can see it in Railway logs
+    console.error("❌ Failed to connect to MongoDB:", err.message);
+    console.error(err.stack);
+    // Exit here IS correct — without DB the app is useless and Railway
+    // will restart the container automatically.
+    process.exit(1);
+  }
 };
 
-setInterval(keepAlive, 14 * 60 * 1000);
-});
-
+start();

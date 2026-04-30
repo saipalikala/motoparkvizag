@@ -2,9 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>motopark-web</title>
+    <title>MotoPark Vizag — Premium Motorcycle Gear</title>
+    <meta name="description" content="Shop helmets, jackets, gloves and riding gear at MotoPark Vizag." />
+
+    <!-- Preconnect: start DNS+TLS for these origins before JS runs -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="preconnect" href="https://api.motoparkvizag.in" crossorigin />
+
+    <!-- Preload the custom font so it's ready before carousel renders -->
+    <link
+      rel="preload"
+      href="/assets/fonts/Sakana.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/assets/logo/logo.svg" />
   </head>
   <body>
     <div id="root"></div>

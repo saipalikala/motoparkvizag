@@ -2,10 +2,33 @@ import jwt from "jsonwebtoken";
 
 // In-memory blacklist — survives the process lifetime.
 // For multi-instance deployments, move this to Redis.
-const revokedTokens = new Set();
+const revokedTokens = new Map();
+const TOKEN_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 
-export const revokeToken = (token) => revokedTokens.add(token);
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, exp] of revokedTokens) {
+    if (now > exp) {
+      revokedTokens.delete(token);
+    }
+  }
+}, TOKEN_CLEANUP_INTERVAL);
 
+export const revokeToken = (token) => {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split('.')[1], 'base64url').toString()
+    );
+
+    const exp = payload.exp
+      ? payload.exp * 1000
+      : Date.now() + 24 * 60 * 60 * 1000;
+
+    revokedTokens.set(token, exp);
+  } catch {
+    revokedTokens.set(token, Date.now() + 24 * 60 * 60 * 1000);
+  }
+};
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
@@ -15,7 +38,7 @@ const authMiddleware = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    if (revokedTokens.has(token)) {
+    if (revokedTokens.has(token) && Date.now() < revokedTokens.get(token)) {
         return res.status(401).json({ message: "Unauthorized: Token revoked" });
     }
 
