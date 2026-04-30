@@ -97,7 +97,7 @@ app.use(
 app.use(compression());
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-app.use("/api", apiLimiter);
+// app.use("/api", apiLimiter);
 
 /* ── STATIC ── */
 app.use(
