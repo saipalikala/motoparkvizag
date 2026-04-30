@@ -65,7 +65,18 @@ process.on("uncaughtException", (err) => {
    APP SETUP
 ════════════════════════════════ */
 const app = express();
+app.get("/", (req, res) => {
+  res.send("ROOT OK");
+});
 
+app.get("/ping", (req, res) => {
+  res.send("PING OK");
+});
+
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.url}`);
+  next();
+});
 /* ── Payment rate limiter ── */
 const paymentLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -119,32 +130,34 @@ app.get("/api/health", (req, res) => {
 /* ════════════════════════════════
    API ROUTES
 ════════════════════════════════ */
-app.use("/api/offers", offerRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/navbar", navbarRoutes);
-app.use("/api/carousel", carouselRoutes);
-app.use("/api/upload", uploadLimiter, uploadRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/home-layout", homeLayoutRoutes);
-app.use("/api/collections", collectionRoutes);
-app.use("/api/media", mediaRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/store-config", storeConfigRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/payment", paymentLimiter, paymentRoutes);
-app.use("/api/users/otp", otpLimiter);
-app.use("/api/users", authLimiter, userRoutes);
-app.use("/api/home-data", homeDataRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/wishlist", wishlistRouter);
-app.use("/api/video-showcase", videoShowcaseRoutes);
+// app.use("/api/offers", offerRoutes);
+// app.use("/api/admin", adminRoutes);
+// app.use("/api/navbar", navbarRoutes);
+// app.use("/api/carousel", carouselRoutes);
+// app.use("/api/upload", uploadLimiter, uploadRoutes);
+// app.use("/api/products", productRoutes);
+// app.use("/api/home-layout", homeLayoutRoutes);
+// app.use("/api/collections", collectionRoutes);
+// app.use("/api/media", mediaRoutes);
+// app.use("/api/categories", categoryRoutes);
+// app.use("/api/store-config", storeConfigRoutes);
+// app.use("/api/orders", orderRoutes);
+// app.use("/api/payment", paymentLimiter, paymentRoutes);
+// app.use("/api/users/otp", otpLimiter);
+// app.use("/api/users", authLimiter, userRoutes);
+// app.use("/api/home-data", homeDataRoutes);
+// app.use("/api/cart", cartRoutes);
+// app.use("/api/wishlist", wishlistRouter);
+// app.use("/api/video-showcase", videoShowcaseRoutes);
 
 /* ════════════════════════════════
    ERROR HANDLING (must be last)
 ════════════════════════════════ */
-app.use(notFound);
-app.use(globalErrorHandler);
-
+// app.use(notFound);
+// app.use(globalErrorHandler);
+app.use((req, res) => {
+  res.status(404).send("Not Found");
+});
 /* ════════════════════════════════
    START — DB first, then listen
    This guarantees Railway's health
