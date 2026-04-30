@@ -10,8 +10,8 @@
    ✅ Each section renders exactly once
    ✅ Clean lazy loading with stable Suspense fallbacks
    ================================================ */
-import { useEffect, useState, lazy, Suspense } from "react";
-import { API } from "@/config/api";
+import { useState, lazy, Suspense } from "react";
+import { useProducts } from "@/context/ProductContext";
 import "./Home.css";
 
 import PremiumCarousel from "@/components/PremiumCarousel/PremiumCarousel";
@@ -55,29 +55,11 @@ const BentoSkeleton = () => (
    See: src/App.jsx  →  useSmoothScroll()
 ════════════════════════════════ */
 function Home() {
-    const [homeData, setHomeData] = useState(null);
-    const [loading, setLoading]   = useState(true);
+const { featured, trending, newArrivals, loading } = useProducts();
 
-    useEffect(() => {
-        let cancelled = false;
-        fetch(`${API}/home-data`)
-            .then(r => r.json())
-            .then(data => { if (!cancelled) { setHomeData(data); setLoading(false); } })
-            .catch(() => {
-                if (!cancelled) {
-                    setHomeData({ featured: [], trending: [], newArrivals: [] });
-                    setLoading(false);
-                }
-            });
-        return () => { cancelled = true; };
-    }, []);
-
-    /* Merge featured + trending for showcase, deduplicated by _id */
-    const showcaseProducts = homeData
-        ? [...(homeData.featured || []), ...(homeData.trending || [])]
-            .filter((p, i, arr) => arr.findIndex(x => x._id === p._id) === i)
-            .slice(0, 8)
-        : [];
+    const showcaseProducts = [...featured, ...trending]
+        .filter((p, i, arr) => arr.findIndex(x => x._id === p._id) === i)
+        .slice(0, 8);
 
     return (
         <div className="home-page">
@@ -103,7 +85,7 @@ function Home() {
                     ? <CardRowSkeleton />
                     : (
                         <Suspense fallback={<CardRowSkeleton />}>
-                            <NewArrivalsSlider products={homeData?.newArrivals || []} />
+                            <NewArrivalsSlider products={newArrivals} />
                         </Suspense>
                     )
                 }
@@ -119,7 +101,7 @@ function Home() {
                             <BentoGrid
                                 title="Highest Selling"
                                 type="featured"
-                                products={homeData?.featured || []}
+                                products={featured}
                             />
                         </Suspense>
                     )
@@ -146,7 +128,7 @@ function Home() {
                     ? <CardRowSkeleton />
                     : (
                         <Suspense fallback={<CardRowSkeleton />}>
-                            <TrendingProducts products={homeData?.trending || []} />
+                            <TrendingProducts products={trending} />
                         </Suspense>
                     )
                 }

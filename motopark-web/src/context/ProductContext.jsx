@@ -50,29 +50,27 @@ export const ProductProvider = ({ children }) => {
   const fetchingRef = useRef(false); 
 
 const fetchHighlights = useCallback(async (force = false) => {
-  if (fetchingRef.current) return;   // ← deduplicate concurrent calls
-  if (!force) {
-    const c = readCache();
-    if (c) {
-      setFeatured(c.featured);
-      setTrending(c.trending);
-      setNewArrivals(c.newArrivals);
-      setLoading(false);
-      return;
+    if (fetchingRef.current) return;
+    if (!force) {
+        const c = readCache();
+        if (c) {
+            setFeatured(c.featured);
+            setTrending(c.trending);
+            setNewArrivals(c.newArrivals);
+            setLoading(false);
+            return;
+        }
     }
-  }
 
-  fetchingRef.current = true;        // ← lock
-  const ctrl = new AbortController();
-  setLoading(true);
+    fetchingRef.current = true;
+    setLoading(true);
 
-  try {
-      // Three targeted requests — each returns ≤8 lean documents
-      const [featRes, trendRes, newRes] = await Promise.all([
-        fetch(`${API}/products?flags=featured&limit=8`,    { signal: ctrl.signal }),
-        fetch(`${API}/products?flags=trending&limit=8`,    { signal: ctrl.signal }),
-        fetch(`${API}/products?flags=newArrival&limit=8`,  { signal: ctrl.signal }),
-      ]);
+    try {
+        const [featRes, trendRes, newRes] = await Promise.all([
+            fetch(`${API}/products?flags=featured&limit=8`),
+            fetch(`${API}/products?flags=trending&limit=8`),
+            fetch(`${API}/products?flags=newArrival&limit=8`),
+        ]);
 
       if (!featRes.ok || !trendRes.ok || !newRes.ok) throw new Error("Fetch failed");
 
@@ -100,19 +98,75 @@ const fetchHighlights = useCallback(async (force = false) => {
         setError(null);
       }
     } catch (err) {
-      if (err.name === "AbortError") return;
-      if (isMounted.current) setError(err.message);
-    }finally {
-    fetchingRef.current = false;     // ← always unlock
-    if (isMounted.current) setLoading(false);
-  }
+        if (err.name === "AbortError") return;
+        if (isMounted.current) setError(err.message);
+    } finally {
+        fetchingRef.current = false;
+        if (isMounted.current) setLoading(false);
+    }
+
 }, []);
 
-  useEffect(() => {
+
+useEffect(() => {
     isMounted.current = true;
-    fetchHighlights();
-    return () => { isMounted.current = false; };
-  }, [fetchHighlights]);
+    const ctrl = new AbortController();
+
+    const run = async () => {
+        if (fetchingRef.current) return;
+
+        const c = readCache();
+        if (c) {
+            setFeatured(c.featured); setTrending(c.trending);
+            setNewArrivals(c.newArrivals); setLoading(false);
+            return;
+        }
+
+        fetchingRef.current = true;
+        setLoading(true);
+
+        try {
+            const [featRes, trendRes, newRes] = await Promise.all([
+                fetch(`${API}/products?flags=featured&limit=8`,   { signal: ctrl.signal }),
+                fetch(`${API}/products?flags=trending&limit=8`,   { signal: ctrl.signal }),
+                fetch(`${API}/products?flags=newArrival&limit=8`, { signal: ctrl.signal }),
+            ]);
+
+            if (!featRes.ok || !trendRes.ok || !newRes.ok) throw new Error("Fetch failed");
+
+            const [featData, trendData, newData] = await Promise.all([
+                featRes.json(), trendRes.json(), newRes.json(),
+            ]);
+
+            const normalize = (arr) => (arr || []).map(p => ({
+                ...p, images: p?.variants?.[0]?.images || [],
+            }));
+
+            const payload = {
+                featured:    normalize(featData.products),
+                trending:    normalize(trendData.products),
+                newArrivals: normalize(newData.products),
+            };
+
+            writeCache(payload);
+
+            if (isMounted.current) {
+                setFeatured(payload.featured);
+                setTrending(payload.trending);
+                setNewArrivals(payload.newArrivals);
+                setError(null);
+            }
+        } catch (err) {
+            if (err.name !== "AbortError" && isMounted.current) setError(err.message);
+        } finally {
+            fetchingRef.current = false;
+            if (isMounted.current) setLoading(false);
+        }
+    };
+
+    run();
+    return () => { isMounted.current = false; ctrl.abort(); };
+}, []); // ← no fetchHighlights dependency needed now
 
   // Stable value object — only changes when data actually changes
   const value = useMemo(() => ({

@@ -279,6 +279,7 @@ MuteButton.displayName = "MuteButton";
 // ─── SLIDE CONTENT ────────────────────────────────────────────────────────────
 const SlideContent = memo(({ slide }) => {
     const navigate = useNavigate();
+    
     return (
         <div className="carousel-content">
             <motion.span
@@ -375,7 +376,8 @@ DotsBar.displayName = "DotsBar";
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PremiumCarousel = () => {
-    const [slides,    setSlides]    = useState(null);
+    const [slides, setSlides] = useState(fallbackSlides);
+    
     const [index,     setIndex]     = useState(0);
     const [paused,    setPaused]    = useState(false);
     const [direction, setDirection] = useState(1);
@@ -391,7 +393,19 @@ const PremiumCarousel = () => {
     indexRef.current   = index;
 
     const navigate    = useNavigate();
-    const parallaxRef = useParallax({ speed: 0.4 });
+    const [isMobileDevice, setIsMobileDevice] = useState(
+  typeof window !== "undefined" && window.innerWidth < 768
+);
+
+useEffect(() => {
+  const handleResize = () => {
+    setIsMobileDevice(window.innerWidth < 768);
+  };
+
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
+const parallaxRef = useParallax({ speed: isMobileDevice ? 0 : 0.4 });
 
     /* [D] + [O1]: normalise — downgrade video on data-saver AND enforce order */
     const normaliseSlides = useCallback((raw) => {
@@ -488,15 +502,7 @@ useEffect(() => {
         trackMouse:    false,
     });
 
-    /* Loading skeleton */
-    if (!slides) return (
-        <div
-            className="carousel-skeleton"
-            role="status"
-            aria-busy="true"
-            aria-label="Loading carousel"
-        />
-    );
+
 
     const slide    = slides[index];
     const isVideo  = slide.type === "video";
@@ -526,7 +532,7 @@ useEffect(() => {
                     aria-label={`${index + 1} of ${slides.length}: ${slide.title}`}
                 >
                     {/* ── BACKGROUND ── */}
-                    <div className="carousel-bg-wrap" ref={!isVideo ? parallaxRef : undefined}>
+<div className="carousel-bg-wrap" ref={(!isVideo && !isMobileDevice) ? parallaxRef : undefined}>
                         {isVideo ? (
                             <VideoBackground
                                 key={slide.video}     /* force remount on slide change */

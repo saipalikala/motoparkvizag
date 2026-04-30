@@ -150,22 +150,24 @@ useEffect(() => {
   }, []);
 
   /* ── Active index change — play active, pause + preload:none others ── */
-  useEffect(() => {
+useEffect(() => {
     activeIdxRef.current = activeIdx;
     videoRefs.current.forEach((vid, i) => {
-      if (!vid) return;
-      if (i === activeIdx) {
-        // FIX: switch to auto before playing so the browser fetches the stream
-        vid.preload     = "auto";
-        vid.currentTime = 0;
-        if (isInViewRef.current) vid.play().catch(() => {});
-      } else {
-        vid.pause();
-        // FIX: stop fetching non-active videos to prevent bandwidth competition
-        vid.preload = "none";
-      }
+        if (!vid) return;
+        if (i === activeIdx) {
+            if (!vid.src) {              // ← set src only when first activated
+                vid.src = videos[i].src;
+                vid.load();
+            }
+            vid.preload = "auto";
+            vid.currentTime = 0;
+            if (isInViewRef.current) vid.play().catch(() => {});
+        } else {
+            vid.pause();
+            vid.preload = "none";
+        }
     });
-  }, [activeIdx, videos]);
+}, [activeIdx, videos]);
 
   /* ── Mute sync ── */
   useEffect(() => {
@@ -248,20 +250,19 @@ const handleExplore = useCallback(() => {
 
         {/* Video layer */}
         <motion.div className="vs-video-layer" style={{ scale: videoScale }}>
-          {videos.map((vid, i) => (
-            <video
-              key={vid.id}
-              ref={el => { videoRefs.current[i] = el; }}
-              className={`vs-video${i === activeIdx ? " vs-video--active" : ""}`}
-              src={vid.src}
-              poster={vid.poster || undefined}
-              muted playsInline loop
-              /* FIX: only preload the first video on mount;
-                 the effect above manages preload per-index */
-              preload={i === 0 ? "auto" : "none"}
-              aria-hidden="true"
-            />
-          ))}
+{/* In the video layer map, change src to only set on active: */}
+{videos.map((vid, i) => (
+    <video
+        key={vid.id}
+        ref={el => { videoRefs.current[i] = el; }}
+        className={`vs-video${i === activeIdx ? " vs-video--active" : ""}`}
+        src={i === activeIdx ? vid.src : undefined}  // ← only active gets src
+        poster={vid.poster || undefined}
+        muted playsInline loop
+        preload={i === activeIdx ? "auto" : "none"}
+        aria-hidden="true"
+    />
+))}
         </motion.div>
 
         {/* Gradient overlay */}
@@ -279,14 +280,14 @@ const handleExplore = useCallback(() => {
 
 {/* Replace the 4 separate AnimatePresence blocks with one wrapper */}
 <AnimatePresence mode="wait">
-  <motion.div
+<motion.div
     key={activeIdx}
     initial={{ opacity: 0, y: 18 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -10 }}
     transition={{ duration: 0.45, ease: EASE }}
-    style={{ display: "contents" }}   // no layout impact
-  >
+    className="vs-content-inner"   // ← use a real class, not display:contents
+>
     {/* Tag pill — remove its own AnimatePresence wrapper */}
     <div className="vs-tag" style={{ "--va": v.accent }}>
       <span className="vs-tag__dot" />

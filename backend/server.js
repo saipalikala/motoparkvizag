@@ -3,12 +3,12 @@ dotenv.config();
 import http from "http";
 
 
-console.log({
-  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
-  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
-  CLOUDINARY_URL: process.env.CLOUDINARY_URL
-});
+// console.log({
+//   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+//   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+//   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+//   CLOUDINARY_URL: process.env.CLOUDINARY_URL
+// });
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import express from "express";
 import cors from "cors";

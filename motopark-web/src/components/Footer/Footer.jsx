@@ -30,7 +30,7 @@ const Footer = () => {
                             className="footer-social-btn" aria-label="Instagram">
                             <Instagram size={16} />
                         </a>
-                        <a href="https://youtube.com" target="_blank" rel="noreferrer"
+                        <a href="https://youtube.com/@motoparkvizag?si=B9rxuRaNNVsMKg49"
                             className="footer-social-btn" aria-label="YouTube">
                             <Youtube size={16} />
                         </a>
@@ -79,9 +79,9 @@ const Footer = () => {
                     </nav>
 
                     <div className="footer-contact-list">
-                        <a href="mailto:support@motopark.in" className="footer-contact-item">
+                        <a href="mailto:support.motoparkvizag@gmail.com" className="footer-contact-item">
                             <Mail size={13} />
-                            support@motopark.in
+                            support.motoparkvizag@gmail.com
                         </a>
                         <a href="tel:08328031179" className="footer-contact-item">
                             <Phone size={13} />
