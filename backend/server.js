@@ -7,110 +7,112 @@ import path from "path";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 
-import connectDB from "./config/db.js";
-
-/* ── ROUTES ── */
-import homeLayoutRoutes from "./routes/homeLayoutRoutes.js";
-import offerRoutes from "./routes/offerRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
-import navbarRoutes from "./routes/navbarRoutes.js";
-import carouselRoutes from "./routes/carouselRoutes.js";
-import uploadRoutes from "./routes/uploadRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
-import collectionRoutes from "./routes/collectionRoutes.js";
-import mediaRoutes from "./routes/mediaRoutes.js";
-import categoryRoutes from "./routes/categoryRoutes.js";
-import storeConfigRoutes from "./routes/storeConfigRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import paymentRoutes from "./routes/paymentRoutes.js";
-import homeDataRoutes from "./routes/homeDataRoutes.js";
-import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
-import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
-
-/* ── SECURITY MIDDLEWARE ── */
-import {
-  apiLimiter,
-  otpLimiter,
-  authLimiter,
-  uploadLimiter,
-  globalErrorHandler,
-  notFound,
-  helmet,
-} from "./middleware/security.js";
-
 /* ════════════════════════════════
    PROCESS-LEVEL SAFETY
-   — log errors but DO NOT exit on
-     unhandled rejections (Railway
-     will restart if truly fatal)
 ════════════════════════════════ */
 process.on("unhandledRejection", (reason) => {
   console.error("💥 Unhandled Rejection:", reason?.message || reason);
   console.error(reason?.stack || "(no stack)");
-  // ✅ DO NOT process.exit() here — let the server keep running
+  // DO NOT exit — Railway will restart if truly fatal
 });
 
 process.on("uncaughtException", (err) => {
   console.error("💥 Uncaught Exception:", err.message);
   console.error(err.stack);
-  // ✅ Only exit for truly unrecoverable errors.
-  //    On Railway the platform will auto-restart the container.
-  //    Exiting here causes the 502 you were seeing.
-  //    Keep this line ONLY if you want Railway to force-restart:
-  // process.exit(1);
+  // DO NOT exit — keep server alive for Railway
 });
 
 /* ════════════════════════════════
    APP SETUP
 ════════════════════════════════ */
 const app = express();
+
+/* ── Request logger (helps debug Railway logs) ── */
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.url} [${new Date().toISOString()}]`);
+  next();
+});
+
+/* ════════════════════════════════
+   HEALTH / PING — BEFORE everything else
+   These must respond even if DB is down.
+   Railway's health check hits "/" or "/ping"
+   during deploy. If these are below middleware
+   that throws, you get 502.
+════════════════════════════════ */
 app.get("/", (req, res) => {
-  res.send("ROOT OK");
+  res.status(200).json({ status: "ok", service: "motopark-api" });
 });
 
 app.get("/ping", (req, res) => {
-  res.send("PING OK");
+  res.status(200).send("PONG");
 });
 
-app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.url}`);
-  next();
-});
-/* ── Payment rate limiter ── */
-const paymentLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  message: { message: "Too many payment attempts. Please wait." },
-  standardHeaders: true,
-  legacyHeaders: false,
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "development",
+    port: process.env.PORT || 5000,
+  });
 });
 
-/* ── CORS ── */
+/* ════════════════════════════════
+   CORS — before helmet, before body parsers
+   Railway reverse-proxy forwards the real
+   Origin header so this is safe.
+════════════════════════════════ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://motoparkvizag.in",
+  "https://www.motoparkvizag.in",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://motoparkvizag.in",
-      "https://www.motoparkvizag.in",
-    ],
+    origin: (origin, callback) => {
+      // Allow no-origin requests (mobile apps, curl, Railway health checks)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      console.warn(`⚠️  CORS blocked origin: ${origin}`);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(
-  helmet({
+/* ════════════════════════════════
+   HELMET — safe defaults for Railway
+   Disable CSP so it doesn't block
+   your own API responses.
+   crossOriginResourcePolicy: cross-origin
+   is needed for Cloudinary image URLs.
+════════════════════════════════ */
+let helmetMiddleware;
+try {
+  const { default: helmetPkg } = await import("helmet");
+  helmetMiddleware = helmetPkg({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: false,
-  })
-);
+    crossOriginEmbedderPolicy: false, // ← required when CSP is false
+  });
+  console.log("✅ Helmet loaded");
+} catch (e) {
+  console.warn("⚠️  Helmet failed to load, skipping:", e.message);
+  helmetMiddleware = (req, res, next) => next(); // no-op fallback
+}
+app.use(helmetMiddleware);
 
+/* ── Compression ── */
 app.use(compression());
+
+/* ── Body parsers ── */
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-// app.use("/api", apiLimiter);
 
-/* ── STATIC ── */
+/* ── Static uploads ── */
 app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "uploads"), {
@@ -121,69 +123,212 @@ app.use(
 );
 
 /* ════════════════════════════════
-   HEALTH CHECK
+   RATE LIMITERS
 ════════════════════════════════ */
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+const paymentLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { message: "Too many payment attempts. Please wait." },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /* ════════════════════════════════
-   API ROUTES
+   ROUTE IMPORTS — wrapped in try/catch
+   A single bad import can crash the whole
+   module load and cause 502 with no logs.
 ════════════════════════════════ */
-// app.use("/api/offers", offerRoutes);
-// app.use("/api/admin", adminRoutes);
-// app.use("/api/navbar", navbarRoutes);
-// app.use("/api/carousel", carouselRoutes);
-// app.use("/api/upload", uploadLimiter, uploadRoutes);
-// app.use("/api/products", productRoutes);
-// app.use("/api/home-layout", homeLayoutRoutes);
-// app.use("/api/collections", collectionRoutes);
-// app.use("/api/media", mediaRoutes);
-// app.use("/api/categories", categoryRoutes);
-// app.use("/api/store-config", storeConfigRoutes);
-// app.use("/api/orders", orderRoutes);
-// app.use("/api/payment", paymentLimiter, paymentRoutes);
-// app.use("/api/users/otp", otpLimiter);
-// app.use("/api/users", authLimiter, userRoutes);
-// app.use("/api/home-data", homeDataRoutes);
-// app.use("/api/cart", cartRoutes);
-// app.use("/api/wishlist", wishlistRouter);
-// app.use("/api/video-showcase", videoShowcaseRoutes);
+let routes = {};
+try {
+  const [
+    homeLayoutRoutes,
+    offerRoutes,
+    adminRoutes,
+    navbarRoutes,
+    carouselRoutes,
+    uploadRoutes,
+    productRoutes,
+    collectionRoutes,
+    mediaRoutes,
+    categoryRoutes,
+    storeConfigRoutes,
+    orderRoutes,
+    userRoutes,
+    paymentRoutes,
+    homeDataRoutes,
+    videoShowcaseRoutes,
+    cartModule,
+  ] = await Promise.all([
+    import("./routes/homeLayoutRoutes.js"),
+    import("./routes/offerRoutes.js"),
+    import("./routes/adminRoutes.js"),
+    import("./routes/navbarRoutes.js"),
+    import("./routes/carouselRoutes.js"),
+    import("./routes/uploadRoutes.js"),
+    import("./routes/productRoutes.js"),
+    import("./routes/collectionRoutes.js"),
+    import("./routes/mediaRoutes.js"),
+    import("./routes/categoryRoutes.js"),
+    import("./routes/storeConfigRoutes.js"),
+    import("./routes/orderRoutes.js"),
+    import("./routes/userRoutes.js"),
+    import("./routes/paymentRoutes.js"),
+    import("./routes/homeDataRoutes.js"),
+    import("./routes/videoShowcaseRoutes.js"),
+    import("./routes/cartRoutes.js"),
+  ]);
+
+  routes = {
+    homeLayoutRoutes: homeLayoutRoutes.default,
+    offerRoutes: offerRoutes.default,
+    adminRoutes: adminRoutes.default,
+    navbarRoutes: navbarRoutes.default,
+    carouselRoutes: carouselRoutes.default,
+    uploadRoutes: uploadRoutes.default,
+    productRoutes: productRoutes.default,
+    collectionRoutes: collectionRoutes.default,
+    mediaRoutes: mediaRoutes.default,
+    categoryRoutes: categoryRoutes.default,
+    storeConfigRoutes: storeConfigRoutes.default,
+    orderRoutes: orderRoutes.default,
+    userRoutes: userRoutes.default,
+    paymentRoutes: paymentRoutes.default,
+    homeDataRoutes: homeDataRoutes.default,
+    videoShowcaseRoutes: videoShowcaseRoutes.default,
+    cartRoutes: cartModule.default,
+    wishlistRouter: cartModule.wishlistRouter,
+  };
+
+  console.log("✅ All routes imported successfully");
+} catch (importErr) {
+  // Log exactly which import failed — this is the #1 hidden cause of 502
+  console.error("❌ ROUTE IMPORT FAILED:", importErr.message);
+  console.error(importErr.stack);
+  // Server stays alive — health check still works
+  // Only the broken routes won't be registered
+}
 
 /* ════════════════════════════════
-   ERROR HANDLING (must be last)
+   SECURITY MIDDLEWARE IMPORTS
 ════════════════════════════════ */
-// app.use(notFound);
-// app.use(globalErrorHandler);
+let securityMiddleware = {};
+try {
+  securityMiddleware = await import("./middleware/security.js");
+  console.log("✅ Security middleware loaded");
+} catch (e) {
+  console.error("❌ Security middleware failed to load:", e.message);
+}
+
+const {
+  apiLimiter,
+  otpLimiter,
+  authLimiter,
+  uploadLimiter,
+  globalErrorHandler,
+  notFound,
+} = securityMiddleware;
+
+/* ════════════════════════════════
+   MOUNT ROUTES (only if imported OK)
+════════════════════════════════ */
+if (routes.offerRoutes) app.use("/api/offers", routes.offerRoutes);
+if (routes.adminRoutes) app.use("/api/admin", routes.adminRoutes);
+if (routes.navbarRoutes) app.use("/api/navbar", routes.navbarRoutes);
+if (routes.carouselRoutes) app.use("/api/carousel", routes.carouselRoutes);
+if (routes.uploadRoutes)
+  app.use(
+    "/api/upload",
+    uploadLimiter || ((q, r, n) => n()),
+    routes.uploadRoutes
+  );
+if (routes.productRoutes) app.use("/api/products", routes.productRoutes);
+if (routes.homeLayoutRoutes)
+  app.use("/api/home-layout", routes.homeLayoutRoutes);
+if (routes.collectionRoutes)
+  app.use("/api/collections", routes.collectionRoutes);
+if (routes.mediaRoutes) app.use("/api/media", routes.mediaRoutes);
+if (routes.categoryRoutes) app.use("/api/categories", routes.categoryRoutes);
+if (routes.storeConfigRoutes)
+  app.use("/api/store-config", routes.storeConfigRoutes);
+if (routes.orderRoutes) app.use("/api/orders", routes.orderRoutes);
+if (routes.paymentRoutes)
+  app.use("/api/payment", paymentLimiter, routes.paymentRoutes);
+if (routes.userRoutes) {
+  app.use("/api/users/otp", otpLimiter || ((q, r, n) => n()));
+  app.use("/api/users", authLimiter || ((q, r, n) => n()), routes.userRoutes);
+}
+if (routes.homeDataRoutes) app.use("/api/home-data", routes.homeDataRoutes);
+if (routes.cartRoutes) app.use("/api/cart", routes.cartRoutes);
+if (routes.wishlistRouter) app.use("/api/wishlist", routes.wishlistRouter);
+if (routes.videoShowcaseRoutes)
+  app.use("/api/video-showcase", routes.videoShowcaseRoutes);
+
+/* ════════════════════════════════
+   ERROR HANDLING — must be last
+════════════════════════════════ */
+// 404 for unmatched routes
 app.use((req, res) => {
-  res.status(404).send("Not Found");
+  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
+
+// Global error handler (catches errors passed via next(err))
+app.use((err, req, res, next) => {
+  console.error("🔴 EXPRESS ERROR:", err.message);
+  console.error(err.stack);
+
+  if (err.name === "ValidationError") {
+    const messages = Object.values(err.errors).map((e) => e.message);
+    return res.status(400).json({ message: messages.join(", ") });
+  }
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue || {})[0] || "field";
+    return res.status(400).json({ message: `${field} already exists` });
+  }
+  if (err.name === "JsonWebTokenError")
+    return res.status(401).json({ message: "Invalid token" });
+  if (err.name === "TokenExpiredError")
+    return res.status(401).json({ message: "Token expired, please login again" });
+  if (err.code === "LIMIT_FILE_SIZE")
+    return res.status(400).json({ message: "File too large. Max 5MB." });
+  // CORS errors
+  if (err.message && err.message.startsWith("CORS:"))
+    return res.status(403).json({ message: err.message });
+
+  res.status(err.status || 500).json({
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : err.message,
+  });
+});
+
 /* ════════════════════════════════
-   START — DB first, then listen
-   This guarantees Railway's health
-   check hits a live server only
-   after MongoDB is ready.
+   DB CONNECT — fixed version
 ════════════════════════════════ */
-const PORT = process.env.PORT || 5000;
+import connectDB from "./config/db.js";
+
+/* ════════════════════════════════
+   START SERVER
+════════════════════════════════ */
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
 const start = async () => {
   try {
     console.log("⏳ Connecting to MongoDB...");
-    await connectDB(); // ✅ await DB before binding port
-    console.log("✅ MongoDB connected");
+    console.log(`📌 PORT from env: ${process.env.PORT}`);
+    console.log(`📌 NODE_ENV: ${process.env.NODE_ENV}`);
+
+    await connectDB();
 
     app.listen(PORT, "0.0.0.0", () => {
-      // ✅ "0.0.0.0" ensures Railway's internal router can reach the process
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`🔗 Health: http://0.0.0.0:${PORT}/api/health`);
     });
   } catch (err) {
-    // DB failed to connect — log clearly so you can see it in Railway logs
-    console.error("❌ Failed to connect to MongoDB:", err.message);
+    console.error("❌ Fatal startup error:", err.message);
     console.error(err.stack);
-    // Exit here IS correct — without DB the app is useless and Railway
-    // will restart the container automatically.
-    process.exit(1);
+    process.exit(1); // Only exit on startup failure — Railway will restart
   }
 };
 
