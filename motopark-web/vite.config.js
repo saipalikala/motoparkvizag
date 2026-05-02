@@ -15,36 +15,65 @@ export default defineConfig({
         skipWaiting:           true,
         navigateFallback:      "/index.html",
         runtimeCaching: [
+
+          // ── 1. SEMI-STATIC API ROUTES — StaleWhileRevalidate ────────
+          // These endpoints change only when admin updates them.
+          // StaleWhileRevalidate = serve from cache INSTANTLY (~1ms),
+          // then silently fetch fresh data in the background.
+          // Result: user sees content immediately on every visit.
           {
-            // API responses — NetworkFirst (fresh data, fallback to cache)
-            urlPattern: /^https?:\/\/.*\/api\//,
-            handler: "NetworkFirst",
+            urlPattern: /\/api\/(store-config|navbar|offers|carousel|video-showcase|categories|home-data|brands)/,
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "api-cache",
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 },
-              networkTimeoutSeconds: 4,
+              cacheName:  "api-static-cache",
+              expiration: { maxEntries: 30, maxAgeSeconds: 5 * 60 }, // 5 min
+              cacheableResponse: { statuses: [0, 200, 304] },
             },
           },
+
+          // ── 2. DYNAMIC / USER API ROUTES — NetworkFirst ─────────────
+          // These MUST be fresh: cart, orders, auth, checkout, payment.
+          // NetworkFirst = always tries network, falls back to cache
+          // only if offline/Railway down.
           {
-            // Static assets — CacheFirst (JS, CSS, fonts, local images)
+            urlPattern: /\/api\/(orders|cart|users|wishlist|payment|admin)/,
+            handler: "NetworkFirst",
+            options: {
+              cacheName:             "api-dynamic-cache",
+              expiration:            { maxEntries: 20, maxAgeSeconds: 60 },
+              networkTimeoutSeconds: 4,
+              cacheableResponse:     { statuses: [0, 200] },
+            },
+          },
+
+          // ── 3. STATIC ASSETS — CacheFirst ───────────────────────────
+          // JS, CSS, fonts, local images. These are content-hashed by
+          // Vite so a new deploy gets new URLs automatically.
+          {
             urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|webp|svg|ico)$/,
             handler: "CacheFirst",
             options: {
-              cacheName: "static-assets",
+              cacheName:  "static-assets",
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
+
+          // ── 4. CLOUDINARY IMAGES — CacheFirst ───────────────────────
+          // Images are immutable after upload (content-addressed URLs).
+          // Cache aggressively — 30 days.
           {
-            // Cloudinary images — CacheFirst (immutable after upload)
             urlPattern: /^https:\/\/res\.cloudinary\.com\//,
             handler: "CacheFirst",
             options: {
-              cacheName: "cloudinary-images",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheName:  "cloudinary-images",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
       },
+
       manifest: {
         name:             "MotoPark",
         short_name:       "MotoPark",
@@ -67,18 +96,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // React core — cached separately, changes rarely
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-
-          // ── FIX: framer-motion in its own vendor chunk ──────────────
-          // framer-motion is ~100KB gzipped. Without this it gets
-          // bundled into whatever page first imports it (usually Home),
-          // bloating the initial chunk. Isolated here it's cached once
-          // and reused across every page that uses motion components.
+          "vendor-react":  ["react", "react-dom", "react-router-dom"],
           "vendor-motion": ["framer-motion"],
-
-          // Admin panel — only admins ever load this chunk.
-          // Kept full list (suggested fix only had 3 pages — incomplete).
           "chunk-admin": [
             "./src/admin/pages/Dashboard",
             "./src/admin/pages/AdminProducts",
@@ -92,28 +111,15 @@ export default defineConfig({
             "./src/admin/pages/InventoryManager",
             "./src/admin/pages/OffersAdmin",
           ],
-
-          // ── NOT ADDED: chunk-ui for PremiumCarousel ─────────────────
-          // Suggested fix proposed splitting PremiumCarousel into its
-          // own chunk. Rejected — PremiumCarousel is on the HOME PAGE
-          // critical path. Splitting it forces an extra network request
-          // that blocks the above-the-fold render. Wrong direction.
         },
       },
     },
 
     chunkSizeWarningLimit: 500,
-
-    // ── FIX: drop console.log + debugger in production ──────────────
-    // esbuild (already used) supports this natively via `drop`.
-    // The suggested fix swapped to terser which requires `npm install
-    // terser` as an extra devDependency and is 3-4× slower to build.
-    // esbuild achieves the same result with zero extra installs.
-    minify: "esbuild",
+    minify:                "esbuild",
     esbuildOptions: {
       drop: ["console", "debugger"],
     },
-
     sourcemap: false,
   },
 });

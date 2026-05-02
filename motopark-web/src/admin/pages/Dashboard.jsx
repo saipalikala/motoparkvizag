@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import StatCard from "../components/StatCard";
 import SalesChart from "../components/SalesChart";
-import { API } from "@/config/api";
 import "./Dashboard.css";
+import { API } from "@/config/api";
 
 /* ── KPI icons ── */
 const RevenueIcon = () => (
@@ -79,11 +79,10 @@ const Dashboard = () => {
     const fetchDashboard = useCallback(async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("adminToken");
             const [statsRes, ordersRes, productsRes] = await Promise.allSettled([
-               fetch(`${API}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-fetch(`${API}/api/admin/orders/recent`, { headers: { Authorization: `Bearer ${token}` } }),
-fetch(`${API}/api/admin/products/top`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API}/admin/stats`,    { headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` } }),
+                fetch(`${API}/admin/orders/recent`, { headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` } }),
+                fetch(`${API}/admin/products/top`,  { headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` } }),
             ]);
 
             if (statsRes.status === "fulfilled" && statsRes.value.ok) {
