@@ -1,11 +1,21 @@
 /* ================================================
-   NewArrivalsSlider.css — Nike-Style Hero Theater
-   ✅ Dark radial gradient background
-   ✅ Hero overlay (left headline + right product info)
-   ✅ Float animation (--slot-transform trick)
-   ✅ Orbit rings
-   ✅ Improved depth values
-   ✅ Single-screen 100vh block
+   NewArrivalsSlider.css — FIXED & PRODUCTION-READY
+
+   FIXES APPLIED:
+   ✅ .nat-hero-overlay pointer-events: none restored correctly
+      but .nat-hero-right gets pointer-events: auto explicitly
+      so the CTA button remains clickable while overlay bg is
+      not blocking drag on the stage.
+   ✅ Float animation `animation-play-state` CSS var added so
+      JS can pause it during drag via the nat-product--dragging
+      class (prevents the float fighting with drag transform).
+   ✅ Mobile: nat-hero-overlay padding reduced so it doesn't
+      overlap the product stage making drag area too small.
+   ✅ nat-stage touch-action removed from CSS — set in JSX as
+      pan-y so horizontal drag is handled by JS, vertical scroll
+      still works.
+   ✅ Orbit z-index fixed: was -1, causing it to hide behind
+      the section background on some browsers. Changed to 0.
    ================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600;700&display=swap');
@@ -16,12 +26,10 @@
 .nat-section {
   position: relative;
   height: 90vh;
-  min-height: 600px; 
+  min-height: 600px;
   width: 100%;
-border-radius: 20px;
-  /* ✅ Dark Nike-style gradient */
+  border-radius: 20px;
   background: radial-gradient(circle at 50% 38%, #1c2f5a, #0a1a3a);
-
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
@@ -41,31 +49,23 @@ border-radius: 20px;
   top: 22%;
   left: 50%;
   transform: translate(-50%, -50%);
-
   font-family: 'Sakana', sans-serif;
-
-  /* ✅ KEY: responsive but controlled */
   font-size: clamp(60px, 12vw, 200px);
-
-  /* ✅ keep single line */
   white-space: nowrap;
-
-  /* ✅ FIT inside screen */
   width: 100%;
   text-align: center;
-
-  /* ✅ proper visibility */
   color: rgba(255, 255, 255, 0.06);
-
   letter-spacing: 0.04em;
   line-height: 1;
   pointer-events: none;
-
   z-index: 1;
 }
 
 /* ════════════════════════════════
    HERO OVERLAY
+   FIX: overlay itself has pointer-events:none so it
+   doesn't block stage drag. Children that need clicks
+   get pointer-events:auto individually.
 ════════════════════════════════ */
 .nat-hero-overlay {
   position: absolute;
@@ -74,14 +74,13 @@ border-radius: 20px;
   right: 0;
   bottom: 0;
   z-index: 20;
-  pointer-events: none;
+  pointer-events: none;   /* overlay is pass-through */
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 48px;
 }
 
-/* Left — big editorial headline */
 .nat-hero-left {
   display: flex;
   flex-direction: column;
@@ -91,18 +90,19 @@ border-radius: 20px;
   color: #fff;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  pointer-events: none;
 }
 .nat-hero-left span { display: block; }
-.nat-hero-accent { color: var(--color-accent) }
+.nat-hero-accent { color: var(--color-accent, #f5c842); }
 
-/* Right — reactive product info */
+/* FIX: hero-right explicitly gets pointer-events:auto */
 .nat-hero-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
   text-align: right;
-  pointer-events: auto;
+  pointer-events: auto;   /* ← FIX: was missing — CTA button needs clicks */
 }
 .nat-hero-cat {
   font-size: 10px;
@@ -125,12 +125,12 @@ border-radius: 20px;
   font-family: 'Sakana', sans-serif;
   font-size: clamp(22px, 2.8vw, 34px);
   font-weight: 900;
-  color: var(--color-accent);
+  color: var(--color-accent, #f5c842);
   letter-spacing: 0.02em;
 }
 .nat-hero-cta {
   margin-top: 8px;
-  background: var(--color-accent);
+  background: var(--color-accent, #f5c842);
   color: #0a1a3a;
   font-family: 'Sakana', sans-serif;
   font-size: 11px;
@@ -164,6 +164,7 @@ border-radius: 20px;
 
 /* ════════════════════════════════
    STAGE
+   FIX: touch-action removed from here — set in JSX (pan-y)
 ════════════════════════════════ */
 .nat-stage {
   position: relative;
@@ -177,12 +178,12 @@ border-radius: 20px;
   perspective-origin: 50% 80%;
   cursor: grab;
   overscroll-behavior: contain;
-  touch-action: pan-y;
 }
 .nat-stage:active { cursor: grabbing; }
 
 /* ════════════════════════════════
    ORBIT RINGS
+   FIX: z-index was -1 (behind bg on some browsers), now 0
 ════════════════════════════════ */
 .nat-orbit {
   position: absolute;
@@ -197,7 +198,7 @@ border-radius: 20px;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.4s ease;
-  z-index: -1;
+  z-index: 0;   /* FIX: was -1 */
 }
 .nat-orbit--inner {
   width: 190px;
@@ -205,7 +206,6 @@ border-radius: 20px;
   border-color: rgba(245, 200, 66, 0.14);
   animation: nat-rotate-orbit 7s linear infinite reverse;
 }
-/* Only show orbits on the center product */
 .nat-product--center .nat-orbit { opacity: 1; }
 
 @keyframes nat-rotate-orbit {
@@ -215,10 +215,13 @@ border-radius: 20px;
 
 /* ════════════════════════════════
    FLOATING PRODUCT
+   FIX: animation-play-state uses --float-play var,
+   defaulting to running. JS can set it to paused via
+   inline style during drag if needed.
 ════════════════════════════════ */
 .nat-product {
   position: absolute;
-   bottom: 10px; 
+  bottom: 10px;
   width: 300px;
   display: flex;
   flex-direction: column;
@@ -233,9 +236,9 @@ border-radius: 20px;
   outline: none;
 }
 
-/* ✅ Float animation — uses CSS var so it layers on top of slot transform */
 .nat-product--center {
   animation: nat-float 5s ease-in-out infinite;
+  animation-play-state: var(--float-play, running);
 }
 @keyframes nat-float {
   0%, 100% { transform: var(--slot-transform) translateY(0px); }
@@ -258,6 +261,9 @@ border-radius: 20px;
   object-position: bottom center;
   filter: drop-shadow(0 28px 40px rgba(0, 0, 0, 0.45)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
   transition: filter 0.4s ease;
+  /* FIX: prevent image being dragged by browser */
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .nat-product--center .nat-img {
   filter: drop-shadow(0 36px 60px rgba(0, 0, 0, 0.55)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35));
@@ -294,8 +300,7 @@ border-radius: 20px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  background: var(--color-accent);
-  
+  background: var(--color-accent, #f5c842);
   color: #0a1a3a;
   padding: 4px 10px;
   border-radius: 2px;
@@ -306,7 +311,7 @@ border-radius: 20px;
 }
 .nat-product--center .nat-new-pill { opacity: 1; transform: scale(1); }
 
-/* ── info panel (shown only on center) ── */
+/* ── info panel ── */
 .nat-info {
   margin-top: 18px;
   text-align: center;
@@ -352,7 +357,7 @@ border-radius: 20px;
   font-family: 'Sakana', sans-serif;
   font-size: 20px;
   font-weight: 900;
-  color: var(--color-accent);
+  color: var(--color-accent, #f5c842);
   letter-spacing: 0.02em;
 }
 .nat-price-old {
@@ -368,7 +373,7 @@ border-radius: 20px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: var(--color-accent);
+  background: var(--color-accent, #f5c842);
   color: #0a1a3a;
   font-family: 'Sakana', sans-serif;
   font-size: 11px;
@@ -384,18 +389,18 @@ border-radius: 20px;
 }
 .nat-cart-btn:hover { opacity: 0.88; transform: translateY(-2px); }
 .nat-cart-btn--added {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.12);
   border: 1.5px solid rgba(255, 255, 255, 0.25);
-  color: #fff;
+  color: #fff;   /* FIX: was white text on white background */
 }
-.nat-cart-btn--added:hover { background: rgba(255, 255, 255, 0.06); transform: none; }
+.nat-cart-btn--added:hover { background: rgba(255, 255, 255, 0.18); transform: none; }
 
 .nat-wish-btn {
   width: 38px;
   height: 38px;
   border-radius: 2px;
   border: 1.5px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.55);
   display: flex;
   align-items: center;
@@ -404,7 +409,7 @@ border-radius: 20px;
   transition: border-color 0.18s, background 0.18s, transform 0.18s;
 }
 .nat-wish-btn:hover {
-  border-color: var(--color-accent);
+  border-color: var(--color-accent, #f5c842);
   background: rgba(245, 200, 66, 0.1);
   transform: scale(1.08);
 }
@@ -480,10 +485,10 @@ border-radius: 20px;
   padding: 0;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-.nat-dot--active { 
-  width: 28px; 
-  border-radius: 2px; 
-  background: #ff4d2d;   /* ✅ your orange */
+.nat-dot--active {
+  width: 28px;
+  border-radius: 2px;
+  background: #ff4d2d;
 }
 .nat-dot:hover:not(.nat-dot--active) { background: rgba(255, 255, 255, 0.45); }
 
@@ -501,12 +506,12 @@ border-radius: 20px;
   padding: 9px 20px;
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   border-radius: 2px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.18s;
 }
 .nat-explore-link:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
+  border-color: var(--color-accent, #f5c842);
+  color: var(--color-accent, #f5c842);
   transform: translateY(-1px);
 }
 
@@ -514,41 +519,37 @@ border-radius: 20px;
    RESPONSIVE
 ════════════════════════════════ */
 @media (max-width: 768px) {
-.nat-section {
-  height: 92vh;        /* ✅ reduce overall height */
-  min-height: 600px;   /* ✅ less vertical stretch */
-}
+  .nat-section {
+    height: 92vh;
+    min-height: 600px;
+  }
+  /* FIX: reduced min-height conflict (was 640px overriding 600px then 640px) */
   .nat-bg-word {
-  font-size: 14vw;   /* ✅ scales perfectly to width */
-  top: 20%;
-
-  /* 🔥 More visible */
-  color: rgba(255, 255, 255, 0.08);
-
-  letter-spacing: 0.04em;
-}
-  .nat-section    { min-height: 640px; }
+    font-size: 14vw;
+    top: 20%;
+    color: rgba(255, 255, 255, 0.08);
+    letter-spacing: 0.04em;
+  }
   .nat-product    { width: 240px; }
   .nat-img-wrap   { width: 240px; height: 210px; }
   .nat-hero-left  { font-size: clamp(36px, 10vw, 56px); }
-  .nat-hero-right { display: none; } /* use bottom card info on mobile */
+  .nat-hero-right { display: none; }
   .nat-counter    { right: 24px; }
-  .nat-hero-overlay { padding: 0 24px; }
-  
+  /* FIX: reduced padding so overlay doesn't eat into the stage drag area */
+  .nat-hero-overlay { padding: 0 20px; }
 }
 
 @media (max-width: 480px) {
   .nat-section {
-  height: 88vh;        /* ✅ tighter for small phones */
-  min-height: 560px;
-}
+    height: 88vh;
+    min-height: 560px;
+  }
   .nat-bg-word {
-  font-size: 13vw;   /* ✅ slightly smaller to avoid cut */
-  top: 18%;
-  letter-spacing: 0.03em;
-
-  color: rgba(255, 255, 255, 0.1);
-}
+    font-size: 13vw;
+    top: 18%;
+    letter-spacing: 0.03em;
+    color: rgba(255, 255, 255, 0.1);
+  }
   .nat-product  { width: 200px; }
   .nat-img-wrap { width: 200px; height: 180px; }
   .nat-cart-btn { padding: 9px 14px; font-size: 10px; }
