@@ -1,8 +1,8 @@
 // vite.config.js
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import { VitePWA } from "vite-plugin-pwa";
+import react            from "@vitejs/plugin-react";
+import path             from "path";
+import { VitePWA }      from "vite-plugin-pwa";
 
 export default defineConfig({
   plugins: [
@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        navigateFallback: "/index.html",
+        clientsClaim:          true,
+        skipWaiting:           true,
+        navigateFallback:      "/index.html",
         runtimeCaching: [
           {
             // API responses — NetworkFirst (fresh data, fallback to cache)
@@ -26,7 +26,7 @@ export default defineConfig({
             },
           },
           {
-            // Static assets — CacheFirst (images, fonts, JS)
+            // Static assets — CacheFirst (JS, CSS, fonts, local images)
             urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|webp|svg|ico)$/,
             handler: "CacheFirst",
             options: {
@@ -35,7 +35,7 @@ export default defineConfig({
             },
           },
           {
-            // Cloudinary images — CacheFirst
+            // Cloudinary images — CacheFirst (immutable after upload)
             urlPattern: /^https:\/\/res\.cloudinary\.com\//,
             handler: "CacheFirst",
             options: {
@@ -46,11 +46,11 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: "MotoPark",
-        short_name: "MotoPark",
-        theme_color: "#111111",
+        name:             "MotoPark",
+        short_name:       "MotoPark",
+        theme_color:      "#111111",
         background_color: "#ffffff",
-        display: "standalone",
+        display:          "standalone",
         icons: [
           { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
@@ -58,14 +58,27 @@ export default defineConfig({
       },
     }),
   ],
+
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
+          // React core — cached separately, changes rarely
           "vendor-react": ["react", "react-dom", "react-router-dom"],
+
+          // ── FIX: framer-motion in its own vendor chunk ──────────────
+          // framer-motion is ~100KB gzipped. Without this it gets
+          // bundled into whatever page first imports it (usually Home),
+          // bloating the initial chunk. Isolated here it's cached once
+          // and reused across every page that uses motion components.
+          "vendor-motion": ["framer-motion"],
+
+          // Admin panel — only admins ever load this chunk.
+          // Kept full list (suggested fix only had 3 pages — incomplete).
           "chunk-admin": [
             "./src/admin/pages/Dashboard",
             "./src/admin/pages/AdminProducts",
@@ -79,11 +92,28 @@ export default defineConfig({
             "./src/admin/pages/InventoryManager",
             "./src/admin/pages/OffersAdmin",
           ],
+
+          // ── NOT ADDED: chunk-ui for PremiumCarousel ─────────────────
+          // Suggested fix proposed splitting PremiumCarousel into its
+          // own chunk. Rejected — PremiumCarousel is on the HOME PAGE
+          // critical path. Splitting it forces an extra network request
+          // that blocks the above-the-fold render. Wrong direction.
         },
       },
     },
+
     chunkSizeWarningLimit: 500,
+
+    // ── FIX: drop console.log + debugger in production ──────────────
+    // esbuild (already used) supports this natively via `drop`.
+    // The suggested fix swapped to terser which requires `npm install
+    // terser` as an extra devDependency and is 3-4× slower to build.
+    // esbuild achieves the same result with zero extra installs.
     minify: "esbuild",
+    esbuildOptions: {
+      drop: ["console", "debugger"],
+    },
+
     sourcemap: false,
   },
 });

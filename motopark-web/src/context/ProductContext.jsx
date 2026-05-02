@@ -1,4 +1,3 @@
-// ProductContext.jsx — FULL REPLACEMENT
 import {
   createContext, useContext, useState,
   useEffect, useCallback, useRef, useMemo
@@ -11,18 +10,43 @@ export const useProducts = () => useContext(ProductContext);
 const CACHE_KEY = "mp_home_v3";
 const CACHE_TTL = 5 * 60 * 1000;
 
+// 🔥 In-memory cache
+let _memCache     = null;
+let _memCacheTime = 0;
+
 const readCache = () => {
+  // 1. MEMORY (fastest)
+  if (_memCache && Date.now() - _memCacheTime < CACHE_TTL) {
+    return _memCache;
+  }
+
+  // 2. sessionStorage
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
+
     const { data, time } = JSON.parse(raw);
-    return Date.now() - time < CACHE_TTL ? data : null;
-  } catch { return null; }
+
+    if (Date.now() - time < CACHE_TTL) {
+      _memCache = data;
+      _memCacheTime = time;
+      return data;
+    }
+  } catch {}
+
+  return null;
 };
 
 const writeCache = (data) => {
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, time: Date.now() })); }
-  catch {}
+  _memCache     = data;
+  _memCacheTime = Date.now();
+
+  try {
+    sessionStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ data, time: Date.now() })
+    );
+  } catch {}
 };
 
 const normalize = (arr) => (arr || []).map(p => ({

@@ -1,11 +1,5 @@
-/* ================================================
-   File: backend/routes/userRoutes.js
-
-   Add to server.js:
-     import userRoutes from "./routes/userRoutes.js";
-     app.use("/api/users", userRoutes);
-   ================================================ */
 import express from "express";
+import rateLimit from "express-rate-limit";
 import {
   register, loginEmail, sendOtp, verifyOtp,
   getProfile, updateProfile, saveAddress, deleteAddress,
@@ -14,16 +8,24 @@ import { protect } from "../middleware/userAuth.js";
 
 const router = express.Router();
 
-/* Public */
-router.post("/register", register);
-router.post("/login/email", loginEmail);
-router.post("/otp/send", sendOtp);
-router.post("/otp/verify", verifyOtp);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many login attempts. Try again later." },
+});
 
-/* Protected */
-router.get("/profile", protect, getProfile);
-router.put("/profile", protect, updateProfile);
-router.post("/addresses", protect, saveAddress);
-router.delete("/addresses/:addressId", protect, deleteAddress);
+/* Public — rate limited */
+router.post("/register",     authLimiter, register);
+router.post("/login/email",  authLimiter, loginEmail);
+router.post("/otp/send",     authLimiter, sendOtp);
+router.post("/otp/verify",   authLimiter, verifyOtp);
+
+/* Protected — no rate limit, normal user traffic */
+router.get("/profile",                    protect, getProfile);
+router.put("/profile",                    protect, updateProfile);
+router.post("/addresses",                 protect, saveAddress);
+router.delete("/addresses/:addressId",    protect, deleteAddress);
 
 export default router;

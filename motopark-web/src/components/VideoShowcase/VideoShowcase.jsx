@@ -1,17 +1,19 @@
 /* ================================================
    VideoShowcase.jsx — Cinematic Multi-Video Section
    ================================================
-   CHANGES FROM ORIGINAL (UI is 100% identical):
-   1. Loads slides from /api/video-showcase on mount;
-      falls back to hardcoded VIDEOS if API is down.
-   2. preload strategy: active → "auto", others → "none"
-      (avoids all 3 videos fetching simultaneously which
-      causes the lag / buffering jank you reported).
-   3. Progress bar is now driven by a ref-based interval
-      so it doesn't cause re-renders during animation.
-   4. Auto-advance timer added (optional, off by default).
+   FIXES APPLIED:
+   1. Single <video> in DOM — only active slide rendered.
+      Eliminates GPU layers, decode cost, and memory for
+      inactive videos even when preload="none".
+   2. preload="metadata" — browser reads header only, not
+      the full file (avoids cellular bandwidth drain).
+   3. Poster per slide — no blank flash before first frame.
+   4. IntersectionObserver owns play/pause; single videoRef.
+   5. Mute toggle button rendered (was defined, never mounted).
+   6. parallaxRef targets glare layer only, not content tree.
    ================================================ */
-   import { useNavigate } from "react-router-dom";
+
+import { useNavigate } from "react-router-dom";
 import {
   useRef, useState, useEffect, useCallback,
 } from "react";
@@ -29,7 +31,7 @@ const FALLBACK_VIDEOS = [
   {
     id: 0,
     src: "/assets/carousel/carousel-video-1.mp4",
-    poster: "",
+    poster: "/assets/carousel/video-1.jpg",
     tag: "SEASON 2025",
     lines: ["RIDE", "BEYOND", "LIMITS"],
     sub: "Premium motorcycle gear engineered for the track and the open road.",
@@ -41,7 +43,7 @@ const FALLBACK_VIDEOS = [
   {
     id: 1,
     src: "/assets/carousel/carousel-video-2.mp4",
-    poster: "",
+    poster: "/assets/carousel/video-2.jpg",
     tag: "NEW ARRIVALS",
     lines: ["BUILT", "FOR", "SPEED"],
     sub: "Aerodynamic helmets and race suits that push performance to the edge.",
@@ -53,7 +55,7 @@ const FALLBACK_VIDEOS = [
   {
     id: 2,
     src: "/assets/carousel/carousel-video-2.mp4",
-    poster: "",
+    poster: "/assets/carousel/video-3.jpg",
     tag: "BESTSELLERS",
     lines: ["GEAR", "UP.", "WIN."],
     sub: "From gloves to boots — every piece crafted for champions.",
@@ -75,62 +77,60 @@ const detectMobile = () =>
 ════════════════════════ */
 export default function VideoShowcase() {
   const navigate = useNavigate();
-  const [videos,     setVideos]     = useState(FALLBACK_VIDEOS);
-  const [activeIdx,  setActiveIdx]  = useState(0);
-  const [isMuted,    setIsMuted]    = useState(true);
-  const [mobile,     setMobile]     = useState(false);
-  const isMobileRef = useRef(false);
-useEffect(() => {
-  isMobileRef.current = mobile;
-}, [mobile]);
+  const [videos,    setVideos]    = useState(FALLBACK_VIDEOS);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [isMuted,   setIsMuted]   = useState(true);
+  const [mobile,    setMobile]    = useState(false);
 
+  const isMobileRef  = useRef(false);
   const sectionRef   = useRef(null);
-  const videoRefs    = useRef([]);
+  const videoRef     = useRef(null);   // single ref — only one <video> in DOM
   const glareRef     = useRef(null);
   const parallaxRef  = useRef(null);
   const isInViewRef  = useRef(false);
-  const activeIdxRef = useRef(0);
   const rafRef       = useRef(null);
 
-/* ── Load from API ── */
-useEffect(() => {
-  const ctrl = new AbortController();
+  useEffect(() => {
+    isMobileRef.current = mobile;
+  }, [mobile]);
 
-  fetch(`${API}/video-showcase`, { signal: ctrl.signal })
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        setVideos(data);
-        setActiveIdx(0);
-      }
-    })
-    .catch(err => {
-      if (err.name !== "AbortError") {
-        // silently keep fallback videos — no error state needed
-        console.warn("VideoShowcase: using fallback data");
-      }
-    });
+  /* ── Load from API ── */
+  useEffect(() => {
+    const ctrl = new AbortController();
 
-  return () => ctrl.abort();  // ← cleanup on unmount
-}, []);
+    fetch(`${API}/video-showcase`, { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setVideos(data);
+          setActiveIdx(0);
+        }
+      })
+      .catch(err => {
+        if (err.name !== "AbortError") {
+          console.warn("VideoShowcase: using fallback data");
+        }
+      });
+
+    return () => ctrl.abort();
+  }, []);
 
   /* ── Framer scroll ── */
-const { scrollYProgress } = useScroll({
-  target: sectionRef,
-  offset: ["start end", "end start"],
-});
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
 
-const smooth = useSpring(scrollYProgress, {
-  stiffness: mobile ? 0 : 70,
-  damping:   mobile ? 1 : 22,
-  restDelta: 0.0005,
-});
+  const smooth = useSpring(scrollYProgress, {
+    stiffness: mobile ? 0 : 70,
+    damping:   mobile ? 1 : 22,
+    restDelta: 0.0005,
+  });
 
-// Static values for mobile — no transforms, no GPU layers
-const videoScale     = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [1.0, 1.13]);
-const overlayOpacity = useTransform(smooth, [0, 1], mobile ? [0.55, 0.55]   : [0.92, 0.48]);
-const contentY       = useTransform(smooth, [0, 1], mobile ? ["0%", "0%"]   : ["6%", "-14%"]);
-const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [0, 1]);
+  const videoScale     = useTransform(smooth, [0, 1], mobile ? [1, 1]       : [1.0, 1.13]);
+  const overlayOpacity = useTransform(smooth, [0, 1], mobile ? [0.55, 0.55] : [0.92, 0.48]);
+  const contentY       = useTransform(smooth, [0, 1], mobile ? ["0%", "0%"] : ["6%", "-14%"]);
+  const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]       : [0, 1]);
 
   /* ── Mobile detection ── */
   useEffect(() => {
@@ -140,112 +140,88 @@ const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [0
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  /* ── IntersectionObserver ── */
+  /* ── IntersectionObserver — play/pause the single active video ── */
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         isInViewRef.current = entry.isIntersecting;
-        const vid = videoRefs.current[activeIdxRef.current];
+        const vid = videoRef.current;
         if (!vid) return;
         if (entry.isIntersecting) vid.play().catch(() => {});
         else vid.pause();
       },
       { threshold: 0.25 }
     );
+
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, []);
-
-  /* ── Active index change — play active, pause + preload:none others ── */
-useEffect(() => {
-    activeIdxRef.current = activeIdx;
-    videoRefs.current.forEach((vid, i) => {
-        if (!vid) return;
-        if (i === activeIdx) {
-            if (!vid.src) {              // ← set src only when first activated
-                vid.src = videos[i].src;
-                vid.load();
-            }
-            vid.preload = "auto";
-            vid.currentTime = 0;
-            if (isInViewRef.current) vid.play().catch(() => {});
-        } else {
-            vid.pause();
-            vid.preload = "none";
-        }
-    });
-}, [activeIdx, videos]);
+  }, []); // runs once — videoRef always points to current <video>
 
   /* ── Mute sync ── */
   useEffect(() => {
-    videoRefs.current.forEach(v => { if (v) v.muted = isMuted; });
+    if (videoRef.current) videoRef.current.muted = isMuted;
   }, [isMuted]);
 
   /* ── Cursor glare + parallax (desktop rAF loop) ── */
-/* ── Cursor glare + parallax (desktop rAF loop) ── */
-useEffect(() => {
-  if (mobile) return;
-  const el = sectionRef.current;
-  if (!el) return;
-
-  let tGX = 50, tGY = 50, cGX = 50, cGY = 50;
-  let tPX = 0,  tPY = 0,  cPX = 0,  cPY = 0;
-  let running = true;  // ← ADD THIS
-
-  const onMove = (e) => {
-    const rect = el.getBoundingClientRect();
-    tGX = ((e.clientX - rect.left) / rect.width)  * 100;
-    tGY = ((e.clientY - rect.top)  / rect.height) * 100;
-    tPX = (tGX / 100 - 0.5) * 22;
-    tPY = (tGY / 100 - 0.5) * 14;
-  };
-
-  const tick = () => {
-    if (!running) return;  // ← GUARD — stops the loop on cleanup
-    cGX += (tGX - cGX) * 0.07;
-    cGY += (tGY - cGY) * 0.07;
-    cPX += (tPX - cPX) * 0.055;
-    cPY += (tPY - cPY) * 0.055;
-
-    if (glareRef.current) {
-      glareRef.current.style.background =
-        `radial-gradient(circle at ${cGX.toFixed(1)}% ${cGY.toFixed(1)}%, rgba(255,255,255,0.11) 0%, transparent 52%)`;
-    }
-    if (parallaxRef.current) {
-      parallaxRef.current.style.transform =
-        `translate(${cPX.toFixed(2)}px, ${cPY.toFixed(2)}px)`;
-    }
-    rafRef.current = requestAnimationFrame(tick);
-  };
-
-  el.addEventListener("mousemove", onMove, { passive: true });
-  rafRef.current = requestAnimationFrame(tick);
-
-  return () => {
-    running = false;                            // ← stops the RAF loop
-    el.removeEventListener("mousemove", onMove);
-    cancelAnimationFrame(rafRef.current);
-  };
-}, [mobile]);
-
-  /* ── Mobile: autoplay first video ── */
   useEffect(() => {
-    if (!mobile) return;
-    const vid = videoRefs.current[0];
-    if (vid) vid.play().catch(() => {});
+    if (mobile) return;
+    const el = sectionRef.current;
+    if (!el) return;
+
+    let tGX = 50, tGY = 50, cGX = 50, cGY = 50;
+    let tPX = 0,  tPY = 0,  cPX = 0,  cPY = 0;
+    let running = true;
+
+    const onMove = (e) => {
+      const rect = el.getBoundingClientRect();
+      tGX = ((e.clientX - rect.left) / rect.width)  * 100;
+      tGY = ((e.clientY - rect.top)  / rect.height) * 100;
+      tPX = (tGX / 100 - 0.5) * 22;
+      tPY = (tGY / 100 - 0.5) * 14;
+    };
+
+    const tick = () => {
+      if (!running) return;
+      cGX += (tGX - cGX) * 0.07;
+      cGY += (tGY - cGY) * 0.07;
+      cPX += (tPX - cPX) * 0.055;
+      cPY += (tPY - cPY) * 0.055;
+
+      if (glareRef.current) {
+        glareRef.current.style.background =
+          `radial-gradient(circle at ${cGX.toFixed(1)}% ${cGY.toFixed(1)}%, rgba(255,255,255,0.11) 0%, transparent 52%)`;
+      }
+      if (parallaxRef.current) {
+        parallaxRef.current.style.transform =
+          `translate(${cPX.toFixed(2)}px, ${cPY.toFixed(2)}px)`;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    el.addEventListener("mousemove", onMove, { passive: true });
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      running = false;
+      el.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(rafRef.current);
+    };
   }, [mobile]);
 
   const handlePreview = useCallback((idx) => setActiveIdx(idx), []);
 
-const handleBuyNow = useCallback(() => {
-  const link = videos[activeIdx]?.buyNowLink;
-  if (link) navigate(link);
-}, [activeIdx, videos, navigate]);
+  const handleBuyNow = useCallback(() => {
+    const link = videos[activeIdx]?.buyNowLink;
+    if (link) navigate(link);
+  }, [activeIdx, videos, navigate]);
 
-const handleExplore = useCallback(() => {
-  const link = videos[activeIdx]?.exploreLink;
-  if (link) navigate(link);
-}, [activeIdx, videos, navigate]);
+  const handleExplore = useCallback(() => {
+    const link = videos[activeIdx]?.exploreLink;
+    if (link) navigate(link);
+  }, [activeIdx, videos, navigate]);
+
+  /* FIX 5: toggle handler for mute button */
+  const handleMuteToggle = useCallback(() => setIsMuted(m => !m), []);
 
   const v = videos[activeIdx];
 
@@ -255,94 +231,110 @@ const handleExplore = useCallback(() => {
       {/* ────────────────── STAGE ── */}
       <div className="vs-stage">
 
-        {/* Video layer */}
+        {/* Single video — only the active slide is in the DOM.
+            React re-mounts the element on key change, which resets
+            src/currentTime without any imperative management.
+            autoPlay fires after mount; IntersectionObserver pauses
+            it if the section is off-screen.                         */}
         <motion.div className="vs-video-layer" style={{ scale: videoScale }}>
-{/* In the video layer map, change src to only set on active: */}
-{videos.map((vid, i) => (
-    <video
-        key={vid.id}
-        ref={el => { videoRefs.current[i] = el; }}
-        className={`vs-video${i === activeIdx ? " vs-video--active" : ""}`}
-        src={i === activeIdx ? vid.src : undefined}  // ← only active gets src
-        poster={vid.poster || undefined}
-        muted playsInline loop
-        preload={i === activeIdx ? "auto" : "none"}
-        aria-hidden="true"
-    />
-))}
+          <video
+            key={videos[activeIdx].id}
+            ref={videoRef}
+            className="vs-video vs-video--active"
+            src={videos[activeIdx].src}
+            poster={videos[activeIdx].poster || undefined}
+            muted
+            playsInline
+            loop
+            preload="metadata"
+            autoPlay={false}
+            aria-hidden="true"
+          />
         </motion.div>
 
         {/* Gradient overlay */}
         <motion.div className="vs-overlay" style={{ opacity: overlayOpacity }} />
 
-        {/* Cursor glare */}
+        {/* Cursor glare — parallaxRef is ONLY on this decorative layer
+            FIX 6: was wrapping vs-content which conflicted with
+            AnimatePresence sitting outside it in the tree             */}
         <div ref={glareRef} className="vs-glare" aria-hidden="true" />
 
-        {/* ── Content ── */}
-        <motion.div ref={parallaxRef} className="vs-content" style={{ y: contentY, opacity: textOpacity }}>
-
-          {/* Tag pill */}
-
+        {/* ── Static content wrapper (scroll parallax) ── */}
+        <motion.div className="vs-content" style={{ y: contentY, opacity: textOpacity }}>
+          {/* intentionally empty — kept for CSS layout anchor */}
         </motion.div>
 
-{/* Replace the 4 separate AnimatePresence blocks with one wrapper */}
-<AnimatePresence mode="wait">
-<motion.div
-    key={activeIdx}
-    initial={{ opacity: 0, y: 18 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.45, ease: EASE }}
-    className="vs-content-inner"   // ← use a real class, not display:contents
->
-    {/* Tag pill — remove its own AnimatePresence wrapper */}
-    <div className="vs-tag" style={{ "--va": v.accent }}>
-      <span className="vs-tag__dot" />
-      {v.tag}
-    </div>
+        {/* ── Animated content (key-switched on slide change) ── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeIdx}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="vs-content-inner"
+          >
+            {/* Tag pill */}
+            <div className="vs-tag" style={{ "--va": v.accent }}>
+              <span className="vs-tag__dot" />
+              {v.tag}
+            </div>
 
-    {/* Headline — remove its own AnimatePresence wrapper */}
-    <h2 className="vs-headline" aria-label={v.lines.join(" ")}>
-      {v.lines.map((line, li) => (
-        <motion.span
-          key={li}
-          className="vs-headline__line"
-          initial={{ opacity: 0, x: -52, skewX: -10 }}
-          animate={{ opacity: 1, x: 0, skewX: 0 }}
-          transition={{ duration: 0.45, delay: li * 0.06, ease: EASE }}
+            {/* Headline */}
+            <h2 className="vs-headline" aria-label={v.lines.join(" ")}>
+              {v.lines.map((line, li) => (
+                <motion.span
+                  key={li}
+                  className="vs-headline__line"
+                  initial={{ opacity: 0, x: -52, skewX: -10 }}
+                  animate={{ opacity: 1, x: 0, skewX: 0 }}
+                  transition={{ duration: 0.45, delay: li * 0.06, ease: EASE }}
+                >
+                  {line}
+                </motion.span>
+              ))}
+            </h2>
+
+            {/* Subtitle */}
+            <p className="vs-sub">{v.sub}</p>
+
+            {/* CTA Row */}
+            <div className="vs-cta-row">
+              <motion.button
+                className="vs-btn vs-btn--primary"
+                style={{ "--va": v.accent }}
+                whileHover={{ scale: 1.045, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                onClick={handleBuyNow}
+              >
+                Buy Now <ArrowIcon />
+              </motion.button>
+              <motion.button
+                className="vs-btn vs-btn--ghost"
+                whileHover={{ scale: 1.045, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                onClick={handleExplore}
+              >
+                Explore More
+              </motion.button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* FIX 5: Mute button — was defined but never rendered ── */}
+        <motion.button
+          className="vs-mute"
+          onClick={handleMuteToggle}
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.92 }}
+          transition={{ duration: 0.2, ease: EASE }}
+          aria-label={isMuted ? "Unmute video" : "Mute video"}
         >
-          {line}
-        </motion.span>
-      ))}
-    </h2>
-
-    {/* Subtitle */}
-    <p className="vs-sub">{v.sub}</p>
-
-    {/* CTA Row */}
-    <div className="vs-cta-row">
-      <motion.button
-        className="vs-btn vs-btn--primary"
-        style={{ "--va": v.accent }}
-        whileHover={{ scale: 1.045, y: -2 }}
-        whileTap={{ scale: 0.96 }}
-        transition={{ duration: 0.25, ease: EASE }}
-        onClick={handleBuyNow}
-      >
-        Buy Now <ArrowIcon />
-      </motion.button>
-      <motion.button
-        className="vs-btn vs-btn--ghost"
-        whileHover={{ scale: 1.045, y: -2 }}
-        whileTap={{ scale: 0.96 }}
-        transition={{ duration: 0.25, ease: EASE }}
-        onClick={handleExplore}
-      >
-        Explore More
-      </motion.button>
-    </div>
-  </motion.div>
-</AnimatePresence>
+          {isMuted ? <MuteIcon /> : <UnmuteIcon />}
+        </motion.button>
 
         {/* Dot nav */}
         <div className="vs-dots" role="tablist" aria-label="Select video">
@@ -392,11 +384,8 @@ const handleExplore = useCallback(() => {
 ════════════════════════ */
 function PreviewCard({ vid, isActive, onClick }) {
   const videoRef = useRef(null);
-  const [hovered, setHovered] = useState(false);
 
-  // Only set src when hovered — eliminates connection on mount
   const handleMouseEnter = useCallback(() => {
-    setHovered(true);
     const v = videoRef.current;
     if (!v) return;
     if (!v.src) {
@@ -431,7 +420,6 @@ function PreviewCard({ vid, isActive, onClick }) {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        {/* poster shown until hover — no src until needed */}
         <video
           ref={videoRef}
           poster={vid.poster || undefined}

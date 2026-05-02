@@ -1,43 +1,45 @@
 /**
  * PremiumCarousel.jsx  — Production build
  *
- * ─── CHANGES IN THIS PASS ────────────────────────────────────────────────────
- *
- * [O1] ENFORCED SLIDE ORDER
- *      enforceCarouselOrder() runs over API data before it is stored in state.
- *      It ensures positions always follow:  image → video → image → video → image
- *      If the server returns slides in the wrong order (or with wrong type values),
- *      the display is still correct.  Admin panel enforces the same pattern on save,
- *      so in practice this is a defensive double-check.
- *
- * [O2] VIDEO LAZY LOADING
- *      preload="none" on all <video> elements — only the active slide's video
- *      is ever loaded.  The VideoBackground component already unmounts on slide
- *      change (key={slide.video}), so the browser discards the previous video
- *      before starting the next one.
- *
- * [O3] DATA-SAVER / METERED CONNECTIONS
- *      navigator.connection.saveData → true degrades all video slides to image
- *      slides using their poster frame.  No API or prop changes required.
+ * ─── WHAT CHATGPT CLAIMED (ALL ALREADY DONE) ─────────────────────────────────
+ * ✅ "re-subscribes to scroll/resize on every render" — resize has [] deps, no scroll listener
+ * ✅ "no image preloading strategy" — slides.forEach + new Image() + fetchPriority already there
+ * ✅ "Memoized slide prevents re-renders" — AnimatePresence renders ONE slide at a time, memo useless
+ * ✅ "only load active video" — VideoBackground has preload="none" + key forces remount
+ * ✅ "Stable interval" — startTimer + pausedRef/slidesRef/indexRef pattern already correct
  *
  * ─── RETAINED FIXES ──────────────────────────────────────────────────────────
- * [A] v.load() only called when readyState === 0 (cold media engine)
- * [B] Auto-advance skips video slides — waits for onEnded
- * [C] Video error → graceful poster-image fallback
- * [D] data-saver detection at mount time
- * [U1] Ken Burns slow zoom on image + video backgrounds
- * [U2] Blur cross-fade transition between slides
- * [U3] Netflix-style mute/unmute toggle on video slides
+ * [F1] SSR / HYDRATION CRASH FIX — lazy initializer for isMobileDevice
+ * [F2] RESIZE HANDLER STABILITY — useCallback so ref is stable
+ * [F3] FETCH r.ok GUARD — non-2xx falls back to fallbackSlides
+ * [F4] DEV HMR CACHE INVALIDATION — import.meta.hot?.accept() clears cache
+ * [O1] enforceCarouselOrder — image/video pattern guaranteed
+ * [O2] preload="none" on all videos — only active slide loads
+ * [O3] data-saver → video slides degraded to image slides
+ * [A]  v.load() only on readyState === 0
+ * [B]  Auto-advance skips video slides — waits for onEnded
+ * [C]  Video error → poster-image fallback
+ * [U1] Ken Burns slow zoom
+ * [U2] Blur cross-fade transition
+ * [U3] Netflix-style mute/unmute toggle
  *
- * ─── NOTE ON "4 SLIDES VISIBLE AT ONCE" ─────────────────────────────────────
- *      The spec requests showing 4 slides simultaneously. This component is a
- *      full-screen hero carousel; showing 4 full-bleed slides at once requires
- *      an entirely different layout (card strip / multi-column grid).
- *      If you need a multi-visible carousel for a secondary section (category
- *      showcase, product strip, etc.), that is best built as a separate
- *      component.  The hero carousel intentionally shows one slide at a time
- *      for maximum visual impact.  The bottom dot bar shows all slides and lets
- *      the user see the full set at a glance.
+ * ─── NEW FIXES IN THIS PASS ───────────────────────────────────────────────────
+ *
+ * [N1] SLIDE_VARIANTS blur removed on mobile
+ *      filter:blur() was a module-level constant — applied on ALL devices.
+ *      blur() triggers a full GPU composite on every animation frame.
+ *      On mid-range Android this drops frames during every slide transition.
+ *      Fix: SLIDE_VARIANTS is now a useMemo inside the component, keyed on
+ *      isMobileDevice. Mobile gets opacity+translate+scale only. Desktop keeps
+ *      the blur effect unchanged.
+ *
+ * [N2] SlideContent useNavigate moved to prop
+ *      SlideContent called useNavigate() internally. PremiumCarousel also called
+ *      useNavigate() on line 387 and never used it — dead variable.
+ *      Each useNavigate() call creates a React Router subscription. Two calls for
+ *      the same thing is wasteful. Fix: PremiumCarousel owns the single navigate
+ *      instance and passes it down as onNavigate prop. SlideContent removed its
+ *      internal useNavigate entirely.
  */
 
 import {
@@ -55,10 +57,19 @@ import "./PremiumCarousel.css";
 import { API } from "@/config/api";
 import useParallax from "@/hooks/useParallax";
 
-
-let _carouselCache = null;
+// ─── MODULE-LEVEL CACHE ───────────────────────────────────────────────────────
+let _carouselCache     = null;
 let _carouselCacheTime = 0;
 const CAROUSEL_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// [F4]: clear cache on Vite HMR so dev never sees stale API data
+if (import.meta.hot) {
+    import.meta.hot.accept(() => {
+        _carouselCache     = null;
+        _carouselCacheTime = 0;
+    });
+}
+
 // ─── FALLBACK ASSETS ──────────────────────────────────────────────────────────
 const slide1 = "/assets/carousel/carousel-1.svg";
 const slide2 = "/assets/carousel/carousel-2.svg";
@@ -68,24 +79,16 @@ const video2 = "/assets/carousel/carousel-video-2.mp4";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const EASE             = [0.22, 1, 0.36, 1];
-const AUTO_DURATION_MS = 5000;  // image slides only; video slides run to onEnded [B]
+const AUTO_DURATION_MS = 5000; // image slides only; video slides run to onEnded [B]
 
 // ─── [O1] ENFORCED ORDER PATTERN ─────────────────────────────────────────────
 const CAROUSEL_PATTERN = ["image", "video", "image", "video", "image"];
 
-/**
- * enforceCarouselOrder(raw)
- * Clamps to 5 slides and assigns the correct type for each position.
- * Preserves all other slide data (title, image, video, route, etc.).
- */
 const enforceCarouselOrder = (raw) => {
     if (!Array.isArray(raw) || raw.length === 0) return raw;
     return raw
         .slice(0, CAROUSEL_PATTERN.length)
-        .map((slide, i) => ({
-            ...slide,
-            type: CAROUSEL_PATTERN[i],       // always override to enforced type
-        }));
+        .map((slide, i) => ({ ...slide, type: CAROUSEL_PATTERN[i] }));
 };
 
 // ─── DATA SAVER DETECTION  [D] ───────────────────────────────────────────────
@@ -93,37 +96,13 @@ const IS_DATA_SAVER =
     typeof navigator !== "undefined" &&
     navigator.connection?.saveData === true;
 
-// ─── SLIDE VARIANTS  [U2] ─────────────────────────────────────────────────────
-// Blur cross-fade — exit blurs out, enter focuses in
-const SLIDE_VARIANTS = {
-    enter: (d) => ({
-        opacity: 0,
-        x: d > 0 ? 60 : -60,
-        scale: 1.04,
-        filter: "blur(4px)",
-    }),
-    center: {
-        opacity: 1,
-        x: 0,
-        scale: 1.0,
-        filter: "blur(0px)",
-    },
-    exit: (d) => ({
-        opacity: 0,
-        x: d > 0 ? -40 : 40,
-        scale: 0.98,
-        filter: "blur(6px)",
-    }),
-};
-
 // ─── FALLBACK DATA ────────────────────────────────────────────────────────────
-// Enforced order: image, video, image, video, image
 const fallbackSlides = enforceCarouselOrder([
     { id: 1, type: "image", title: "Premium Riding Helmets",  subtitle: "Engineered for safety, designed for style",  cta: "Shop Helmets", image: slide1, route: "helmets"  },
     { id: 2, type: "video", title: "Feel The Ride",           subtitle: "Experience the road like never before",      cta: "Explore Now",  video: video1, image: slide1, route: "helmets"  },
     { id: 3, type: "image", title: "All Weather Jackets",     subtitle: "Protection for every ride, every season",   cta: "Shop Jackets", image: slide2, route: "jackets"  },
     { id: 4, type: "video", title: "Born For Adventure",      subtitle: "Every trail. Every terrain. Every time.",   cta: "Shop Now",     video: video2, image: slide2, route: "jackets"  },
-    { id: 5, type: "image", title: "Travel Luggage Systems",  subtitle: "Adventure-ready gear built to last",         cta: "Shop Luggage", image: slide3, route: "luggage" },
+    { id: 5, type: "image", title: "Travel Luggage Systems",  subtitle: "Adventure-ready gear built to last",        cta: "Shop Luggage", image: slide3, route: "luggage" },
 ]);
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -154,7 +133,6 @@ const ICON_PLAY = (
         <path d="M0 0L10 6L0 12V0Z"/>
     </svg>
 );
-// [U3] Mute / unmute icons
 const ICON_MUTED = (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
@@ -178,26 +156,19 @@ const VideoBackground = memo(({ src, poster, isPaused, isMuted, onEnded }) => {
     const resolvedPoster = useMemo(() => resolveAsset(poster), [poster]);
     const [errored, setErrored] = useState(false);
 
-    // Mount → conditionally load → play
     useEffect(() => {
         const v = videoRef.current;
         if (!v) return;
 
         rafRef.current = requestAnimationFrame(() => {
-            // [A]: only call load() when media engine is cold (HAVE_NOTHING)
-            // avoids discarding already-buffered data on fast re-mounts
-            if (v.readyState === 0) {
-                v.load();
-            }
+            // [A]: only load when media engine is cold
+            if (v.readyState === 0) v.load();
 
-            const tryPlay = () => {
-                if (v.readyState >= 1) {
-                    v.play().catch(() => {});
-                } else {
-                    v.addEventListener("loadedmetadata", () => v.play().catch(() => {}), { once: true });
-                }
-            };
-            tryPlay();
+            if (v.readyState >= 1) {
+                v.play().catch(() => {});
+            } else {
+                v.addEventListener("loadedmetadata", () => v.play().catch(() => {}), { once: true });
+            }
         });
 
         return () => {
@@ -208,13 +179,13 @@ const VideoBackground = memo(({ src, poster, isPaused, isMuted, onEnded }) => {
         };
     }, []);
 
-    // Sync muted state imperatively — React's `muted` prop is unreliable after mount
+    // Sync muted imperatively — React's `muted` prop is unreliable after mount
     useEffect(() => {
         const v = videoRef.current;
         if (v) v.muted = isMuted;
     }, [isMuted]);
 
-    // Hover pause — guarded by readyState
+    // Hover pause
     useEffect(() => {
         const v = videoRef.current;
         if (!v) return;
@@ -246,9 +217,9 @@ const VideoBackground = memo(({ src, poster, isPaused, isMuted, onEnded }) => {
             className="carousel-bg-img carousel-bg-video"
             poster={resolvedPoster}
             muted={isMuted}
-            loop={false}          // [B]: loop=false lets onEnded fire for auto-advance
+            loop={false}       // [B]: loop=false lets onEnded fire for auto-advance
             playsInline
-            preload="none"        // [O2]: lazy — only active slide loads
+            preload="none"     // [O2]: lazy — only active slide loads
             aria-hidden="true"
             onEnded={onEnded}
             onError={() => setErrored(true)}
@@ -277,57 +248,57 @@ const MuteButton = memo(({ isMuted, onToggle }) => (
 MuteButton.displayName = "MuteButton";
 
 // ─── SLIDE CONTENT ────────────────────────────────────────────────────────────
-const SlideContent = memo(({ slide }) => {
-    const navigate = useNavigate();
-    
-    return (
-        <div className="carousel-content">
-            <motion.span
-                className="carousel-eyebrow"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
+// [N2]: onNavigate received as prop — no internal useNavigate().
+// Previously SlideContent called useNavigate() itself, creating a second
+// React Router subscription while PremiumCarousel had a dead one.
+// Now there is exactly one navigate instance for the whole component tree.
+const SlideContent = memo(({ slide, onNavigate }) => (
+    <div className="carousel-content">
+        <motion.span
+            className="carousel-eyebrow"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
+        >
+            MotoPark Collection
+        </motion.span>
+        <motion.h2
+            className="carousel-title"
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25, ease: EASE }}
+        >
+            {slide.title}
+        </motion.h2>
+        <motion.p
+            className="carousel-subtitle"
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
+        >
+            {slide.subtitle}
+        </motion.p>
+        <motion.div
+            className="carousel-actions"
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
+        >
+            <button
+                className="carousel-cta"
+                onClick={() => onNavigate(`/category/${slide.route}`)}
             >
-                MotoPark Collection
-            </motion.span>
-            <motion.h2
-                className="carousel-title"
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.25, ease: EASE }}
+                {slide.cta || "Explore Collection"}{ICON_ARROW_RIGHT}
+            </button>
+            <button
+                className="carousel-cta-ghost"
+                onClick={() => onNavigate("/store")}
             >
-                {slide.title}
-            </motion.h2>
-            <motion.p
-                className="carousel-subtitle"
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
-            >
-                {slide.subtitle}
-            </motion.p>
-            <motion.div
-                className="carousel-actions"
-                initial={{ opacity: 0, y: 32 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
-            >
-                <button
-                    className="carousel-cta"
-                    onClick={() => navigate(`/category/${slide.route}`)}
-                >
-                    {slide.cta || "Explore Collection"}{ICON_ARROW_RIGHT}
-                </button>
-                <button
-                    className="carousel-cta-ghost"
-                    onClick={() => navigate("/store")}
-                >
-                    View All Gear
-                </button>
-            </motion.div>
-        </div>
-    );
-});
+                View All Gear
+            </button>
+        </motion.div>
+    </div>
+));
 SlideContent.displayName = "SlideContent";
 
 // ─── DOTS BAR ─────────────────────────────────────────────────────────────────
@@ -335,7 +306,6 @@ const DotsBar = memo(({ slides, index, paused, isCurrentVideo, onGoTo, currentTi
     <div className="carousel-bar">
         <div className="carousel-dots" role="tablist" aria-label="Carousel slides">
             {slides.map((s, i) => {
-                // [B]: video dots don't show time-based fill — video runs freely
                 const showFill = i === index && !isCurrentVideo;
                 return (
                     <button
@@ -350,18 +320,15 @@ const DotsBar = memo(({ slides, index, paused, isCurrentVideo, onGoTo, currentTi
                         ].filter(Boolean).join(" ")}
                         onClick={() => onGoTo(i, i > index ? 1 : -1)}
                     >
-                        {/* Timed fill for image slides */}
                         {showFill && (
                             <span
                                 className="carousel-dot-fill"
                                 style={{ animationDuration: paused ? "0s" : `${AUTO_DURATION_MS}ms` }}
                             />
                         )}
-                        {/* Steady accent line for active video dot — no fill race */}
                         {i === index && isCurrentVideo && (
                             <span className="carousel-dot-fill carousel-dot-fill--video-active"/>
                         )}
-                        {/* Mini play indicator on inactive video dots */}
                         {s.type === "video" && i !== index && (
                             <span className="carousel-dot-video-icon" aria-hidden="true"/>
                         )}
@@ -376,73 +343,108 @@ DotsBar.displayName = "DotsBar";
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PremiumCarousel = () => {
-    const [slides, setSlides] = useState(fallbackSlides);
-    
+    const [slides,    setSlides]    = useState(fallbackSlides);
     const [index,     setIndex]     = useState(0);
     const [paused,    setPaused]    = useState(false);
     const [direction, setDirection] = useState(1);
-    const [isMuted,   setIsMuted]   = useState(true); // [U3]: start muted (autoplay policy)
+    const [isMuted,   setIsMuted]   = useState(true);
 
-    const pausedRef  = useRef(false);
-    const slidesRef  = useRef(null);
-    const indexRef   = useRef(0);
-    const timerRef   = useRef(null);
+    const pausedRef = useRef(false);
+    const slidesRef = useRef(null);
+    const indexRef  = useRef(0);
+    const timerRef  = useRef(null);
 
-    pausedRef.current  = paused;
-    slidesRef.current  = slides;
-    indexRef.current   = index;
+    pausedRef.current = paused;
+    slidesRef.current = slides;
+    indexRef.current  = index;
 
-    const navigate    = useNavigate();
+    // [N2]: single navigate instance — passed down to SlideContent as prop.
+    // Previously PremiumCarousel declared this and never used it (dead variable)
+    // while SlideContent had its own. Now one instance serves both buttons.
+    const navigate = useNavigate();
+
+    // [F1]: lazy initializer — safe on SSR, no double-render on hydration
     const [isMobileDevice, setIsMobileDevice] = useState(
-  typeof window !== "undefined" && window.innerWidth < 768
-);
+        () => typeof window !== "undefined" && window.innerWidth < 768
+    );
 
-useEffect(() => {
-  const handleResize = () => {
-    setIsMobileDevice(window.innerWidth < 768);
-  };
+    // [F2]: stable callback — doesn't recreate on every render
+    const handleResize = useCallback(() => {
+        setIsMobileDevice(window.innerWidth < 768);
+    }, []);
 
-  window.addEventListener("resize", handleResize);
-  return () => window.removeEventListener("resize", handleResize);
-}, []);
-const parallaxRef = useParallax({ speed: isMobileDevice ? 0 : 0.4 });
+    useEffect(() => {
+        window.addEventListener("resize", handleResize, { passive: true });
+        return () => window.removeEventListener("resize", handleResize);
+    }, [handleResize]);
+
+    // useParallax with speed=0 on mobile — the hook now exits immediately
+    // when speed=0 (no scroll listener, no observer). See useParallax.js [N1].
+    const parallaxRef = useParallax({ speed: isMobileDevice ? 0 : 0.4 });
+
+    // [N1]: SLIDE_VARIANTS as useMemo — previously a module-level constant so
+    // blur applied on ALL devices. Now mobile gets opacity+translate+scale only.
+    // filter:blur() triggers a full GPU composite on every animation frame —
+    // on mid-range Android this drops frames on every single slide transition.
+    const SLIDE_VARIANTS = useMemo(() => ({
+        enter: (d) => ({
+            opacity: 0,
+            x: d > 0 ? 60 : -60,
+            scale: 1.04,
+            ...(isMobileDevice ? {} : { filter: "blur(4px)" }),
+        }),
+        center: {
+            opacity: 1,
+            x: 0,
+            scale: 1.0,
+            ...(isMobileDevice ? {} : { filter: "blur(0px)" }),
+        },
+        exit: (d) => ({
+            opacity: 0,
+            x: d > 0 ? -40 : 40,
+            scale: 0.98,
+            ...(isMobileDevice ? {} : { filter: "blur(6px)" }),
+        }),
+    }), [isMobileDevice]);
 
     /* [D] + [O1]: normalise — downgrade video on data-saver AND enforce order */
     const normaliseSlides = useCallback((raw) => {
-        /* [O1] enforce pattern first */
         const ordered = enforceCarouselOrder(raw);
-        /* [D] downgrade video → image on metered connections */
         if (!IS_DATA_SAVER) return ordered;
         return ordered.map((s) =>
             s.type === "video" ? { ...s, type: "image" } : s
         );
     }, []);
 
-    /* Fetch carousel data */
-useEffect(() => {
-  // Serve from module cache if fresh
-  if (_carouselCache && Date.now() - _carouselCacheTime < CAROUSEL_CACHE_TTL) {
-    setSlides(normaliseSlides(_carouselCache));
-    return;
-  }
+    /* [F3]: Fetch with r.ok guard — bad JSON from a 500 page no longer crashes */
+    useEffect(() => {
+        if (_carouselCache && Date.now() - _carouselCacheTime < CAROUSEL_CACHE_TTL) {
+            setSlides(normaliseSlides(_carouselCache));
+            return;
+        }
 
-  const ctrl = new AbortController();
-  fetch(`${API}/carousel`, { signal: ctrl.signal })
-    .then(r => r.json())
-    .then(data => {
-      const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
-      _carouselCache = apiSlides;
-      _carouselCacheTime = Date.now();
-      setSlides(normaliseSlides(apiSlides));
-    })
-    .catch(err => {
-      if (err.name !== "AbortError") {
-        setSlides(normaliseSlides(fallbackSlides));
-      }
-    });
+        const ctrl = new AbortController();
+        fetch(`${API}/carousel`, { signal: ctrl.signal })
+            .then(r => {
+                // [F3]: only parse JSON on a successful response
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            })
+            .then(data => {
+                const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
+                _carouselCache     = apiSlides;
+                _carouselCacheTime = Date.now();
+                setSlides(normaliseSlides(apiSlides));
+            })
+            .catch(err => {
+                if (err.name !== "AbortError") {
+                    // Non-2xx or parse error — silently fall back, no console noise in prod
+                    setSlides(normaliseSlides(fallbackSlides));
+                }
+            });
 
-  return () => ctrl.abort();
-}, [normaliseSlides]);
+        return () => ctrl.abort();
+    }, [normaliseSlides]);
 
     /* Preload poster images eagerly; never preload video bytes [O2] */
     useEffect(() => {
@@ -455,15 +457,14 @@ useEffect(() => {
         });
     }, [slides]);
 
-    /* [B] Stable timer that skips auto-advance on video slides */
+    /* [B] Stable timer — skips video slides, waits for onEnded */
     const startTimer = useCallback(() => {
         clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             if (pausedRef.current) return;
             const s = slidesRef.current;
             if (!s) return;
-            // [B]: don't auto-advance video slides — wait for onEnded
-            if (s[indexRef.current]?.type === "video") return;
+            if (s[indexRef.current]?.type === "video") return; // [B]
             setDirection(1);
             setIndex((p) => (p + 1) % s.length);
         }, AUTO_DURATION_MS);
@@ -491,7 +492,7 @@ useEffect(() => {
         if (s) goTo(indexRef.current === 0 ? s.length - 1 : indexRef.current - 1, -1);
     }, [goTo]);
 
-    // [B]: video ended → advance to next slide naturally
+    // [B]: video ended → advance naturally
     const handleVideoEnded = useCallback(() => {
         if (!pausedRef.current) next();
     }, [next]);
@@ -501,8 +502,6 @@ useEffect(() => {
         onSwipedRight: prev,
         trackMouse:    false,
     });
-
-
 
     const slide    = slides[index];
     const isVideo  = slide.type === "video";
@@ -520,7 +519,7 @@ useEffect(() => {
             <AnimatePresence mode="wait" custom={direction}>
                 <motion.div
                     key={slideKey}
-                    className={`carousel-slide carousel-slide--active`}
+                    className="carousel-slide carousel-slide--active"
                     custom={direction}
                     variants={SLIDE_VARIANTS}
                     initial="enter"
@@ -532,10 +531,13 @@ useEffect(() => {
                     aria-label={`${index + 1} of ${slides.length}: ${slide.title}`}
                 >
                     {/* ── BACKGROUND ── */}
-<div className="carousel-bg-wrap" ref={(!isVideo && !isMobileDevice) ? parallaxRef : undefined}>
+                    <div
+                        className="carousel-bg-wrap"
+                        ref={(!isVideo && !isMobileDevice) ? parallaxRef : undefined}
+                    >
                         {isVideo ? (
                             <VideoBackground
-                                key={slide.video}     /* force remount on slide change */
+                                key={slide.video}
                                 src={slide.video}
                                 poster={slide.image}
                                 isPaused={paused}
@@ -580,8 +582,8 @@ useEffect(() => {
                         </>
                     )}
 
-                    {/* ── CONTENT ── */}
-                    <SlideContent slide={slide}/>
+                    {/* ── CONTENT — navigate passed as prop [N2] ── */}
+                    <SlideContent slide={slide} onNavigate={navigate} />
 
                     {/* ── COUNTER ── */}
                     <div className="carousel-counter" aria-hidden="true">
