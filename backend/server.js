@@ -178,9 +178,9 @@ app.use(
 ════════════════════════ */
 const addCacheHeaders = (req, res, next) => {
   if (req.method === "GET") {
-    res.set("Cache-Control",   "public, max-age=0, s-maxage=300, stale-while-revalidate=60, must-revalidate");
-    res.set("Surrogate-Control", "max-age=300");  // Fastly/Railway CDN reads this
-    res.set("CDN-Cache-Control", "max-age=300");  // Cloudflare-compatible fallback
+    res.set("Cache-Control",     "public, max-age=0, s-maxage=300, stale-while-revalidate=60, must-revalidate");
+    res.set("Surrogate-Control", "max-age=300");
+    res.set("CDN-Cache-Control", "max-age=300");
   }
   next();
 };
