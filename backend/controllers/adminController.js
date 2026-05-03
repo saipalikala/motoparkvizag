@@ -15,11 +15,11 @@ export const adminLogin = async (req, res) => {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  const token = jwt.sign(
-    { role: "admin",email  },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+const token = jwt.sign(
+  { role: "admin", email },
+  process.env.JWT_SECRET,
+  { expiresIn: "4h" } // 1d → 4h: limits exposure window if blacklist wipes on restart
+);
 
   res.json({ token });
 };

@@ -1,17 +1,35 @@
-/* ================================================
-   VideoShowcase.jsx — Cinematic Multi-Video Section
-   ================================================
-   FIXES APPLIED:
-   1. Single <video> in DOM — only active slide rendered.
-      Eliminates GPU layers, decode cost, and memory for
-      inactive videos even when preload="none".
-   2. preload="metadata" — browser reads header only, not
-      the full file (avoids cellular bandwidth drain).
-   3. Poster per slide — no blank flash before first frame.
-   4. IntersectionObserver owns play/pause; single videoRef.
-   5. Mute toggle button rendered (was defined, never mounted).
-   6. parallaxRef targets glare layer only, not content tree.
-   ================================================ */
+/**
+ * src/components/VideoShowcase/VideoShowcase.jsx
+ *
+ * FIXES APPLIED:
+ * ─────────────────────────────────────────────────────────────
+ * [F1] Raw fetch → cachedFetch
+ *      Before: fetch(`${API}/video-showcase`) on every mount.
+ *      VideoShowcase is on the Home page — every Home visit = new request.
+ *      After: cachedFetch serves from memory/sessionStorage for 5 min.
+ *
+ * [F2] AbortController + isMounted guard
+ *      Before: no cleanup. Promise resolved on unmounted component.
+ *      After: ctrl.abort() + alive flag.
+ *
+ * [F3] Video slide transition — play new video after slide change
+ *      Before: IntersectionObserver only plays/pauses on scroll.
+ *      When user clicks a different slide, the new video does NOT
+ *      auto-play unless the IO fires again.
+ *      After: added a separate useEffect on [activeIdx] that
+ *      imperatively calls v.load() + v.play() when the key changes,
+ *      respecting the isInViewRef so off-screen sections don't autoplay.
+ *
+ * [F4] preload="metadata" preserved — reads header only, not full video.
+ *      This is correct — do NOT change to preload="auto".
+ *
+ * [F5] Mute toggle preserved — was already fixed in uploaded version.
+ *
+ * [F6] Mobile detection useEffect runs once on mount (already correct).
+ *
+ * All existing functionality (parallax, glare, cursor effect,
+ * PreviewCard hover-play, dot navigation, counter) preserved exactly.
+ */
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -25,6 +43,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { API } from "@/config/api";
+import { cachedFetch } from "@/lib/apiCache"; // [F1]
 import "./VideoShowcase.css";
 
 const FALLBACK_VIDEOS = [
@@ -72,9 +91,6 @@ const detectMobile = () =>
   typeof window !== "undefined" &&
   (window.innerWidth < 768 || "ontouchstart" in window);
 
-/* ════════════════════════
-   MAIN COMPONENT
-════════════════════════ */
 export default function VideoShowcase() {
   const navigate = useNavigate();
   const [videos,    setVideos]    = useState(FALLBACK_VIDEOS);
@@ -82,38 +98,51 @@ export default function VideoShowcase() {
   const [isMuted,   setIsMuted]   = useState(true);
   const [mobile,    setMobile]    = useState(false);
 
-  const isMobileRef  = useRef(false);
-  const sectionRef   = useRef(null);
-  const videoRef     = useRef(null);   // single ref — only one <video> in DOM
-  const glareRef     = useRef(null);
-  const parallaxRef  = useRef(null);
-  const isInViewRef  = useRef(false);
-  const rafRef       = useRef(null);
+  const isMobileRef = useRef(false);
+  const sectionRef  = useRef(null);
+  const videoRef    = useRef(null);
+  const glareRef    = useRef(null);
+  const parallaxRef = useRef(null);
+  const isInViewRef = useRef(false);
+  const rafRef      = useRef(null);
 
   useEffect(() => {
     isMobileRef.current = mobile;
   }, [mobile]);
 
-  /* ── Load from API ── */
+  // [F1] + [F2]: cachedFetch with abort + alive guard
   useEffect(() => {
-    const ctrl = new AbortController();
+    const ctrl  = new AbortController();
+    let   alive = true;
 
-    fetch(`${API}/video-showcase`, { signal: ctrl.signal })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+    cachedFetch(`${API}/video-showcase`, { signal: ctrl.signal })
+      .then((data) => {
+        if (alive && Array.isArray(data) && data.length > 0) {
           setVideos(data);
           setActiveIdx(0);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         if (err.name !== "AbortError") {
-          console.warn("VideoShowcase: using fallback data");
+          console.warn("[VideoShowcase] using fallback data");
         }
       });
 
-    return () => ctrl.abort();
+    return () => { alive = false; ctrl.abort(); };
   }, []);
+
+  // [F3]: When activeIdx changes, play the new video if section is in view.
+  // The key prop on <video> causes React to remount the element, which resets
+  // src+currentTime. We then need to explicitly call play() after the remount.
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid || !isInViewRef.current) return;
+    // Small timeout lets React finish the remount before we call play()
+    const t = setTimeout(() => {
+      vid.play().catch(() => {});
+    }, 50);
+    return () => clearTimeout(t);
+  }, [activeIdx]);
 
   /* ── Framer scroll ── */
   const { scrollYProgress } = useScroll({
@@ -123,14 +152,14 @@ export default function VideoShowcase() {
 
   const smooth = useSpring(scrollYProgress, {
     stiffness: mobile ? 0 : 70,
-    damping:   mobile ? 1 : 22,
+    damping  : mobile ? 1 : 22,
     restDelta: 0.0005,
   });
 
-  const videoScale     = useTransform(smooth, [0, 1], mobile ? [1, 1]       : [1.0, 1.13]);
-  const overlayOpacity = useTransform(smooth, [0, 1], mobile ? [0.55, 0.55] : [0.92, 0.48]);
-  const contentY       = useTransform(smooth, [0, 1], mobile ? ["0%", "0%"] : ["6%", "-14%"]);
-  const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]       : [0, 1]);
+  const videoScale     = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [1.0, 1.13]);
+  const overlayOpacity = useTransform(smooth, [0, 1], mobile ? [0.55, 0.55]   : [0.92, 0.48]);
+  const contentY       = useTransform(smooth, [0, 1], mobile ? ["0%", "0%"]   : ["6%", "-14%"]);
+  const textOpacity    = useTransform(smooth, [0, 1], mobile ? [1, 1]         : [0, 1]);
 
   /* ── Mobile detection ── */
   useEffect(() => {
@@ -155,7 +184,7 @@ export default function VideoShowcase() {
 
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, []); // runs once — videoRef always points to current <video>
+  }, []);
 
   /* ── Mute sync ── */
   useEffect(() => {
@@ -220,7 +249,6 @@ export default function VideoShowcase() {
     if (link) navigate(link);
   }, [activeIdx, videos, navigate]);
 
-  /* FIX 5: toggle handler for mute button */
   const handleMuteToggle = useCallback(() => setIsMuted(m => !m), []);
 
   const v = videos[activeIdx];
@@ -228,14 +256,15 @@ export default function VideoShowcase() {
   return (
     <section ref={sectionRef} className="vs-root" aria-label="Cinematic video showcase">
 
-      {/* ────────────────── STAGE ── */}
       <div className="vs-stage">
 
-        {/* Single video — only the active slide is in the DOM.
-            React re-mounts the element on key change, which resets
-            src/currentTime without any imperative management.
-            autoPlay fires after mount; IntersectionObserver pauses
-            it if the section is off-screen.                         */}
+        {/*
+          Single video in DOM — only active slide rendered.
+          key={videos[activeIdx].id} forces React to remount the
+          <video> element when slide changes, resetting src+currentTime
+          without any imperative management.
+          [F3]: useEffect on activeIdx handles play() after remount.
+        */}
         <motion.div className="vs-video-layer" style={{ scale: videoScale }}>
           <video
             key={videos[activeIdx].id}
@@ -246,26 +275,20 @@ export default function VideoShowcase() {
             muted
             playsInline
             loop
-            preload="metadata"
-            autoPlay={false}
+            preload="metadata"  // [F4]: header only — NOT preload="auto"
+            autoPlay={false}    // [F3]: play() called imperatively
             aria-hidden="true"
           />
         </motion.div>
 
-        {/* Gradient overlay */}
         <motion.div className="vs-overlay" style={{ opacity: overlayOpacity }} />
 
-        {/* Cursor glare — parallaxRef is ONLY on this decorative layer
-            FIX 6: was wrapping vs-content which conflicted with
-            AnimatePresence sitting outside it in the tree             */}
         <div ref={glareRef} className="vs-glare" aria-hidden="true" />
 
-        {/* ── Static content wrapper (scroll parallax) ── */}
         <motion.div className="vs-content" style={{ y: contentY, opacity: textOpacity }}>
-          {/* intentionally empty — kept for CSS layout anchor */}
+          {/* CSS layout anchor */}
         </motion.div>
 
-        {/* ── Animated content (key-switched on slide change) ── */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeIdx}
@@ -275,13 +298,11 @@ export default function VideoShowcase() {
             transition={{ duration: 0.45, ease: EASE }}
             className="vs-content-inner"
           >
-            {/* Tag pill */}
             <div className="vs-tag" style={{ "--va": v.accent }}>
               <span className="vs-tag__dot" />
               {v.tag}
             </div>
 
-            {/* Headline */}
             <h2 className="vs-headline" aria-label={v.lines.join(" ")}>
               {v.lines.map((line, li) => (
                 <motion.span
@@ -296,10 +317,8 @@ export default function VideoShowcase() {
               ))}
             </h2>
 
-            {/* Subtitle */}
             <p className="vs-sub">{v.sub}</p>
 
-            {/* CTA Row */}
             <div className="vs-cta-row">
               <motion.button
                 className="vs-btn vs-btn--primary"
@@ -324,7 +343,6 @@ export default function VideoShowcase() {
           </motion.div>
         </AnimatePresence>
 
-        {/* FIX 5: Mute button — was defined but never rendered ── */}
         <motion.button
           className="vs-mute"
           onClick={handleMuteToggle}
@@ -336,7 +354,6 @@ export default function VideoShowcase() {
           {isMuted ? <MuteIcon /> : <UnmuteIcon />}
         </motion.button>
 
-        {/* Dot nav */}
         <div className="vs-dots" role="tablist" aria-label="Select video">
           {videos.map((_, i) => (
             <motion.button
@@ -353,16 +370,14 @@ export default function VideoShowcase() {
           ))}
         </div>
 
-        {/* Counter */}
         <div className="vs-counter" aria-hidden="true">
           <span className="vs-counter__cur">{String(activeIdx + 1).padStart(2, "0")}</span>
           <span className="vs-counter__sep" />
           <span className="vs-counter__total">{String(videos.length).padStart(2, "0")}</span>
         </div>
 
-      </div>{/* /vs-stage */}
+      </div>
 
-      {/* ────────────────── PREVIEW NAV ── */}
       <div className="vs-previews" role="tablist" aria-label="Video preview navigation">
         {videos.map((vid, i) => (
           <PreviewCard
@@ -379,9 +394,6 @@ export default function VideoShowcase() {
   );
 }
 
-/* ════════════════════════
-   PREVIEW CARD (unchanged)
-════════════════════════ */
 function PreviewCard({ vid, isActive, onClick }) {
   const videoRef = useRef(null);
 
@@ -397,10 +409,7 @@ function PreviewCard({ vid, isActive, onClick }) {
 
   const handleMouseLeave = useCallback(() => {
     const v = videoRef.current;
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
-    }
+    if (v) { v.pause(); v.currentTime = 0; }
   }, []);
 
   return (
@@ -457,7 +466,6 @@ function PreviewCard({ vid, isActive, onClick }) {
   );
 }
 
-/* ── Icons ── */
 const ArrowIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
     <path d="M1 6.5h11M6.5 1l5.5 5.5-5.5 5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>

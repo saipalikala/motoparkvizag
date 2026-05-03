@@ -56,11 +56,9 @@ import { useSwipeable } from "react-swipeable";
 import "./PremiumCarousel.css";
 import { API } from "@/config/api";
 import useParallax from "@/hooks/useParallax";
-
+import { cachedFetch, invalidateCache } from "@/lib/apiCache";
 // ─── MODULE-LEVEL CACHE ───────────────────────────────────────────────────────
-let _carouselCache     = null;
-let _carouselCacheTime = 0;
-const CAROUSEL_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 
 // [F4]: clear cache on Vite HMR so dev never sees stale API data
 if (import.meta.hot) {
@@ -418,32 +416,14 @@ const PremiumCarousel = () => {
 
     /* [F3]: Fetch with r.ok guard — bad JSON from a 500 page no longer crashes */
     useEffect(() => {
-        if (_carouselCache && Date.now() - _carouselCacheTime < CAROUSEL_CACHE_TTL) {
-            setSlides(normaliseSlides(_carouselCache));
-            return;
-        }
-
-        const ctrl = new AbortController();
-        fetch(`${API}/carousel`, { signal: ctrl.signal })
-            .then(r => {
-                // [F3]: only parse JSON on a successful response
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.json();
-            })
-            .then(data => {
-                const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
-                _carouselCache     = apiSlides;
-                _carouselCacheTime = Date.now();
-                setSlides(normaliseSlides(apiSlides));
-            })
-            .catch(err => {
-                if (err.name !== "AbortError") {
-                    // Non-2xx or parse error — silently fall back, no console noise in prod
-                    setSlides(normaliseSlides(fallbackSlides));
-                }
-            });
-
-        return () => ctrl.abort();
+const ctrl = new AbortController();
+cachedFetch(`${API}/carousel`, { signal: ctrl.signal })
+  .then(data => {
+    const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
+    setSlides(normaliseSlides(apiSlides));
+  })
+  .catch(err => { if (err.name !== "AbortError") setSlides(normaliseSlides(fallbackSlides)); });
+return () => ctrl.abort();
     }, [normaliseSlides]);
 
     /* Preload poster images eagerly; never preload video bytes [O2] */

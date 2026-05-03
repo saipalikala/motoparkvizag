@@ -1,3 +1,27 @@
+/**
+ * src/components/Navbar/Navbar.jsx
+ *
+ * FIXES APPLIED:
+ * ─────────────────────────────────────────────────────────────
+ * [F1] Raw fetch → cachedFetch
+ *      Before: fetch(`${API}/navbar`) — no cache, no deduplication.
+ *      Every mount fires a new request. StrictMode = 2 requests.
+ *      App.jsx remount on admin↔user nav = another request.
+ *      After: cachedFetch shares one promise, serves from memory
+ *      for 5 minutes, sessionStorage for back/forward navigation.
+ *
+ * [F2] AbortController + isMounted guard
+ *      Before: no cleanup. On unmount, the promise would still
+ *      resolve and call setNavbar on an unmounted component —
+ *      causing React's "state update on unmounted component" warning.
+ *      After: ctrl.abort() in cleanup, alive flag guards setState.
+ *
+ * [F3] AbortError filtering
+ *      Before: console.error caught everything including aborts.
+ *      AbortErrors are expected and should be silent.
+ *      After: only non-abort errors are logged.
+ */
+
 import { useEffect, useState } from "react";
 import NavLinks from "./NavLinks";
 import NavIcons from "./NavIcons";
@@ -6,18 +30,24 @@ import SearchOverlay from "../SearchOverlay/SearchOverlay";
 import "./Navbar.css";
 
 import { API } from "@/config/api";
+import { cachedFetch } from "@/lib/apiCache"; // [F1]
 
 const Navbar = () => {
-  const [navbar, setNavbar] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [navbar,     setNavbar]     = useState(null);
+  const [menuOpen,   setMenuOpen]   = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled,   setScrolled]   = useState(false);
 
+  // [F1] + [F2] + [F3]: cached fetch with abort + isMounted guard
   useEffect(() => {
-    fetch(`${API}/navbar`)
-      .then(r => r.json())
-      .then(setNavbar)
-      .catch(console.error);
+    const ctrl  = new AbortController();
+    let   alive = true;
+
+    cachedFetch(`${API}/navbar`, { signal: ctrl.signal })
+      .then((data) => { if (alive) setNavbar(data); })
+      .catch((err)  => { if (err.name !== "AbortError") console.error("[Navbar]", err); });
+
+    return () => { alive = false; ctrl.abort(); };
   }, []);
 
   useEffect(() => {
@@ -26,7 +56,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* lock body scroll when mobile menu is open */
+  /* Lock body scroll when mobile menu is open */
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -65,7 +95,7 @@ const Navbar = () => {
 
           {/* ICONS */}
           <NavIcons
-            openMenu={() => setMenuOpen(true)}
+            openMenu={()   => setMenuOpen(true)}
             openSearch={() => setSearchOpen(true)}
           />
 
