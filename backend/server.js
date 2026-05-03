@@ -178,11 +178,9 @@ app.use(
 ════════════════════════ */
 const addCacheHeaders = (req, res, next) => {
   if (req.method === "GET") {
-    // max-age=0        → browser always revalidates (cheap 304, not full re-fetch)
-    // s-maxage=300     → CDN/proxy caches for 5 min (future-proof)
-    // stale-while-revalidate=60 → SW serves instantly, refreshes in background
-    // must-revalidate  → never serve stale after max-age expires
-    res.set("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=60, must-revalidate");
+    res.set("Cache-Control",   "public, max-age=0, s-maxage=300, stale-while-revalidate=60, must-revalidate");
+    res.set("Surrogate-Control", "max-age=300");  // Fastly/Railway CDN reads this
+    res.set("CDN-Cache-Control", "max-age=300");  // Cloudflare-compatible fallback
   }
   next();
 };
