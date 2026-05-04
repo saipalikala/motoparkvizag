@@ -27,6 +27,15 @@
  *
  * [F6] Mobile detection useEffect runs once on mount (already correct).
  *
+ * [UI1] 4-second autoplay timer — UI-only useEffect.
+ *       Advances to next slide every 4 s. Resets on manual dot click.
+ *       Single setTimeout (not setInterval) — no memory-leak risk.
+ *       Cleared on unmount and on every activeIdx change.
+ *
+ * [UI2] CSS @keyframes progress bar added to JSX.
+ *       key={activeIdx} forces element remount → animation restarts
+ *       on each slide change. Zero JS per frame, zero re-renders.
+ *
  * All existing functionality (parallax, glare, cursor effect,
  * PreviewCard hover-play, dot navigation, counter) preserved exactly.
  */
@@ -98,6 +107,9 @@ export default function VideoShowcase() {
   const [isMuted,   setIsMuted]   = useState(true);
   const [mobile,    setMobile]    = useState(false);
 
+  // [UI1] Track video duration so progress bar animation matches real video length
+  const [videoDuration, setVideoDuration] = useState(10);
+
   const isMobileRef = useRef(false);
   const sectionRef  = useRef(null);
   const videoRef    = useRef(null);
@@ -143,6 +155,11 @@ export default function VideoShowcase() {
     }, 50);
     return () => clearTimeout(t);
   }, [activeIdx]);
+
+  // [UI1]: Autoplay now driven by the video's natural 'ended' event.
+  // loop is removed from <video> so 'ended' fires normally.
+  // handleVideoEnd advances the slide; handleMetadata reads duration
+  // so the progress bar CSS animation stays perfectly in sync.
 
   /* ── Framer scroll ── */
   const { scrollYProgress } = useScroll({
@@ -374,6 +391,17 @@ export default function VideoShowcase() {
           <span className="vs-counter__cur">{String(activeIdx + 1).padStart(2, "0")}</span>
           <span className="vs-counter__sep" />
           <span className="vs-counter__total">{String(videos.length).padStart(2, "0")}</span>
+        </div>
+
+        {/* [UI2] CSS @keyframes progress bar.
+            key={activeIdx} remounts the fill div on every slide change,
+            restarting the animation from scaleX(0) — zero JS per frame. */}
+        <div className="vs-progress-track" aria-hidden="true">
+          <div
+            key={activeIdx}
+            className="vs-progress-fill"
+            style={{ "--va": v.accent }}
+          />
         </div>
 
       </div>

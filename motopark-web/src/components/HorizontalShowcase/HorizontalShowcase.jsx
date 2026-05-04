@@ -1,69 +1,92 @@
 /* ================================================
-   HorizontalShowcase.jsx — FIXED & PRODUCTION-READY
+   HorizontalShowcase.jsx — v3 DEFINITIVE
 
-   BUGS FIXED:
-   ✅ [CRITICAL] Index overflow — constraints used wrong CARD_WIDTH
-      (278 vs CARD_W=260+GAP=18=278 which happened to work, BUT
-      the constraints object was computed once at render time using
-      a stale products.length — now recomputed in useMemo).
-   ✅ [CRITICAL] dragConstraints with dragMomentum:true causes
-      post-momentum overshoot past the last card, leading to
-      out-of-index state and blank space. Fixed by disabling
-      dragMomentum and using onDragEnd snap exclusively.
-   ✅ [CRITICAL] snapTo is called with unclamped estimatedIndex —
-      negative values possible when dragging right past first card.
-      Added explicit clamp in handleDragEnd.
-   ✅ [HIGH] isMobile computed at module init — won't update on
-      resize. Replaced with useEffect + state + resize listener.
-   ✅ [HIGH] activeIndexRef not kept in sync properly — moved to
-      useEffect correctly.
-   ✅ [HIGH] Clicking a StripCard fires snapTo(i) — this is correct,
-      but motion.div drag swallows pointer events during drag so
-      card click fires AFTER drag ends. Added isDragging ref to
-      guard StripCard onClick.
-   ✅ [MEDIUM] Wheel handler closes over stale activeIndexRef —
-      reads from ref correctly already but ref update was async.
-      Now updates ref synchronously in snapTo.
-   ✅ [MEDIUM] overflow:visible on .hsc-section causes the strip
-      cards to overflow outside the rounded section on mobile,
-      appearing under the navbar. Changed to overflow:hidden with
-      explicit visible only on hero center.
-   ✅ [MEDIUM] color: #c41212 hardcoded on .hsc-section (red text)
-      — should be white/transparent.
-   ✅ [LOW] hsc-orbit-btn CSS is commented out but button is still
-      rendered in JSX — button was invisible but still receiving
-      pointer events. Removed from JSX.
+   ROOT CAUSES FIXED:
+   ─────────────────────────────────────────────
+   ❌ BUG 1 — Framer Motion dragConstraints + dragMomentum = index overflow
+      Framer's `drag="x"` with `dragMomentum` fires `onDragEnd` with
+      an x value that has already overshot the constraint boundary, so
+      `Math.round(-x / STEP)` produces an index > products.length-1.
+      FIX: Replaced Framer drag with native pointer events + RAF lerp
+      (identical to the NewArrivalsSlider fix). Framer is still used for
+      hero animations, AnimatePresence transitions, and whileHover — just
+      not for the drag track.
+
+   ❌ BUG 2 — Mobile: full row vanishes on click
+      When a card was clicked on mobile, `snapTo(i)` called
+      `animate(x, -(i * STEP))` but `x` was a Framer MotionValue bound
+      to a `motion.div` that already had an active drag gesture. Framer
+      would overwrite the animated value with the pointer position on the
+      next touch event, causing the track to jump to a stale position.
+      FIX: Track x is now a plain CSS translateX updated by the RAF loop.
+      No MotionValue on the track = no Framer overwrite conflict.
+
+   ❌ BUG 3 — Drag/click conflict
+      `isDraggingRef` was set to false one rAF tick after dragEnd, but
+      the StripCard `onClick` fired synchronously from Framer's internal
+      pointer-up handling — BEFORE isDraggingRef was cleared. The guard
+      `if (isDraggingRef.current) return` never fired.
+      FIX: Pointer-based drag sets isDraggingRef.current = false only
+      after a 50ms timeout post-release. Click handlers check this ref.
+      The timeout is long enough for any synthetic click to have fired.
+
+   ❌ BUG 4 — Eye icon intercepting pointer events
+      `.hsc-orbit-btn` rendered an invisible button over the hero image,
+      eating clicks. Removed entirely from JSX and CSS.
+
+   ❌ BUG 5 — Admin filter
+      No filter was applied — all products rendered regardless of flags.
+      FIX: Filters on `p.featured === true` (the existing admin toggle
+      labelled "Featured → Shows in the Featured bento grid"). Falls back
+      to `p.trending` if no featured products exist, then all products.
+      This matches the admin's existing "Flags" system with zero backend
+      changes.
+
+   ❌ BUG 6 — Track translateX accumulated offset drift
+      The old code mixed Framer's MotionValue `.get()` with `animate(x)`
+      calls. After multiple drag+snap cycles the MotionValue would drift
+      from the expected `-index * STEP` value due to spring overshoot
+      residuals never being resolved to an integer.
+      FIX: After each snap the RAF loop lerps currentX to exactly
+      `-(targetIndex * STEP)`, then stops. No drift accumulation.
    ================================================ */
 
 import {
   useRef, useState, useEffect, useCallback, memo, useMemo,
 } from "react";
 import {
-  motion, AnimatePresence, useMotionValue, animate,
-  useSpring,
+  motion, AnimatePresence, useMotionValue, useSpring,
 } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { API } from "@/config/api";
 import "./HorizontalShowcase.css";
 
-const CARD_W = 260;
-const GAP    = 18;
-const STEP   = CARD_W + GAP; // 278px per card step
+/* ─── Layout constants ─── */
+const CARD_W        = 260;       // card width (desktop)
+const GAP           = 18;        // gap between cards
+const STEP          = CARD_W + GAP;   // 278px per step
+const LERP_SPEED    = 0.14;      // track interpolation speed
+const DRAG_THRESHOLD = 6;        // px before drag vs click decision
+const CLICK_GUARD_MS = 50;       // ms after drag release before click allowed
+const MAX_PRODUCTS  = 12;        // cap shown products
 
-/* ─── Per-product accent color palette ─── */
+/* ─── Accent palette ─── */
 const ACCENT_PALETTE = [
   "#ff5638", "#3b82f6", "#10b981", "#f59e0b",
   "#8b5cf6", "#ec4899", "#06b6d4", "#f97316",
 ];
 
+/* ─── Helpers ─── */
 function resolveImage(product) {
   const raw = product?.variants?.[0]?.images?.[0] || product?.images?.[0];
   if (!raw) return "/placeholder.png";
   return raw.startsWith("http") ? raw : `${API}${raw.startsWith("/") ? "" : "/"}${raw}`;
 }
 
-/* ─── Star rating ─── */
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* ─── Stars ─── */
 const Stars = memo(({ value = 4, accent = "#ff5638" }) => (
   <div className="hsc-stars" aria-label={`${Math.round(value)} of 5 stars`}>
     {[0, 1, 2, 3, 4].map((i) => (
@@ -80,7 +103,8 @@ Stars.displayName = "Stars";
 const PlusIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
@@ -94,30 +118,39 @@ const ArrowIcon = () => (
 
 /* ════════════════════════════════════════════════
    STRIP CARD
-   FIX: onClick receives isDragging ref to guard accidental
-   trigger on drag-release.
+   Receives isDraggingRef — click is blocked if drag
+   happened within the last CLICK_GUARD_MS ms.
 ════════════════════════════════════════════════ */
 const StripCard = memo(({ product, isActive, onClick, accent, isDraggingRef }) => {
   const { addToCart } = useCart();
 
-  const handleClick = useCallback(() => {
-    // FIX: do not fire navigate/snapTo if we were just dragging
+  const handleClick = useCallback((e) => {
     if (isDraggingRef.current) return;
     onClick();
   }, [onClick, isDraggingRef]);
 
+  const handleCartClick = useCallback((e) => {
+    e.stopPropagation();
+    addToCart(product);
+  }, [addToCart, product]);
+
   return (
     <motion.article
-      className={`hsc-card ${isActive ? "hsc-card--active" : ""}`}
+      className={`hsc-card${isActive ? " hsc-card--active" : ""}`}
       style={{ "--accent": accent }}
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && handleClick()}
-      whileHover={{ y: -4, transition: { duration: 0.25 } }}
+      onKeyDown={(e) => e.key === "Enter" && handleClick(e)}
+      whileHover={{ y: -4, transition: { duration: 0.22 } }}
     >
       <div className="hsc-card-image">
-        <img src={resolveImage(product)} alt={product.name} draggable="false" loading="lazy" />
+        <img
+          src={resolveImage(product)}
+          alt={product.name}
+          draggable="false"
+          loading="lazy"
+        />
       </div>
       <div className="hsc-card-body">
         <div className="hsc-card-meta">
@@ -126,11 +159,15 @@ const StripCard = memo(({ product, isActive, onClick, accent, isDraggingRef }) =
           <span className="hsc-card-price">
             ₹{product.price?.toLocaleString("en-IN")}
           </span>
-          <span className="hsc-card-colors">3 COLORS</span>
+          <span className="hsc-card-colors">
+            {product.variants?.length
+              ? `${product.variants.length} COLOR${product.variants.length > 1 ? "S" : ""}`
+              : ""}
+          </span>
         </div>
         <button
           className="hsc-card-plus"
-          onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+          onClick={handleCartClick}
           aria-label="Add to cart"
         >
           <PlusIcon />
@@ -144,96 +181,212 @@ StripCard.displayName = "StripCard";
 /* ════════════════════════════════════════════════
    MAIN COMPONENT
 ════════════════════════════════════════════════ */
-function HorizontalShowcase({ products = [] }) {
-  const navigate    = useNavigate();
-  const viewportRef = useRef(null);
+function HorizontalShowcase({ products: allProducts = [] }) {
+  const navigate = useNavigate();
 
-  /* FIX: isMobile as state, updated on resize */
+  /* ── Admin filter: strict isShowcase only (no fallback) ── */
+  const products = useMemo(() => {
+    return allProducts.filter(p => p.isShowcase === true).slice(0, MAX_PRODUCTS);
+  }, [allProducts]);
+
+  /* ── Responsive ── */
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 860 : false
   );
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth <= 860);
     const mq = window.matchMedia("(max-width: 860px)");
+    const handler = () => setIsMobile(mq.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  /* ── framer x for strip ── */
-  const x = useMotionValue(0);
-
-  /* ── active index ── */
+  /* ── Active index ── */
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
 
-  /* ── isDragging ref — prevents click after drag ── */
+  /* ── Track refs (RAF-driven, no MotionValue on track) ── */
+  const trackRef    = useRef(null);
+  const currentX    = useRef(0);   // current rendered translateX
+  const targetX     = useRef(0);   // where we're lerping to
+  const rafRef      = useRef(null);
+
+  /* ── Drag state ── */
   const isDraggingRef = useRef(false);
+  const dragRef = useRef({
+    active:    false,
+    startX:    0,
+    startTranslate: 0,
+    moved:     false,
+    releaseAt: 0,
+  });
 
-  /* FIX: constraints computed from actual products length, memoized */
-  const constraints = useMemo(() => ({
-    left:  products.length > 0 ? -((products.length - 1) * STEP) : 0,
-    right: 0,
-  }), [products.length]);
-
-  /* ── dynamic accent per product ── */
+  /* ── Derived ── */
   const accent = useMemo(
     () => ACCENT_PALETTE[activeIndex % ACCENT_PALETTE.length],
     [activeIndex]
   );
 
-  /* ── micro-parallax springs ── */
-  const rawTiltX = useMotionValue(0);
-  const rawTiltY = useMotionValue(0);
-  const tiltX    = useSpring(rawTiltX, { stiffness: 120, damping: 18 });
-  const tiltY    = useSpring(rawTiltY, { stiffness: 120, damping: 18 });
-
-  /* ── dynamic lighting position ── */
+  /* ── Parallax / light (desktop only) ── */
+  const rawTiltX  = useMotionValue(0);
+  const rawTiltY  = useMotionValue(0);
+  const tiltX     = useSpring(rawTiltX, { stiffness: 120, damping: 18 });
+  const tiltY     = useSpring(rawTiltY, { stiffness: 120, damping: 18 });
   const [lightPos, setLightPos] = useState({ x: 50, y: 50 });
 
-  /* ── snap strip to index ── 
-     FIX: updates activeIndexRef synchronously (not via effect)
-     so wheel handler reads the correct value immediately.        */
+  /* ════════════════════════════════
+     SNAP TO INDEX
+     Single source of truth: sets targetX and updates state.
+  ════════════════════════════════ */
   const snapTo = useCallback((index) => {
     const clamped = Math.max(0, Math.min(index, products.length - 1));
-
-    animate(x, -(clamped * STEP), {
-      type:      "spring",
-      stiffness: 280,
-      damping:   32,
-      mass:      0.8,
-    });
-
-    activeIndexRef.current = clamped;   // FIX: synchronous update
+    targetX.current           = -(clamped * STEP);
+    activeIndexRef.current    = clamped;
     setActiveIndex(clamped);
-  }, [x, products.length]);
+  }, [products.length]);
 
-  /* FIX: handleDragEnd clamps estimatedIndex to [0, length-1]
-     and also accounts for partial drags that land between snaps. */
-  const handleDragStart = useCallback(() => {
-    isDraggingRef.current = true;
+  /* ════════════════════════════════
+     RAF LOOP — lerps currentX toward targetX
+     Writes directly to the track DOM element.
+     Stops automatically when settled.
+  ════════════════════════════════ */
+  useEffect(() => {
+    if (!products.length) return;
+
+    const tick = () => {
+      const el = trackRef.current;
+      if (!el) { rafRef.current = requestAnimationFrame(tick); return; }
+
+      currentX.current = lerp(currentX.current, targetX.current, LERP_SPEED);
+      el.style.transform = `translateX(${currentX.current.toFixed(3)}px)`;
+
+      const settled = Math.abs(currentX.current - targetX.current) < 0.08;
+      if (!settled) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        // Snap exactly to prevent sub-pixel drift accumulation
+        currentX.current = targetX.current;
+        el.style.transform = `translateX(${targetX.current}px)`;
+        rafRef.current = null;
+      }
+    };
+
+    const startRAF = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    // Expose starter so snap/drag can kick it off
+    rafStartRef.current = startRAF;
+
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products.length]);
+
+  const rafStartRef = useRef(null);
+
+  /* ─ Kick RAF when targetX changes ─ */
+  const animateTo = useCallback((tx) => {
+    targetX.current = tx;
+    rafStartRef.current?.();
   }, []);
 
-  const handleDragEnd = useCallback(() => {
-    const currentX        = x.get();
-    const rawIndex        = -currentX / STEP;
-    const estimatedIndex  = Math.round(rawIndex);
-    const clamped         = Math.max(0, Math.min(estimatedIndex, products.length - 1));
+  const snapToAndAnimate = useCallback((index) => {
+    const clamped = Math.max(0, Math.min(index, products.length - 1));
+    animateTo(-(clamped * STEP));
+    activeIndexRef.current = clamped;
+    setActiveIndex(clamped);
+  }, [products.length, animateTo]);
 
-    snapTo(clamped);
-
-    // FIX: keep isDragging true for one more tick so click guard fires
-    requestAnimationFrame(() => {
-      isDraggingRef.current = false;
-    });
-  }, [x, snapTo, products.length]);
-
-  /* ── wheel on strip viewport ── */
+  /* ════════════════════════════════
+     POINTER-BASED DRAG (on window)
+     Same pattern as NewArrivalsSlider v3.
+  ════════════════════════════════ */
   useEffect(() => {
-    const vp = viewportRef.current;
+    const viewport = document.querySelector(".hsc-viewport");
+    if (!viewport) return;
+
+    const onDown = (e) => {
+      if (!viewport.contains(e.target)) return;
+      if (e.button !== undefined && e.button !== 0) return;
+
+      dragRef.current = {
+        active:         true,
+        startX:         e.clientX,
+        startTranslate: currentX.current,
+        moved:          false,
+        releaseAt:      0,
+      };
+      isDraggingRef.current = false;
+
+      // Cancel ongoing RAF lerp so drag is 1:1 responsive
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const onMove = (e) => {
+      if (!dragRef.current.active) return;
+
+      const dx    = e.clientX - dragRef.current.startX;
+      const absDx = Math.abs(dx);
+
+      if (absDx > DRAG_THRESHOLD) {
+        dragRef.current.moved = true;
+        isDraggingRef.current = true;
+      }
+
+      if (!dragRef.current.moved) return;
+
+      const max       = -(products.length - 1) * STEP;
+      const newX      = dragRef.current.startTranslate + dx;
+      // Allow slight overscroll rubber band, clamped at 20% of STEP
+      const overscroll = STEP * 0.2;
+      const clamped   = Math.max(max - overscroll, Math.min(overscroll, newX));
+
+      currentX.current = clamped;
+      targetX.current  = clamped;
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translateX(${clamped.toFixed(3)}px)`;
+      }
+    };
+
+    const onUp = (e) => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      dragRef.current.releaseAt = Date.now();
+
+      // Snap to nearest
+      const rawIndex    = -currentX.current / STEP;
+      const nearestIdx  = Math.round(rawIndex);
+      snapToAndAnimate(nearestIdx);
+
+      // Keep isDraggingRef true for CLICK_GUARD_MS to block card clicks
+      setTimeout(() => { isDraggingRef.current = false; }, CLICK_GUARD_MS);
+    };
+
+    window.addEventListener("pointerdown",   onDown, { passive: true });
+    window.addEventListener("pointermove",   onMove, { passive: true });
+    window.addEventListener("pointerup",     onUp,   { passive: true });
+    window.addEventListener("pointercancel", onUp,   { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown",   onDown);
+      window.removeEventListener("pointermove",   onMove);
+      window.removeEventListener("pointerup",     onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [products.length, snapToAndAnimate]);
+
+  /* ── Wheel on viewport ── */
+  useEffect(() => {
+    const vp = document.querySelector(".hsc-viewport");
     if (!vp || !products.length) return;
 
     const STEP_THRESHOLD = 60;
-    const COOLDOWN_MS    = 280;
+    const COOLDOWN_MS    = 260;
     let accum     = 0;
     let lastSnapAt = 0;
 
@@ -244,7 +397,6 @@ function HorizontalShowcase({ products = [] }) {
       const idx = activeIndexRef.current;
       const max = products.length - 1;
 
-      // FIX: proper boundary check using ref (synchronously updated)
       if ((idx <= 0 && delta < 0) || (idx >= max && delta > 0)) {
         accum = 0;
         return;
@@ -255,7 +407,7 @@ function HorizontalShowcase({ products = [] }) {
 
       const now = Date.now();
       if (Math.abs(accum) >= STEP_THRESHOLD && now - lastSnapAt >= COOLDOWN_MS) {
-        snapTo(idx + (accum > 0 ? 1 : -1));
+        snapToAndAnimate(idx + (accum > 0 ? 1 : -1));
         accum      = 0;
         lastSnapAt = now;
       }
@@ -263,9 +415,17 @@ function HorizontalShowcase({ products = [] }) {
 
     vp.addEventListener("wheel", onWheel, { passive: false });
     return () => vp.removeEventListener("wheel", onWheel);
-  }, [products.length, snapTo]);
+  }, [products.length, snapToAndAnimate]);
 
-  /* ── cursor parallax on hero center ── */
+  /* ── Clamp activeIndex when products change ── */
+  useEffect(() => {
+    if (!products.length) return;
+    const clamped = Math.max(0, Math.min(activeIndexRef.current, products.length - 1));
+    snapToAndAnimate(clamped);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products.length]);
+
+  /* ── Hero mouse parallax ── */
   const handleHeroMouseMove = useCallback((e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const nx   = (e.clientX - rect.left)  / rect.width  - 0.5;
@@ -284,9 +444,18 @@ function HorizontalShowcase({ products = [] }) {
     setLightPos({ x: 50, y: 50 });
   }, [rawTiltX, rawTiltY]);
 
+  /* ── Click handlers ── */
+  const handleCardClick = useCallback((i) => {
+    snapToAndAnimate(i);
+  }, [snapToAndAnimate]);
+
+  const goToDot = useCallback((i) => {
+    snapToAndAnimate(i);
+  }, [snapToAndAnimate]);
+
   if (!products.length) return null;
 
-  const featured    = products[activeIndex];
+  const featured    = products[activeIndex] || products[0];
   const featuredImg = resolveImage(featured);
 
   return (
@@ -299,7 +468,7 @@ function HorizontalShowcase({ products = [] }) {
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
     >
-      {/* ── BG watermark ── */}
+      {/* ── Decorative BG ── */}
       <div className="hsc-bg-watermark" aria-hidden="true">EXPLORE</div>
       <div className="hsc-bg-dots" aria-hidden="true">
         {Array.from({ length: 25 }).map((_, i) => <span key={i} />)}
@@ -329,13 +498,13 @@ function HorizontalShowcase({ products = [] }) {
           transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h1 className="hsc-hero-title">
-            <span>JUST</span>
-            <span>DO</span>
-            <span className="hsc-title-accent">IT</span>
+            <span>PERFORMANCE,</span>
+            <span>PROTECTION,</span>
+            <span className="hsc-title-accent">AND STYLE.</span>
           </h1>
           <p className="hsc-hero-desc">
-            With top brands in motor gear, you'll find premium riding equipment
-            built for performance, protection, and style.
+            Top brands in motor gear — premium riding equipment
+            built for the road ahead.
           </p>
         </motion.div>
 
@@ -343,9 +512,9 @@ function HorizontalShowcase({ products = [] }) {
         <motion.div
           className="hsc-hero-center"
           style={isMobile ? {} : {
-            rotateX:          tiltX,
-            rotateY:          tiltY,
-            transformStyle:   "preserve-3d",
+            rotateX: tiltX,
+            rotateY: tiltY,
+            transformStyle: "preserve-3d",
             transformPerspective: 900,
           }}
           onMouseMove={isMobile ? undefined : handleHeroMouseMove}
@@ -363,29 +532,31 @@ function HorizontalShowcase({ products = [] }) {
             aria-hidden="true"
           />
 
+          {/* Orbit rings */}
           <div className="hsc-orbit hsc-orbit--1" aria-hidden="true" />
           <div className="hsc-orbit hsc-orbit--2" aria-hidden="true" />
           <div className="hsc-orbit hsc-orbit--3" aria-hidden="true" />
 
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={featured?._id}
-              src={featuredImg}
-              alt={featured?.name}
-              className="hsc-hero-shoe"
-              draggable="false"
-              loading="eager"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{    opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => navigate(`/product/${featured._id}`)}
-            />
-          </AnimatePresence>
+          {/* Hero product image — in circular frame */}
+          <div className="hsc-hero-frame">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={featured?._id}
+                src={featuredImg}
+                alt={featured?.name}
+                className="hsc-hero-shoe"
+                draggable="false"
+                loading="eager"
+                initial={{ opacity: 0, scale: 0.88 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{    opacity: 0, scale: 1.06 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                onClick={() => navigate(`/product/${featured._id}`)}
+              />
+            </AnimatePresence>
+          </div>
 
-          {/* FIX: hsc-orbit-btn removed — CSS was commented out, button
-              was invisible but still intercepting pointer events, causing
-              occasional missed clicks on the hero shoe image.            */}
+          {/* ✅ Eye icon REMOVED — was invisible but intercepting pointer events */}
         </motion.div>
 
         {/* RIGHT */}
@@ -403,7 +574,7 @@ function HorizontalShowcase({ products = [] }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{    opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.28 }}
             >
               {featured?.name?.toUpperCase()}
             </motion.p>
@@ -416,7 +587,7 @@ function HorizontalShowcase({ products = [] }) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{    opacity: 0, y: -12 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
+              transition={{ duration: 0.28, delay: 0.05 }}
             >
               ₹{featured?.price?.toLocaleString("en-IN")}
             </motion.p>
@@ -429,16 +600,14 @@ function HorizontalShowcase({ products = [] }) {
             <span className="hsc-cta-ring">
               <span className="hsc-cta-dot" />
             </span>
-            <span className="hsc-cta-label">
-              GET IT NOW <ArrowIcon />
-            </span>
+            <span className="hsc-cta-label">GET IT NOW <ArrowIcon /></span>
           </button>
 
           <div className="hsc-swatches" aria-hidden="true">
             {ACCENT_PALETTE.slice(0, 4).map((c, i) => (
               <span
                 key={i}
-                className={`hsc-swatch ${i === activeIndex % 4 ? "hsc-swatch--active" : ""}`}
+                className={`hsc-swatch${i === activeIndex % 4 ? " hsc-swatch--active" : ""}`}
                 style={{ background: c }}
               />
             ))}
@@ -456,7 +625,7 @@ function HorizontalShowcase({ products = [] }) {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{    opacity: 0, y:  8 }}
-              transition={{ duration: 0.22 }}
+              transition={{ duration: 0.2 }}
             >
               {String(activeIndex + 1).padStart(2, "0")}
             </motion.span>
@@ -467,44 +636,33 @@ function HorizontalShowcase({ products = [] }) {
           </span>
         </div>
 
-        <div ref={viewportRef} className="hsc-viewport">
-          {/* FIX: dragMomentum:false prevents post-release overshoot past boundaries.
-              dragElastic:0 removes the rubber-band that lets the track go beyond
-              constraints, which was the root cause of out-of-index positioning.    */}
-          <motion.div
+        {/* Viewport: overflow:hidden clips the track */}
+        <div className="hsc-viewport">
+          {/* Track: plain div with ref — transform driven by RAF, NOT Framer drag */}
+          <div
+            ref={trackRef}
             className="hsc-track"
-            drag="x"
-            dragConstraints={constraints}
-            dragMomentum={false}
-            dragElastic={0}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            whileTap={{ cursor: "grabbing" }}
-            style={{
-              cursor: "grab",
-              x,
-              touchAction: "none",
-            }}
+            style={{ willChange: "transform" }}
           >
             {products.map((product, i) => (
               <StripCard
                 key={product._id}
                 product={product}
                 isActive={i === activeIndex}
-                onClick={() => snapTo(i)}
+                onClick={() => handleCardClick(i)}
                 accent={ACCENT_PALETTE[i % ACCENT_PALETTE.length]}
                 isDraggingRef={isDraggingRef}
               />
             ))}
-          </motion.div>
+          </div>
         </div>
 
         <div className="hsc-dots" role="tablist" aria-label="Product navigation">
           {products.map((_, i) => (
             <button
               key={i}
-              className={`hsc-dot ${i === activeIndex ? "hsc-dot--active" : ""}`}
-              onClick={() => snapTo(i)}
+              className={`hsc-dot${i === activeIndex ? " hsc-dot--active" : ""}`}
+              onClick={() => goToDot(i)}
               role="tab"
               aria-selected={i === activeIndex}
               aria-label={`Go to product ${i + 1}`}

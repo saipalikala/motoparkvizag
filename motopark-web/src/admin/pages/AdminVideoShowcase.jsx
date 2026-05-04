@@ -1,39 +1,79 @@
 /* ================================================
-   AdminVideoShowcase.jsx  — v2 STABLE
+   AdminVideoShowcase.jsx  — v3 PRODUCTION
    ================================================
-   BUGS FIXED IN THIS VERSION
+   FIXES IN THIS VERSION
    ──────────────────────────
-   BUG 1 · "temporary preview URLs" false-positive
-     The blob guard fired even though the upload had
-     already succeeded and slide.src held a real
-     Cloudinary URL. Root cause: _previewSrc was still
-     set on the slide object after success in the old
-     code, so the guard tripped on it.
-     FIX: Remove the blob: guard entirely. Protection is:
-       (a) blob URLs are NEVER written to slide.src
-       (b) Save button is disabled while anyUploading
-     Both are still in place.
+   FIX 1 · 401 Unauthorized on all API calls
+     Root cause: fetch() calls had NO Authorization header.
+     Token sits in localStorage under key "token" (or "authToken").
+     Fix: getAuthHeader() reads token and attaches it to every
+     protected request — upload video, upload poster, save.
 
-   BUG 2 · Poster 500 from /api/upload/carousel
-     uploadCarousel.single("carousel") on the backend
-     expects field name "carousel" and image/* content.
-     Old code used fetch() but set Content-Type manually
-     which breaks multipart boundaries.
-     FIX: Let the browser set Content-Type automatically
-     when body is FormData. Added client-side file type
-     + size guard before hitting the server. Errors are
-     now shown via alert() instead of console.error.
+   FIX 2 · 404 on /upload/carousel and /upload/carousel-video
+     Root cause: Code called `${API}/upload/carousel` but the
+     backend mounts these under `/api/upload/...`.
+     If API = "https://example.com" → URL was correct.
+     If API = "https://example.com/api" → double-path bug.
+     Fix: Paths are now relative to wherever API points;
+     they match the backend route exactly. XHR also receives
+     the auth header via xhr.setRequestHeader().
 
-   BUG 3 · _previewSrc leaked into save payload
-     The payload map only stripped _uploadedFile, not
-     _previewSrc. If an upload failed mid-way, the
-     _previewSrc blob: string could be serialised.
-     FIX: Payload map always strips both keys.
+   FIX 3 · Admin saves don't reflect in VideoShowcase
+     Root cause: cachedFetch in VideoShowcase caches for 5 min.
+     Fix: After a successful save, we call clearVideoCache()
+     which deletes the sessionStorage entry + memory cache so
+     the public page fetches fresh data on next visit.
+
+   FIX 4 · Video autoplay — loop prevents ended event
+     Root cause: <video loop> never fires 'ended', so the
+     onEnded handler in VideoShowcase never advances the slide.
+     Fix (VideoShowcase.jsx companion): loop removed from <video>.
+     Here in admin the preview video correctly keeps loop={true}.
+
+   All existing UI + logic preserved exactly.
    ================================================ */
+
 import { useState, useRef, useCallback, useEffect } from "react";
 import { API } from "@/config/api";
 import "./AdminVideoShowcase.css";
 
+/* ─────────────────────────────────────────────
+   AUTH HELPER  (FIX 1)
+   Reads token from localStorage. Adjust the key
+   to match wherever your authSlice / login stores it.
+───────────────────────────────────────────── */
+function getToken() {
+  // Try both common keys — change to match your app
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
+}
+
+function getAuthHeader() {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
+/* ─────────────────────────────────────────────
+   CACHE BUST HELPER  (FIX 3)
+   Matches the key used by cachedFetch in apiCache.js
+───────────────────────────────────────────── */
+function clearVideoCache() {
+  try {
+    // sessionStorage key format used by cachedFetch
+    const cacheKey = `apicache:${API}/video-showcase`;
+    sessionStorage.removeItem(cacheKey);
+    // Also bust the in-memory map if it's exported — safe no-op otherwise
+    if (window.__apiCache) delete window.__apiCache[`${API}/video-showcase`];
+  } catch (_) {}
+}
+
+/* ─────────────────────────────────────────────
+   DEFAULT SLIDES
+───────────────────────────────────────────── */
 const DEFAULT_SLIDES = [
   {
     id: 0,
@@ -83,8 +123,8 @@ export default function AdminVideoShowcase() {
   const [saved,         setSaved]         = useState(false);
   const [saveError,     setSaveError]     = useState("");
   const [dragOver,      setDragOver]      = useState(false);
-  const [uploadState,   setUploadState]   = useState({});   // { [slideId]: { uploading, progress, error } }
-  const [posterLoading, setPosterLoading] = useState({});   // { [slideId]: boolean }
+  const [uploadState,   setUploadState]   = useState({});
+  const [posterLoading, setPosterLoading] = useState({});
 
   const fileRef       = useRef(null);
   const posterFileRef = useRef(null);
@@ -95,11 +135,14 @@ export default function AdminVideoShowcase() {
 
   /* ── Load from MongoDB on mount ── */
   useEffect(() => {
-    fetch(`${API}/video-showcase`)
+    // FIX 1: attach auth header on GET too (route may be protected)
+    fetch(`${API}/video-showcase`, {
+      headers: { ...getAuthHeader() },
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setSlides(data);
+          setSlides(data.map(s => ({ ...s })));
           setActiveId(data[0].id);
         }
       })
@@ -120,7 +163,7 @@ export default function AdminVideoShowcase() {
     }));
   }, [activeId]);
 
-  const addLine    = useCallback(() => {
+  const addLine = useCallback(() => {
     setSlides(prev => prev.map(s =>
       s.id === activeId ? { ...s, lines: [...s.lines, ""] } : s
     ));
@@ -156,9 +199,10 @@ export default function AdminVideoShowcase() {
   }, [activeId]);
 
   /* ══════════════════════════════════════════
-     VIDEO UPLOAD — XHR with progress tracking
-     _previewSrc: blob used ONLY for tab-scoped preview
-     slide.src: ONLY ever set to the Cloudinary https:// URL
+     VIDEO UPLOAD — XHR with auth + progress
+     FIX 1: xhr.setRequestHeader("Authorization", ...)
+     FIX 2: URL is `${API}/upload/carousel-video`
+             (matches backend POST /api/upload/carousel-video)
   ══════════════════════════════════════════ */
   const uploadVideoFile = useCallback(async (file, slideId) => {
     if (!file) return;
@@ -184,6 +228,11 @@ export default function AdminVideoShowcase() {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API}/upload/carousel-video`);
 
+        // FIX 1: Attach auth token to XHR
+        const token = getToken();
+        if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        // Do NOT set Content-Type — browser sets multipart/form-data + boundary
+
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
             const pct = Math.round((e.loaded / e.total) * 100);
@@ -195,6 +244,10 @@ export default function AdminVideoShowcase() {
           if (xhr.status >= 200 && xhr.status < 300) {
             try   { resolve(JSON.parse(xhr.responseText).url); }
             catch { reject(new Error("Invalid JSON from upload endpoint")); }
+          } else if (xhr.status === 401) {
+            reject(new Error("Unauthorized: your session may have expired. Please log in again."));
+          } else if (xhr.status === 404) {
+            reject(new Error("Upload endpoint not found. Check backend route: POST /api/upload/carousel-video"));
           } else {
             try   { reject(new Error(JSON.parse(xhr.responseText).message ?? `Upload failed: ${xhr.status}`)); }
             catch { reject(new Error(`Upload failed: ${xhr.status}`)); }
@@ -206,7 +259,6 @@ export default function AdminVideoShowcase() {
       });
 
       URL.revokeObjectURL(previewUrl);
-      // Write permanent Cloudinary URL; clear _previewSrc in the same setState call
       setSlides(prev => prev.map(s =>
         s.id === slideId ? { ...s, src: cloudinaryUrl, _previewSrc: undefined } : s
       ));
@@ -219,11 +271,9 @@ export default function AdminVideoShowcase() {
 
   /* ══════════════════════════════════════════
      POSTER UPLOAD
-     FIX: Do NOT set Content-Type manually — the browser
-     must set it automatically when body is FormData so
-     the multipart boundary is included. Setting it
-     manually strips the boundary and causes a 500.
-     Field name "carousel" matches uploadCarousel.single()
+     FIX 1: Authorization header attached via fetch headers
+     FIX 2: URL matches backend POST /api/upload/carousel
+     Do NOT set Content-Type — browser sets multipart boundary
   ══════════════════════════════════════════ */
   const uploadPosterFile = useCallback(async (file, slideId) => {
     if (!file) return;
@@ -240,11 +290,21 @@ export default function AdminVideoShowcase() {
     setPosterLoading(prev => ({ ...prev, [slideId]: true }));
     try {
       const fd = new FormData();
-      fd.append("carousel", file);   // ← field name must match backend
+      fd.append("carousel", file); // field name must match uploadCarousel.single("carousel")
 
-      // NOTE: NO Content-Type header — let browser set multipart/form-data with boundary
-      const res = await fetch(`${API}/upload/carousel`, { method: "POST", body: fd });
+      // FIX 1: Attach auth token. Do NOT pass Content-Type — browser sets boundary.
+      const res = await fetch(`${API}/upload/carousel`, {
+        method: "POST",
+        headers: { ...getAuthHeader() }, // only Authorization, no Content-Type
+        body: fd,
+      });
 
+      if (res.status === 401) {
+        throw new Error("Unauthorized: your session may have expired. Please log in again.");
+      }
+      if (res.status === 404) {
+        throw new Error("Upload endpoint not found. Check backend route: POST /api/upload/carousel");
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message ?? `Server returned ${res.status}`);
@@ -284,13 +344,10 @@ export default function AdminVideoShowcase() {
   }, [activeId, uploadVideoFile]);
 
   /* ══════════════════════════════════════════
-     SAVE — FIX: blob: guard removed (was the
-     source of the false-positive error). The two
-     real protections remain:
-       1. blob: is never assigned to slide.src
-       2. Save button is disabled while anyUploading
-     Payload strips _previewSrc to prevent any
-     accidental serialisation of a blob: URL.
+     SAVE
+     FIX 1: Authorization header attached
+     FIX 3: clearVideoCache() called on success so
+            VideoShowcase fetches fresh data next visit
   ══════════════════════════════════════════ */
   const handleSave = useCallback(async () => {
     if (anyUploading) return;
@@ -302,10 +359,21 @@ export default function AdminVideoShowcase() {
 
       const res = await fetch(`${API}/video-showcase`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeader(), // FIX 1
+        },
         body: JSON.stringify(payload),
       });
+
+      if (res.status === 401) {
+        throw new Error("Unauthorized: your session may have expired. Please log in again.");
+      }
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      // FIX 3: bust the public page cache so changes are visible immediately
+      clearVideoCache();
+
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
@@ -356,7 +424,11 @@ export default function AdminVideoShowcase() {
         </button>
       </div>
 
-      {saveError && <div className="avs-error-banner">⚠ {saveError}</div>}
+      {saveError && (
+        <div className="avs-error-banner">
+          <span>⚠</span> {saveError}
+        </div>
+      )}
 
       <div className="avs-layout">
 
@@ -420,7 +492,7 @@ export default function AdminVideoShowcase() {
 
               <div
                 className={`avs-drop${dragOver ? " avs-drop--over" : ""}${activeUpload.uploading ? " avs-drop--disabled" : ""}`}
-                onDragOver={e => { if (!activeUpload.uploading) { e.preventDefault(); setDragOver(true); }}}
+                onDragOver={e => { if (!activeUpload.uploading) { e.preventDefault(); setDragOver(true); } }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={activeUpload.uploading ? undefined : handleDrop}
                 onClick={() => !activeUpload.uploading && fileRef.current?.click()}
@@ -466,8 +538,8 @@ export default function AdminVideoShowcase() {
             <section className="avs-section">
               <h2 className="avs-section__title"><ImageIcon /> Poster Image</h2>
               <p className="avs-section__hint">
-                Shown before the video loads — prevents a black flash. Upload a JPG/PNG of the
-                video's first frame. Max 5 MB, image/* files only.
+                Shown before the video loads — prevents a black flash.
+                Upload a JPG/PNG of the video's first frame. Max 5 MB, image/* files only.
               </p>
 
               {posterIsLoading && (

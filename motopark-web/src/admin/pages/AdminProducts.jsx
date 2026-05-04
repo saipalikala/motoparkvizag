@@ -26,7 +26,7 @@ const DownloadIcon = () => <svg width="13" height="13" viewBox="0 0 24 24" fill=
 const ChevronIcon = ({ dir = "right" }) => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: dir === "left" ? "rotate(180deg)" : "none" }}><path d="M9 18l6-6-6-6" /></svg>;
 
 /* ── Helpers ─────────────────────────────────────────────────── */
-const emptyForm = () => ({ name: "", price: "", brand: "", category: "", description: "", specs: "", care: "", newArrival: false, featured: false, trending: false });
+const emptyForm = () => ({ name: "", price: "", brand: "", category: "", description: "", specs: "", care: "", newArrival: false, featured: false, trending: false, isShowcase: false });
 const emptyVariant = () => ({ color: "#ff6b3d", colorName: "", images: [], sizes: [{ size: "", stock: 0 }] });
 
 /** Debounce hook — avoids a lodash dependency */
@@ -214,7 +214,7 @@ const AdminProducts = () => {
             name: p.name, price: p.price, brand: p.brand,
             category: p.category?._id || p.category || "",
             description: p.description || "", specs: p.specs || "", care: p.care || "",
-            newArrival: !!p.newArrival, featured: !!p.featured, trending: !!p.trending,
+            newArrival: !!p.newArrival, featured: !!p.featured, trending: !!p.trending, isShowcase: !!p.isShowcase,
         });
         setVariants(
             (p.variants || []).map(v => ({
@@ -323,6 +323,7 @@ const AdminProducts = () => {
             ["description", form.description || ""], ["specs", form.specs || ""],
             ["care", form.care || ""], ["newArrival", String(form.newArrival)],
             ["featured", String(form.featured)], ["trending", String(form.trending)],
+            ["isShowcase", String(form.isShowcase)],
             ]).forEach(([k, v]) => fd.append(k, v));
 
             fd.append("variants", JSON.stringify(
@@ -454,6 +455,7 @@ const AdminProducts = () => {
                                                 {p.featured && <span className="ap-flag ap-flag--featured">Featured</span>}
                                                 {p.trending && <span className="ap-flag ap-flag--trending">Trending</span>}
                                                 {p.newArrival && <span className="ap-flag ap-flag--new">New</span>}
+                                                {p.isShowcase && <span className="ap-flag ap-flag--showcase">Showcase</span>}
                                             </div>
                                         </td>
                                         <td>
@@ -658,6 +660,7 @@ const AdminProducts = () => {
                                         { key: "featured", label: "Featured", desc: "Shows in the Featured bento grid" },
                                         { key: "trending", label: "Trending", desc: "Shows in the Trending Products slider" },
                                         { key: "newArrival", label: "New Arrival", desc: "Shows in New Arrivals (auto-expires 7 days)" },
+                                        { key: "isShowcase", label: "Horizontal Showcase", desc: "Shows in the Horizontal Showcase section" },
                                     ].map(({ key, label, desc }) => (
                                         <label className="ap-toggle-row" key={key}>
                                             <div>

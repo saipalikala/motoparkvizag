@@ -1,650 +1,538 @@
-/* ================================================
-   VideoShowcase.css — Cinematic Dark Premium Theme
-   Bebas Neue headlines · Apple-level interactions
-   ================================================ */
+/* =========================================================
+   VideoShowcase.css  —  Light Premium Edition
+   Apple-minimal layout  ·  Nike bold type  ·  H&M spacing
+   100vh cinematic hero  ·  Option-C mobile split layout
+   ========================================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-/* ══════════════════════════════════════
-   ROOT
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════ */
 .vs-root {
-    --vs-font-head: 'Bebas Neue', 'Impact', 'Arial Narrow', sans-serif;
-    --vs-font-body: 'DM Sans', system-ui, sans-serif;
-    --vs-radius-stage: 0px;
-    --vs-radius-card: 18px;
+  --vs-font-head : 'Bebas Neue', 'Impact', 'Arial Narrow', sans-serif;
+  --vs-font-body : 'DM Sans', system-ui, sans-serif;
 
-    width: 100%;
-    background: #060608;
-    padding-bottom: 52px;
-    font-family: var(--vs-font-body);
-    overflow: hidden;
+  width       : 100%;
+  background  : #ffffff;
+  font-family : var(--vs-font-body);
+  overflow    : hidden;
 }
 
-/* ══════════════════════════════════════
-   STAGE — full-width cinematic viewport
-══════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════
+   STAGE  —  full-viewport cinematic hero
+══════════════════════════════════════════════ */
 .vs-stage {
-    position: relative;
-    width: 100%;
-    height: 82vh;
-    min-height: 540px;
-    max-height: 960px;
-    overflow: hidden;
-    border-radius: var(--vs-radius-stage);
-    background: #0a0a0c;
-    cursor: crosshair;
+  position   : relative;
+  width      : 100%;
+  height     : 100vh;
+  min-height : 100dvh;
+  overflow   : hidden;
+  background : #0c0a07;
+  cursor     : crosshair;
 }
+
 
 /* ── Video layer ── */
 .vs-video-layer {
-    position: absolute;
-    inset: -6%;   /* oversized so scale(1.13) never shows edges */
-    will-change: transform;
-    transform-origin: center center;
+  position         : absolute;
+  inset            : -6%;        /* oversized — scale(1.13) never reveals edges */
+  will-change      : transform;
+  transform-origin : center center;
 }
 
 .vs-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity;
-    pointer-events: none;
+  position       : absolute;
+  inset          : 0;
+  width          : 100%;
+  height         : 100%;
+  object-fit     : cover;
+  opacity        : 0;
+  transition     : opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change    : opacity;
+  pointer-events : none;
 }
 
-.vs-video--active {
-    opacity: 1;
-}
+.vs-video--active { opacity: 1; }
 
-/* ── Cinematic gradient overlay ── */
+
+/* ── Bottom-anchored scrim — warm charcoal, not heavy cold black ── */
 .vs-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background:
-        linear-gradient(
-            130deg,
-            rgba(0, 0, 0, 0.78) 0%,
-            rgba(0, 0, 0, 0.18) 46%,
-            rgba(0, 0, 0, 0.48) 100%
-        ),
-        linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.88) 0%,
-            transparent 38%
-        ),
-        linear-gradient(
-            to bottom,
-            rgba(0, 0, 0, 0.42) 0%,
-            transparent 22%
-        );
+  position       : absolute;
+  inset          : 0;
+  z-index        : 2;
+  pointer-events : none;
+  background     :
+    /* warm charcoal bottom — text zone always readable */
+    linear-gradient(to top,
+      rgba(14, 11, 8, 0.88)  0%,
+      rgba(14, 11, 8, 0.40)  38%,
+      transparent            62%
+    ),
+    /* subtle top vignette — cinematic framing */
+    linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.26) 0%,
+      transparent         18%
+    );
 }
 
-/* ── Cursor glare (light reflection) ── */
+
+/* ── Cursor glare — desktop highlight, GPU composited ── */
 .vs-glare {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    mix-blend-mode: screen;
-    transition: background 40ms linear;
+  position       : absolute;
+  inset          : 0;
+  z-index        : 3;
+  pointer-events : none;
+  mix-blend-mode : screen;
 }
 
-/* ══════════════════════════════════════
+
+/* ══════════════════════════════════════════════
    CONTENT OVERLAY
-══════════════════════════════════════ */
+══════════════════════════════════════════════ */
+
+/* Empty Framer motion scroll anchor — no visual output */
 .vs-content {
-    position: absolute;
-    bottom: 12%;
-    left: 5.5%;
-    right: 5.5%;
-    right: auto; 
-    z-index: 10;
-    will-change: transform, opacity;
+  position    : absolute;
+  bottom      : 11%;
+  left        : 6%;
+  z-index     : 10;
+  will-change : transform, opacity;
 }
 
-/* ── Tag pill ── */
+/* Animated content block — anchored to stage bottom */
+.vs-content-inner {
+  position        : absolute;
+  inset           : 0;
+  z-index         : 10;
+  display         : flex;
+  flex-direction  : column;
+  justify-content : flex-end;   /* content sits at the bottom */
+  padding         : 0 6% 7.5%;
+  pointer-events  : none;
+}
+
+.vs-content-inner > * { pointer-events: auto; }
+
+
+/* ── Season / collection tag pill ── */
 .vs-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(14px) saturate(1.8);
-    -webkit-backdrop-filter: blur(14px) saturate(1.8);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    color: rgba(255, 255, 255, 0.82);
-    font-family: var(--vs-font-body);
-    font-size: 10.5px;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 7px 15px 7px 12px;
-    border-radius: 100px;
-    margin-bottom: 18px;
+  display        : inline-flex;
+  align-items    : center;
+  gap            : 8px;
+  background     : rgba(255, 255, 255, 0.09);
+  border         : 1px solid rgba(255, 255, 255, 0.16);
+  color          : rgba(255, 255, 255, 0.76);
+  font-family    : var(--vs-font-body);
+  font-size      : 10px;
+  font-weight    : 500;
+  letter-spacing : 0.16em;
+  text-transform : uppercase;
+  padding        : 6px 14px 6px 10px;
+  border-radius  : 100px;
+  margin-bottom  : 20px;
+  width          : fit-content;
 }
 
 .vs-tag__dot {
-    width: 6px;
-    height: 6px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--va, #f06a2c);
-    box-shadow: 0 0 8px var(--va, #f06a2c), 0 0 16px color-mix(in srgb, var(--va, #f06a2c) 40%, transparent);
-    animation: vs-dot-pulse 2.2s ease-in-out infinite;
+  width         : 5px;
+  height        : 5px;
+  flex-shrink   : 0;
+  border-radius : 50%;
+  background    : var(--va, #f06a2c);
+  animation     : vs-dot-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes vs-dot-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.55; transform: scale(1.35); }
+  0%, 100% { opacity: 1;    transform: scale(1);    }
+  50%       { opacity: 0.46; transform: scale(1.48); }
 }
 
-/* ── Cinematic headline ── */
+
+/* ── Nike-style bold headline ── */
 .vs-headline {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 0 0 18px;
-    padding: 0;
-    font-family: var(--vs-font-head);
-    font-size: clamp(68px, 9.5vw, 148px);
-    line-height: 0.88;
-    letter-spacing: 0.025em;
-    color: #ffffff;
-    user-select: none;
+  display        : flex;
+  flex-direction : column;
+  gap            : 0;
+  margin         : 0 0 16px;
+  padding        : 0;
+  font-family    : var(--vs-font-head);
+  font-size      : clamp(72px, 9.8vw, 152px);
+  line-height    : 0.88;
+  letter-spacing : 0.02em;
+  color          : #ffffff;
+  user-select    : none;
+  /* Dual text-shadow = safety net on any bright video frame */
+  text-shadow    : 0 2px 28px rgba(0, 0, 0, 0.52),
+                   0 0   8px  rgba(0, 0, 0, 0.26);
 }
 
 .vs-headline__line {
-    display: block;
-    will-change: transform, opacity, filter;
+  display    : block;
+  will-change: transform, opacity;
 }
+
 
 /* ── Subtitle ── */
 .vs-sub {
-    font-size: clamp(13px, 1.45vw, 16px);
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.60);
-    max-width: 420px;
-    line-height: 1.65;
-    margin: 0 0 30px;
-    letter-spacing: 0.008em;
+  font-size      : clamp(13px, 1.3vw, 15.5px);
+  font-weight    : 300;
+  color          : rgba(255, 255, 255, 0.62);
+  max-width      : 400px;
+  line-height    : 1.70;
+  margin         : 0 0 30px;
+  letter-spacing : 0.01em;
+  text-shadow    : 0 1px 14px rgba(0, 0, 0, 0.40);
 }
 
-/* ── CTA row ── */
+
+/* ── CTA row — inline flow with content, not floating absolute ── */
 .vs-cta-row {
-    position: absolute;
-    bottom: 28px;
-    right: 32px;
-
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    z-index: 20;
+  display     : flex;
+  gap         : 12px;
+  align-items : center;
 }
 
+
+/* ── Buttons ── */
 .vs-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    padding: 13px 28px;
-    border-radius: 100px;
-    font-family: var(--vs-font-body);
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    border: none;
-    will-change: transform;
-    outline: none;
-    transition: box-shadow 0.3s ease;
-    text-decoration: none;
+  display        : inline-flex;
+  align-items    : center;
+  gap            : 8px;
+  padding        : 13px 28px;
+  border-radius  : 100px;
+  font-family    : var(--vs-font-body);
+  font-size      : 14px;
+  font-weight    : 500;
+  letter-spacing : 0.025em;
+  cursor         : pointer;
+  border         : none;
+  will-change    : transform;
+  outline        : none;
+  transition     : box-shadow 0.28s ease, background 0.22s ease;
+  white-space    : nowrap;
 }
 
 .vs-btn--primary {
-    background: var(--va, #f06a2c);
-    color: #fff;
-    box-shadow:
-        0 6px 28px -4px color-mix(in srgb, var(--va, #f06a2c) 55%, transparent),
-        inset 0 1px 0 rgba(255,255,255,0.18);
+  background : var(--va, #f06a2c);
+  color      : #ffffff;
+  box-shadow : 0 4px 24px -6px color-mix(in srgb, var(--va, #f06a2c) 56%, transparent),
+               inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .vs-btn--primary:hover {
-    box-shadow:
-        0 10px 36px -4px color-mix(in srgb, var(--va, #f06a2c) 70%, transparent),
-        inset 0 1px 0 rgba(255,255,255,0.22);
+  box-shadow : 0 8px 34px -4px color-mix(in srgb, var(--va, #f06a2c) 70%, transparent),
+               inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .vs-btn--ghost {
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: rgba(255, 255, 255, 0.88);
+  background   : rgba(255, 255, 255, 0.08);
+  border       : 1.5px solid rgba(255, 255, 255, 0.26);
+  color        : rgba(255, 255, 255, 0.88);
 }
 
 .vs-btn--ghost:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.35);
+  background   : rgba(255, 255, 255, 0.14);
+  border-color : rgba(255, 255, 255, 0.40);
 }
 
-/* ══════════════════════════════════════
-   SOUND TOGGLE
-══════════════════════════════════════ */
-.vs-sound {
-    position: absolute;
-    bottom: 26px;
-    right: 26px;
-    z-index: 20;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: rgba(255, 255, 255, 0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
+
+/* ══════════════════════════════════════════════
+   MUTE TOGGLE  (class fixed: vs-mute, was vs-sound in old CSS)
+══════════════════════════════════════════════ */
+.vs-mute {
+  position       : absolute;
+  bottom         : 28px;
+  left           : 6%;
+  z-index        : 20;
+  width          : 40px;
+  height         : 40px;
+  border-radius  : 50%;
+  background     : rgba(255, 255, 255, 0.08);
+  border         : 1px solid rgba(255, 255, 255, 0.16);
+  color          : rgba(255, 255, 255, 0.82);
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  cursor         : pointer;
+  outline        : none;
+  transition     : background 0.22s ease, border-color 0.22s ease;
 }
 
-.vs-sound:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.28);
+.vs-mute:hover {
+  background   : rgba(255, 255, 255, 0.15);
+  border-color : rgba(255, 255, 255, 0.30);
 }
 
-.vs-sound span {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-/* ══════════════════════════════════════
-   DOT NAVIGATION (right side)
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   DOT NAVIGATION  (right rail, desktop)
+══════════════════════════════════════════════ */
 .vs-dots {
-    position: absolute;
-    top: 50%;
-    right: 26px;
-    transform: translateY(-50%);
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+  position       : absolute;
+  top            : 50%;
+  right          : 28px;
+  transform      : translateY(-50%);
+  z-index        : 20;
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  gap            : 7px;
 }
 
 .vs-dot {
-    width: 6px;
-    border-radius: 100px;
-    background: rgba(255, 255, 255, 0.95);
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    outline: none;
-    will-change: height, opacity;
-    transition: background 0.3s;
+  width         : 5px;
+  border-radius : 100px;
+  background    : rgba(255, 255, 255, 0.86);
+  cursor        : pointer;
+  border        : none;
+  padding       : 0;
+  outline       : none;
+  will-change   : height, opacity;
+  transition    : background 0.28s ease;
 }
 
 .vs-dot--active {
-    background: var(--va, #f06a2c);
-    box-shadow: 0 0 8px var(--va, #f06a2c);
+  background : var(--va, #f06a2c);
+  box-shadow : 0 0 7px var(--va, #f06a2c);
 }
 
-/* ══════════════════════════════════════
-   PROGRESS BAR
-══════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════
+   CSS PROGRESS BAR  (@keyframes — zero JS per frame)
+   key={activeIdx} on fill div restarts animation each slide
+══════════════════════════════════════════════ */
 .vs-progress-track {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.08);
-    z-index: 20;
-    overflow: hidden;
+  position   : absolute;
+  bottom     : 0;
+  left       : 0;
+  right      : 0;
+  height     : 2px;
+  background : rgba(255, 255, 255, 0.07);
+  z-index    : 20;
+  overflow   : hidden;
 }
 
 .vs-progress-fill {
-    height: 100%;
-    background: var(--va, #f06a2c);
-    transform-origin: left center;
-    will-change: transform;
-    box-shadow: 0 0 6px var(--va, #f06a2c);
+  height           : 100%;
+  width            : 100%;
+  background       : var(--va, #f06a2c);
+  transform-origin : left center;
+  transform        : scaleX(0);
+  will-change      : transform;
+  animation        : vs-progress 4s linear forwards;
+  box-shadow       : 0 0 5px color-mix(in srgb, var(--va, #f06a2c) 60%, transparent);
 }
 
-/* ══════════════════════════════════════
-   VIDEO COUNTER (top-right corner)
-══════════════════════════════════════ */
+@keyframes vs-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+
+/* ══════════════════════════════════════════════
+   VIDEO COUNTER  (top-right corner)
+══════════════════════════════════════════════ */
 .vs-counter {
-    position: absolute;
-    top: 24px;
-    right: 26px;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--vs-font-head);
-    letter-spacing: 0.04em;
-    pointer-events: none;
+  position       : absolute;
+  top            : 28px;
+  right          : 28px;
+  z-index        : 20;
+  display        : flex;
+  align-items    : center;
+  gap            : 6px;
+  font-family    : var(--vs-font-head);
+  letter-spacing : 0.04em;
+  pointer-events : none;
 }
 
 .vs-counter__cur {
-    font-size: 28px;
-    color: rgba(255, 255, 255, 0.92);
-    line-height: 1;
+  font-size   : 26px;
+  color       : rgba(255, 255, 255, 0.90);
+  line-height : 1;
 }
 
 .vs-counter__sep {
-    width: 22px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.35);
-    transform: rotate(-60deg);
+  width      : 20px;
+  height     : 1px;
+  background : rgba(255, 255, 255, 0.30);
+  transform  : rotate(-60deg);
 }
 
 .vs-counter__total {
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.38);
-    line-height: 1;
+  font-size   : 17px;
+  color       : rgba(255, 255, 255, 0.36);
+  line-height : 1;
 }
 
-/* ══════════════════════════════════════
-   PREVIEW NAVIGATION
-══════════════════════════════════════ */
-.vs-previews {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    padding: 22px 28px 0;
-    max-width: 860px;
-   margin: 40px auto 0;
-}
 
+/* ══════════════════════════════════════════════
+   PREVIEW STRIP  —  removed from design
+   Dot nav + counter handle all navigation needs
+══════════════════════════════════════════════ */
+.vs-previews,
 .vs-preview {
-    position: relative;
-    background: #111116;
-    border-radius: var(--vs-radius-card);
-    overflow: hidden;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    text-align: left;
-    padding: 0;
-    will-change: transform;
-    -webkit-tap-highlight-color: transparent;
+  display: none;
 }
 
-/* Active ring overlay */
-.vs-preview__ring {
-    position: absolute;
-    inset: 0;
-    border-radius: var(--vs-radius-card);
-    border: 2px solid var(--va, #f06a2c);
-    pointer-events: none;
-    z-index: 4;
-    box-shadow:
-        0 0 14px -2px color-mix(in srgb, var(--va, #f06a2c) 45%, transparent),
-        inset 0 0 10px -4px color-mix(in srgb, var(--va, #f06a2c) 25%, transparent);
-}
 
-/* Thumbnail */
-.vs-preview__thumb {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: #1a1a22;
-}
-
-.vs-preview__video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.65;
-    transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1);
-    will-change: opacity, transform;
-    pointer-events: none;
-}
-
-.vs-preview:hover .vs-preview__video,
-.vs-preview--active .vs-preview__video {
-    opacity: 1;
-    transform: scale(1.04);
-}
-
-.vs-preview__vignette {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to bottom,
-        transparent 40%,
-        rgba(0, 0, 0, 0.55) 100%
-    );
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Play icon */
-.vs-preview__play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    opacity: 0;
-    transition: opacity 0.28s ease;
-    pointer-events: none;
-}
-
-.vs-preview:hover .vs-preview__play {
-    opacity: 1;
-}
-
-/* Info row */
-.vs-preview__info {
-    padding: 11px 13px 13px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    position: relative;
-    z-index: 2;
-}
-
-.vs-preview__tag {
-    font-size: 9.5px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
-.vs-preview__title {
-    font-family: var(--vs-font-head);
-    font-size: 20px;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.92);
-    line-height: 1;
-}
-
-/* Active accent bar at bottom */
-.vs-preview__bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2.5px;
-    background: linear-gradient(90deg, var(--va, #f06a2c), transparent);
-    transform-origin: left center;
-    will-change: transform;
-    z-index: 3;
-}
-
-.vs-content-inner {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: inherit;
-    pointer-events: none;
-}
-.vs-content-inner > * {
-    pointer-events: auto;
-}
-/* ══════════════════════════════════════
-   MOBILE ADAPTATIONS
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   MOBILE  —  Option C: Split Layout
+   ─────────────────────────────────────────────
+   Desktop: unchanged 100vh cinematic hero
+   Mobile:  video top block (~55vw) + solid dark
+            text panel below — zero JSX changes
+══════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-    .vs-stage {
-        height: 62vh;
-        min-height: 380px;
-        cursor: default;
-    }
+  .vs-stage {
+    display        : flex;
+    flex-direction : column;
+    height         : auto;
+    min-height     : 100dvh;
+    overflow       : visible;   /* text panel lives outside old clip rect */
+    cursor         : default;
+  }
 
-    .vs-content {
-        bottom: 10%;
-        left: 4%;
-        right: 4%;
-    }
+  /* Video block — top of column, self-clips its oversized element */
+  .vs-video-layer {
+    position    : relative;     /* exits absolute, becomes flex item */
+    flex-shrink : 0;
+    height      : min(55vw, 260px);
+    overflow    : hidden;       /* clips the -6% inset oversizing */
+  }
 
-    .vs-headline {
-        font-size: clamp(54px, 15vw, 82px);
-    }
+  /* Scrim — covers only the video block height, not the text panel */
+  .vs-overlay {
+    height     : min(55vw, 260px);
+    bottom     : auto;
+    top        : 0;
+    background :
+      linear-gradient(to top,
+        rgba(14, 11, 8, 0.55) 0%,
+        rgba(14, 11, 8, 0.08) 52%,
+        transparent           75%
+      );
+  }
 
-    .vs-sub {
-        font-size: 12px;
-        max-width: none;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
+  .vs-glare {
+    height : min(55vw, 260px);
+    bottom : auto;
+    top    : 0;
+  }
 
-    .vs-btn {
-        padding: 11px 22px;
-        font-size: 13px;
-    }
+  /* Mute — top-right of the video area */
+  .vs-mute {
+    top    : 12px;
+    right  : 12px;
+    left   : auto;
+    bottom : auto;
+    width  : 36px;
+    height : 36px;
+  }
 
-    /* Dots go to bottom center on mobile */
-    .vs-dots {
-        flex-direction: row;
-        top: auto;
-        right: 50%;
-        bottom: 32px;
-        transform: translateX(50%);
-    }
+  /* Counter — hidden on mobile */
+  .vs-counter { display: none; }
 
-    .vs-dot {
-        height: 6px !important;
-        width: 22px;
-    }
+  /* Dots — repositioned to bottom of video area, centered */
+  .vs-dots {
+    flex-direction : row;
+    top            : calc(min(55vw, 260px) - 28px);
+    right          : 50%;
+    transform      : translateX(50%);
+    bottom         : auto;
+    gap            : 6px;
+  }
 
-    .vs-dot--active {
-        width: 28px;
-        height: 6px !important;
-    }
+  .vs-dot {
+    width  : 18px !important;
+    height : 4px !important;
+  }
 
-    /* Counter hides on mobile */
-    .vs-counter {
-        display: none;
-    }
+  .vs-dot--active {
+    width  : 24px !important;
+    height : 4px !important;
+  }
 
-    /* Previews scroll horizontally on mobile */
-    .vs-previews {
-        display: flex;
-        grid-template-columns: unset;
-        overflow-x: auto;
-        padding: 18px 16px 0;
-        gap: 10px;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-    }
+  /* Progress bar — at the video / text panel boundary */
+  .vs-progress-track {
+    top    : calc(min(55vw, 260px) - 2px);
+    bottom : auto;
+    left   : 0;
+    right  : 0;
+  }
 
-    .vs-previews::-webkit-scrollbar {
-        display: none;
-    }
+  /* Text panel — exits absolute, solid background, zero transparency */
+  .vs-content-inner {
+    position        : relative;
+    inset           : unset;
+    background      : #0e0e12;   /* solid — guaranteed no video bleed-through */
+    padding         : 24px 20px 36px;
+    justify-content : flex-start;
+    flex            : 1;
+    z-index         : 10;
+  }
 
-    .vs-preview {
-        flex: 0 0 200px;
-        scroll-snap-align: start;
-    }
-}
+  /* Empty Framer scroll anchor — invisible on mobile */
+  .vs-content { display: none; }
 
-@media (max-width: 480px) {
-    .vs-stage {
-        min-height: 320px;
-    }
+  /* Typography — no text-shadow needed (solid background) */
+  .vs-headline {
+    font-size     : clamp(48px, 13.5vw, 76px);
+    text-shadow   : none;
+    margin-bottom : 12px;
+    color         : #ffffff;
+  }
 
-    .vs-headline {
-        font-size: 14vw;
-    }
+  .vs-sub {
+    font-size   : 12.5px;
+    max-width   : none;
+    text-shadow : none;
+    color       : rgba(255, 255, 255, 0.54);
+    display     : -webkit-box;
+    -webkit-line-clamp  : 3;
+    -webkit-box-orient  : vertical;
+    overflow    : hidden;
+    margin-bottom: 24px;
+  }
 
-    .vs-tag {
-        font-size: 9.5px;
-        padding: 6px 12px 6px 10px;
-    }
-
-    .vs-preview {
-        flex: 0 0 170px;
-    }
-
-    .vs-sound {
-        bottom: 20px;
-        right: 16px;
-        width: 38px;
-        height: 38px;
-    }
-}
-
-/* ══════════════════════════════════════
-   REDUCED MOTION — accessibility
-══════════════════════════════════════ */
-@media (prefers-reduced-motion: reduce) {
-    .vs-video              { transition: opacity 0.2s; }
-    .vs-tag__dot           { animation: none; }
-    .vs-preview__video     { transition: opacity 0.2s; transform: none !important; }
-}
-@media (max-width: 768px) {
-
-  .vs-cta-row {
-      position: absolute;
-      bottom: 60px;
-      left: 0;
-      right: 0;
-
-      display: flex;
-      justify-content: space-between;
-      padding: 0 16px;
+  .vs-tag {
+    font-size   : 9.5px;
+    padding     : 5px 12px 5px 9px;
+    background  : rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    margin-bottom: 14px;
   }
 
   .vs-btn {
-      flex: 0 0 auto;
+    padding   : 10px 20px;
+    font-size : 13px;
   }
 
-  .vs-btn--primary {
-      margin-right: auto; /* pushes left */
+  .vs-cta-row {
+    gap: 10px;
+  }
+}
+
+
+/* ── Extra-small phones ── */
+@media (max-width: 480px) {
+  .vs-headline { font-size: 13.5vw; }
+
+  .vs-tag {
+    font-size : 9px;
+    padding   : 5px 10px 5px 8px;
   }
 
-  .vs-btn--ghost {
-      margin-left: auto; /* pushes right */
-  }
+  .vs-mute { width: 34px; height: 34px; }
+}
+
+
+/* ══════════════════════════════════════════════
+   ACCESSIBILITY — reduced motion
+══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .vs-video         { transition: opacity 0.2s; }
+  .vs-tag__dot      { animation: none; }
+  .vs-progress-fill { animation: none; transform: scaleX(1); }
 }
