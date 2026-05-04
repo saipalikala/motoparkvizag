@@ -5,7 +5,7 @@ const brands = [
   "/brands/Axor.png",
   "/brands/BMC.png",
   "/brands/Kodra.png",
-  "/brands/LIUHG.png",
+  "/brands/LIUHJG.png",
   "/brands/MotoTorque.png",
   "/brands/NGK.png",
   "/brands/REDROOSTER.jpg",

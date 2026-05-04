@@ -36,7 +36,7 @@
 /* ── Video layer ── */
 .vs-video-layer {
   position         : absolute;
-  inset            : -6%;        /* oversized — scale(1.13) never reveals edges */
+  inset            : -2%;        /* oversized — scale(1.13) never reveals edges */
   will-change      : transform;
   transform-origin : center center;
 }
@@ -102,6 +102,7 @@
 
 /* Animated content block — anchored to stage bottom */
 .vs-content-inner {
+  
   position        : absolute;
   inset           : 0;
   z-index         : 10;
@@ -385,26 +386,25 @@
 ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  .vs-stage {
-    display        : flex;
-    flex-direction : column;
-    height         : auto;
-    min-height     : 100dvh;
-    overflow       : visible;   /* text panel lives outside old clip rect */
-    cursor         : default;
-  }
+.vs-stage {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: unset; /* 🔥 FIX */
+  overflow: visible;
+}
 
   /* Video block — top of column, self-clips its oversized element */
   .vs-video-layer {
     position    : relative;     /* exits absolute, becomes flex item */
     flex-shrink : 0;
-    height      : min(55vw, 260px);
+    height      : min(85vw, 420px);
     overflow    : hidden;       /* clips the -6% inset oversizing */
   }
 
   /* Scrim — covers only the video block height, not the text panel */
   .vs-overlay {
-    height     : min(55vw, 260px);
+    height     : min(85vw, 420px); 
     bottom     : auto;
     top        : 0;
     background :
@@ -416,7 +416,7 @@
   }
 
   .vs-glare {
-    height : min(55vw, 260px);
+    height : min(85vw, 420px); 
     bottom : auto;
     top    : 0;
   }
@@ -437,7 +437,7 @@
   /* Dots — repositioned to bottom of video area, centered */
   .vs-dots {
     flex-direction : row;
-    top            : calc(min(55vw, 260px) - 28px);
+    top            : calc(min(85vw, 420px) - 28px);
     right          : 50%;
     transform      : translateX(50%);
     bottom         : auto;
@@ -456,7 +456,7 @@
 
   /* Progress bar — at the video / text panel boundary */
   .vs-progress-track {
-    top    : calc(min(55vw, 260px) - 2px);
+    top    : calc(min(85vw, 420px) - 2px);
     bottom : auto;
     left   : 0;
     right  : 0;
@@ -464,12 +464,13 @@
 
   /* Text panel — exits absolute, solid background, zero transparency */
   .vs-content-inner {
+    
     position        : relative;
     inset           : unset;
     background      : #0e0e12;   /* solid — guaranteed no video bleed-through */
-    padding         : 24px 20px 36px;
+    padding         : 18px 16px 20px;
     justify-content : flex-start;
-    flex            : 1;
+    flex            : 0;
     z-index         : 10;
   }
 

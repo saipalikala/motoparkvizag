@@ -341,7 +341,7 @@ DotsBar.displayName = "DotsBar";
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PremiumCarousel = () => {
-    const [slides,    setSlides]    = useState(fallbackSlides);
+    const [slides,    setSlides]    = useState(null); // null = "not yet loaded" — never render stale fallback
     const [index,     setIndex]     = useState(0);
     const [paused,    setPaused]    = useState(false);
     const [direction, setDirection] = useState(1);
@@ -414,16 +414,20 @@ const PremiumCarousel = () => {
         );
     }, []);
 
-    /* [F3]: Fetch with r.ok guard — bad JSON from a 500 page no longer crashes */
+    /* [F3] + [FLICKER FIX]: freshOnly:true skips all cache reads — carousel data
+       is volatile (Cloudinary URLs get deleted), so we never serve stale images.
+       Skeleton is shown while loading; fallbackSlides only used on network error. */
     useEffect(() => {
-const ctrl = new AbortController();
-cachedFetch(`${API}/carousel`, { signal: ctrl.signal })
-  .then(data => {
-    const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
-    setSlides(normaliseSlides(apiSlides));
-  })
-  .catch(err => { if (err.name !== "AbortError") setSlides(normaliseSlides(fallbackSlides)); });
-return () => ctrl.abort();
+        const ctrl = new AbortController();
+        cachedFetch(`${API}/carousel`, { freshOnly: true, signal: ctrl.signal })
+            .then(data => {
+                const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
+                setSlides(normaliseSlides(apiSlides));
+            })
+            .catch(err => {
+                if (err.name !== "AbortError") setSlides(normaliseSlides(fallbackSlides));
+            });
+        return () => ctrl.abort();
     }, [normaliseSlides]);
 
     /* Preload poster images eagerly; never preload video bytes [O2] */
@@ -482,6 +486,13 @@ return () => ctrl.abort();
         onSwipedRight: prev,
         trackMouse:    false,
     });
+
+    // ── SKELETON GUARD — slides is null until fresh API data arrives.
+    //    This is what prevents the deleted-image flash. The .carousel-skeleton
+    //    class already has a shimmer animation in PremiumCarousel.css.
+    if (slides === null) {
+        return <div className="carousel-skeleton" aria-label="Loading carousel" />;
+    }
 
     const slide    = slides[index];
     const isVideo  = slide.type === "video";

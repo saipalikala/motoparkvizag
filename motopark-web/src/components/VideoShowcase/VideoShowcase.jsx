@@ -256,15 +256,35 @@ export default function VideoShowcase() {
 
   const handlePreview = useCallback((idx) => setActiveIdx(idx), []);
 
+  // Strips the origin from same-site full URLs so React Router always gets
+  // a plain path. Handles the case where an admin pastes a full absolute URL
+  // (e.g. https://motoparkvizag.in/product/123) into the link field.
+  const resolveLink = useCallback((link) => {
+    if (!link) return null;
+    try {
+      const url = new URL(link, window.location.origin);
+      if (url.origin === window.location.origin) {
+        return url.pathname + url.search + url.hash; // /product/123
+      }
+      return link; // genuinely external
+    } catch {
+      return link; // already a relative path
+    }
+  }, []);
+
   const handleBuyNow = useCallback(() => {
-    const link = videos[activeIdx]?.buyNowLink;
-    if (link) navigate(link);
-  }, [activeIdx, videos, navigate]);
+    const link = resolveLink(videos[activeIdx]?.buyNowLink);
+    if (!link) return;
+    if (link.startsWith("http")) window.location.href = link;
+    else navigate(link);
+  }, [activeIdx, videos, navigate, resolveLink]);
 
   const handleExplore = useCallback(() => {
-    const link = videos[activeIdx]?.exploreLink;
-    if (link) navigate(link);
-  }, [activeIdx, videos, navigate]);
+    const link = resolveLink(videos[activeIdx]?.exploreLink);
+    if (!link) return;
+    if (link.startsWith("http")) window.location.href = link;
+    else navigate(link);
+  }, [activeIdx, videos, navigate, resolveLink]);
 
   const handleMuteToggle = useCallback(() => setIsMuted(m => !m), []);
 

@@ -1,10 +1,30 @@
-const TTL      = 5 * 60 * 1000;
+// ─────────────────────────────────────────────────────────────────────────────
+//  apiCache.js  —  memory + sessionStorage cache with stale-while-revalidate
+//
+//  Key additions vs original:
+//    • freshOnly: true  → skip cache entirely, always go to network (used by
+//                         the carousel so deleted images never flash)
+//    • CACHE_VERSION    → bump this string any time your data shape changes;
+//                         all old sessionStorage entries are wiped on boot
+//    • revalidate()     → background-refresh a URL without blocking the caller
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CACHE_VERSION = "v2";          // ← bump when Cloudinary URLs change shape
+const SESSION_PREFIX = `api:${CACHE_VERSION}:`;
+const TTL = 5 * 60 * 1000;          // 5 min
+
 const memCache = new Map();
 const inFlight = new Map();
 
-const readSession = (key) => {
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function sessionKey(url) {
+  return `${SESSION_PREFIX}${url}`;
+}
+
+const readSession = (url) => {
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = sessionStorage.getItem(sessionKey(url));
     if (!raw) return null;
     const { data, time } = JSON.parse(raw);
     if (Date.now() - time < TTL) return { data, time };
@@ -12,48 +32,73 @@ const readSession = (key) => {
   return null;
 };
 
-const writeSession = (key, data) => {
+const writeSession = (url, data) => {
   try {
-    sessionStorage.setItem(key, JSON.stringify({ data, time: Date.now() }));
+    sessionStorage.setItem(sessionKey(url), JSON.stringify({ data, time: Date.now() }));
   } catch {}
 };
 
-export function cachedFetch(url, { force = false, signal } = {}) {
-  const key = `api:${url}`;
-
-  // Caller aborted before we even started — bail silently
-  if (signal?.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
-
-  if (!force) {
-    const mem = memCache.get(key);
-    if (mem && Date.now() - mem.time < TTL) return Promise.resolve(mem.data);
-
-    const sess = readSession(key);
-    if (sess) {
-      memCache.set(key, sess);
-      return Promise.resolve(sess.data);
+// On module load: wipe any sessionStorage entries from previous cache versions.
+// This is the primary defence against stale Cloudinary image URLs surviving
+// across deployments.
+(function purgeOldVersions() {
+  try {
+    const keysToDelete = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith("api:") && !k.startsWith(SESSION_PREFIX)) {
+        keysToDelete.push(k);
+      }
     }
+    keysToDelete.forEach((k) => sessionStorage.removeItem(k));
+  } catch {}
+})();
 
-    if (inFlight.has(key)) {
-      // Shared in-flight promise — but respect caller's abort signal
-      const shared = inFlight.get(key);
-      if (!signal) return shared;
-      // Wrap: reject if caller aborts, but don't cancel the shared fetch
-      return new Promise((resolve, reject) => {
-        signal.addEventListener("abort", () =>
-          reject(new DOMException("Aborted", "AbortError")), { once: true }
-        );
-        shared.then(resolve).catch(reject);
-      });
-    }
-  } else {
-    memCache.delete(key);
-    try { sessionStorage.removeItem(key); } catch {}
+// ── core fetch ───────────────────────────────────────────────────────────────
+
+/**
+ * cachedFetch(url, options)
+ *
+ * @param {string}  url
+ * @param {object}  options
+ * @param {boolean} options.force      — bypass read cache, force network request
+ * @param {boolean} options.freshOnly  — NEVER serve from cache (carousel use-case)
+ *                                       Still deduplicates concurrent calls.
+ * @param {AbortSignal} options.signal — caller's abort signal
+ */
+export function cachedFetch(url, { force = false, freshOnly = false, signal } = {}) {
+  const memKey = url; // mem map key (no version prefix needed — it's in-process)
+
+  if (signal?.aborted) {
+    return Promise.reject(new DOMException("Aborted", "AbortError"));
   }
 
-  // Fire ONE network request — NO signal here intentionally.
-  // Individual callers can abort their own wait (above) without
-  // killing the shared fetch that other components depend on.
+  // ── freshOnly: skip all cache reads, straight to network ──────────────────
+  if (!freshOnly && !force) {
+    const mem = memCache.get(memKey);
+    if (mem && Date.now() - mem.time < TTL) return Promise.resolve(mem.data);
+
+    const sess = readSession(url);
+    if (sess) {
+      memCache.set(memKey, sess);
+      return Promise.resolve(sess.data);
+    }
+  } else {
+    // force / freshOnly: clear stale entries so nothing leaks back
+    memCache.delete(memKey);
+    try { sessionStorage.removeItem(sessionKey(url)); } catch {}
+  }
+
+  // ── deduplicate in-flight requests ────────────────────────────────────────
+  if (inFlight.has(memKey)) {
+    const shared = inFlight.get(memKey);
+    if (!signal) return shared;
+    return abortableWrap(shared, signal);
+  }
+
+  // ── fire ONE network request ──────────────────────────────────────────────
+  // No signal on the underlying fetch intentionally — individual callers can
+  // cancel their own wait without killing the shared request.
   const p = fetch(url)
     .then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
@@ -61,35 +106,56 @@ export function cachedFetch(url, { force = false, signal } = {}) {
     })
     .then((data) => {
       const entry = { data, time: Date.now() };
-      memCache.set(key, entry);
-      writeSession(key, data);
+      memCache.set(memKey, entry);
+      // freshOnly callers don't pollute the session cache
+      if (!freshOnly) writeSession(url, data);
       return data;
     })
-    .finally(() => inFlight.delete(key));
+    .finally(() => inFlight.delete(memKey));
 
-  inFlight.set(key, p);
+  inFlight.set(memKey, p);
 
-  // Still respect caller's signal for their personal wait
   if (!signal) return p;
-  return new Promise((resolve, reject) => {
-    signal.addEventListener("abort", () =>
-      reject(new DOMException("Aborted", "AbortError")), { once: true }
-    );
-    p.then(resolve).catch(reject);
+  return abortableWrap(p, signal);
+}
+
+// ── background revalidation ──────────────────────────────────────────────────
+
+/**
+ * Silently refresh a URL in the background so the *next* render gets
+ * fresh data, without blocking the current one.
+ */
+export function revalidate(url) {
+  cachedFetch(url, { force: true }).catch(() => {
+    // swallow — this is best-effort background work
   });
 }
 
+// ── manual invalidation ──────────────────────────────────────────────────────
+
 export function invalidateCache(url) {
-  const key = `api:${url}`;
-  memCache.delete(key);
-  try { sessionStorage.removeItem(key); } catch {}
+  memCache.delete(url);
+  try { sessionStorage.removeItem(sessionKey(url)); } catch {}
 }
 
 export function invalidateAll() {
   memCache.clear();
   try {
     Object.keys(sessionStorage)
-      .filter(k => k.startsWith("api:"))
-      .forEach(k => sessionStorage.removeItem(k));
+      .filter((k) => k.startsWith(SESSION_PREFIX))
+      .forEach((k) => sessionStorage.removeItem(k));
   } catch {}
+}
+
+// ── internal helper ──────────────────────────────────────────────────────────
+
+function abortableWrap(promise, signal) {
+  return new Promise((resolve, reject) => {
+    signal.addEventListener(
+      "abort",
+      () => reject(new DOMException("Aborted", "AbortError")),
+      { once: true }
+    );
+    promise.then(resolve).catch(reject);
+  });
 }
