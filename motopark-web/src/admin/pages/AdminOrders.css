@@ -571,3 +571,34 @@
 .ao-print-btn:hover {
     background: #ff6b3d;
 }
+
+.ao-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.ao-status-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ao-status-select {
+    padding: 7px 28px 7px 12px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(11, 29, 58, .12);
+    font-size: 13px;
+    font-weight: 600;
+    appearance: none;
+    cursor: pointer;
+    background: #fff;
+    color: #0b1d3a;
+    outline: none;
+}
+
+.ao-status-select:focus {
+    border-color: #ff6b3d;
+}

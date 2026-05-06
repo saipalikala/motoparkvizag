@@ -65,7 +65,7 @@ const FALLBACK_VIDEOS = [
     sub: "Premium motorcycle gear engineered for the track and the open road.",
     accent: "#f06a2c",
     cta: "Shop Collection",
-    buyNowLink: "/products?collection=season-2025",
+    buyNowLink: "/store?collection=season-2025",
     exploreLink: "/store",
   },
   {
@@ -77,7 +77,7 @@ const FALLBACK_VIDEOS = [
     sub: "Aerodynamic helmets and race suits that push performance to the edge.",
     accent: "#3b9af0",
     cta: "Explore Helmets",
-    buyNowLink: "/products?category=helmets",
+    buyNowLink: "/store?category=helmets",
     exploreLink: "/store",
   },
   {
@@ -89,7 +89,7 @@ const FALLBACK_VIDEOS = [
     sub: "From gloves to boots — every piece crafted for champions.",
     accent: "#e8c52a",
     cta: "View Bestsellers",
-    buyNowLink: "/products?sort=bestsellers",
+    buyNowLink: "/store?sort=bestsellers",
     exploreLink: "/store",
   },
 ];
@@ -272,12 +272,19 @@ export default function VideoShowcase() {
     }
   }, []);
 
-  const handleBuyNow = useCallback(() => {
-    const link = resolveLink(videos[activeIdx]?.buyNowLink);
-    if (!link) return;
-    if (link.startsWith("http")) window.location.href = link;
-    else navigate(link);
-  }, [activeIdx, videos, navigate, resolveLink]);
+const handleBuyNow = useCallback(() => {
+  const link = resolveLink(videos[activeIdx]?.buyNowLink);
+  if (!link) return;
+  if (link.startsWith("http")) {
+    window.location.href = link;
+  } else {
+    // FIX: Scroll to top BEFORE navigating so ProductDetail
+    // mounts with the viewport at 0, preventing gallery
+    // height miscalculation from stale scroll position.
+    window.scrollTo({ top: 0, behavior: "instant" });
+    navigate(link);
+  }
+}, [activeIdx, videos, navigate, resolveLink]);
 
   const handleExplore = useCallback(() => {
     const link = resolveLink(videos[activeIdx]?.exploreLink);

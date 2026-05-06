@@ -2,6 +2,7 @@ import { Suspense, useCallback, useState, Component, createContext, useContext }
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import AdminTopbar from "./AdminTopbar";
+import { ToastProvider } from "../components/ui/ToastProvider";
 import "./AdminLayout.css";
 
 /* ================================================================
@@ -91,6 +92,7 @@ const AdminLayout = () => {
     const quickActionCtx = { on: registerAction };
 
     return (
+        <ToastProvider>   {/* ← add this */}
         <QuickActionCtx.Provider value={quickActionCtx}>
             <div className="al-layout">
 
@@ -129,6 +131,8 @@ const AdminLayout = () => {
 
             </div>
         </QuickActionCtx.Provider>
+        </ToastProvider>  
+
     );
 };
 

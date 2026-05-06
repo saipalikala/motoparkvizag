@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-// import DataTable from "../components/DataTable";
-// import { useToast } from "../components/ToastProvider";
+import DataTable from "../components/DataTable";           // ✅ FIXED: was commented out
+import { useToast } from "../components/ui/ToastProvider";  // ✅  // ✅ FIXED: was commented out
 import { API } from "@/config/api";
 import "./AdminOrders.css";
 
@@ -26,7 +26,7 @@ const ChevronIcon  = () => <svg width="11" height="11" viewBox="0 0 24 24" fill=
 /* ── Status select (inside panel) ── */
 const StatusSelect = memo(({ orderId, current, onUpdate }) => {
     const [loading, setLoading] = useState(false);
-    const toast = useToast();
+    const toast = useToast(); // ✅ Now works — import is restored above
 
     const change = async (e) => {
         const newStatus = e.target.value;
@@ -66,7 +66,7 @@ const StatusSelect = memo(({ orderId, current, onUpdate }) => {
 });
 StatusSelect.displayName = "StatusSelect";
 
-/* ── Print slip ── (unchanged logic from original) ── */
+/* ── Print slip ── */
 const printOrderSlip = (order) => {
     const addr = order.shippingAddress || {};
     const date = new Date(order.createdAt).toLocaleString("en-IN", {
@@ -132,7 +132,6 @@ const printOrderSlip = (order) => {
 const OrderPanel = memo(({ order, onClose, onUpdate }) => {
     const panelRef = useRef(null);
 
-    // Focus trap
     useEffect(() => {
         if (order) panelRef.current?.focus();
     }, [order]);
@@ -142,10 +141,7 @@ const OrderPanel = memo(({ order, onClose, onUpdate }) => {
 
     return (
         <>
-            {/* Backdrop */}
-            <div className="ao-panel-backdrop" onClick={onClose} aria-hidden="true" />
-
-            {/* Panel */}
+        <div className="ao-overlay" onClick={onClose} aria-hidden="true" />
             <aside
                 ref={panelRef}
                 className="ao-panel"
@@ -156,15 +152,11 @@ const OrderPanel = memo(({ order, onClose, onUpdate }) => {
             >
                 <div className="ao-panel-header">
                     <div>
-                        <div className="ao-panel-title">
-                            Order <code>#{order._id?.slice(-8).toUpperCase()}</code>
-                        </div>
-                        <div className="ao-panel-date">
-                            {new Date(order.createdAt).toLocaleString("en-IN", {
-                                day: "numeric", month: "short", year: "numeric",
-                                hour: "2-digit", minute: "2-digit",
-                            })}
-                        </div>
+                        <h2>Order <code>#{order._id?.slice(-8).toUpperCase()}</code></h2>
+<p>{new Date(order.createdAt).toLocaleString("en-IN", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+})}</p>
                     </div>
                     <div className="ao-panel-actions">
                         <button
@@ -181,34 +173,25 @@ const OrderPanel = memo(({ order, onClose, onUpdate }) => {
                 </div>
 
                 <div className="ao-panel-body">
-                    {/* Status */}
+                    {/* Shipping address */}
                     <div className="ao-section">
-                        <div className="ao-section-title">Status</div>
-                        <StatusSelect orderId={order._id} current={order.status} onUpdate={onUpdate} />
-                    </div>
-
-                    {/* Customer */}
-                    <div className="ao-section">
-                        <div className="ao-section-title">Customer</div>
-                        <div className="ao-detail-grid">
-                            <span>Name</span>    <strong>{addr.name  || "—"}</strong>
-                            <span>Phone</span>   <strong>{addr.phone || "—"}</strong>
-                            {addr.email && <><span>Email</span><strong>{addr.email}</strong></>}
+    <h3>Ship To</h3>
+                        <div className="ao-address">
+                            <strong>{addr.name || "—"}</strong>
+                            <span>{addr.phone || "—"}</span>
+                            <span>{[addr.address, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ")}</span>
                         </div>
                     </div>
 
-                    {/* Address */}
+                    {/* Status */}
                     <div className="ao-section">
-                        <div className="ao-section-title">Delivery Address</div>
-                        <p className="ao-address">
-                            {addr.address}, {addr.city}<br />
-                            {addr.state} – {addr.pincode}
-                        </p>
+    <h3>Status</h3>
+                        <StatusSelect orderId={order._id} current={order.status} onUpdate={onUpdate} />
                     </div>
 
                     {/* Items */}
-                    <div className="ao-section">
-                        <div className="ao-section-title">Items ({order.items?.length || 0})</div>
+                   <div className="ao-section">
+    <h3>Items ({order.items?.length || 0})</h3>
                         <div className="ao-items">
                             {(order.items || []).map((item, i) => (
                                 <div className="ao-item" key={i}>
@@ -229,16 +212,12 @@ const OrderPanel = memo(({ order, onClose, onUpdate }) => {
                     </div>
 
                     {/* Total */}
-                    <div className="ao-panel-total">
-                        <div className="ao-total-row">
-                            <span>Payment</span>
-                            <span className="ao-payment-val">{order.paymentMethod || "—"}</span>
-                        </div>
-                        <div className="ao-total-row ao-total-row--final">
-                            <span>Total</span>
-                            <strong>₹{order.total?.toLocaleString("en-IN")}</strong>
-                        </div>
-                    </div>
+                   <div className="ao-panel-total">
+    <span>Payment</span>
+    <span className="ao-payment-val">{order.paymentMethod || "—"}</span>
+    <span>Total</span>
+    <strong>₹{order.total?.toLocaleString("en-IN")}</strong>
+</div>
                 </div>
             </aside>
         </>
@@ -250,10 +229,10 @@ OrderPanel.displayName = "OrderPanel";
    ADMIN ORDERS PAGE
    ================================================================ */
 const AdminOrders = () => {
-    const [orders,  setOrders]  = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [orders,   setOrders]   = useState([]);
+    const [loading,  setLoading]  = useState(true);
     const [selected, setSelected] = useState(null);
-    const toast = useToast();
+    const toast = useToast(); // ✅ Now works — import is restored above
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -275,7 +254,6 @@ const AdminOrders = () => {
         setSelected((s) => s?._id === id ? { ...s, status } : s);
     }, []);
 
-    /* ── Summary stats ── */
     const stats = {
         total:     orders.length,
         pending:   orders.filter((o) => !o.status || o.status === "pending").length,
@@ -283,7 +261,6 @@ const AdminOrders = () => {
         delivered: orders.filter((o) => o.status === "delivered").length,
     };
 
-    /* ── Table columns ── */
     const columns = [
         {
             key: "orderId", label: "Order ID",
@@ -334,7 +311,6 @@ const AdminOrders = () => {
 
     return (
         <div className="page ao-page">
-            {/* Header */}
             <div className="page__header">
                 <div>
                     <h1 className="page__title">Orders</h1>
@@ -345,22 +321,20 @@ const AdminOrders = () => {
                 </button>
             </div>
 
-            {/* Mini stat pills */}
-            <div className="ao-stat-pills">
-                {[
-                    { label: "Total",     val: stats.total,     cls: "" },
-                    { label: "Pending",   val: stats.pending,   cls: "ao-pill--amber" },
-                    { label: "Shipped",   val: stats.shipped,   cls: "ao-pill--purple" },
-                    { label: "Delivered", val: stats.delivered, cls: "ao-pill--green" },
-                ].map(({ label, val, cls }) => (
-                    <div key={label} className={`ao-pill ${cls}`}>
-                        <span className="ao-pill-val">{val}</span>
-                        <span className="ao-pill-label">{label}</span>
-                    </div>
-                ))}
-            </div>
+<div className="ao-stats">
+    {[
+        { label: "Total",     val: stats.total,     cls: "ao-stat--navy" },
+        { label: "Pending",   val: stats.pending,   cls: "ao-stat--amber" },
+        { label: "Shipped",   val: stats.shipped,   cls: "ao-stat--purple" },
+        { label: "Delivered", val: stats.delivered, cls: "ao-stat--green" },
+    ].map(({ label, val, cls }) => (
+        <div key={label} className={`ao-stat ${cls}`}>
+            <span className="ao-stat-val">{val}</span>
+            <span className="ao-stat-label">{label}</span>
+        </div>
+    ))}
+</div>
 
-            {/* Table */}
             <DataTable
                 columns={columns}
                 data={orders.map((o) => ({ ...o, id: o._id }))}
@@ -381,7 +355,6 @@ const AdminOrders = () => {
                 onRowClick={setSelected}
             />
 
-            {/* Detail panel */}
             <OrderPanel
                 order={selected}
                 onClose={() => setSelected(null)}

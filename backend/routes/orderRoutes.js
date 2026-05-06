@@ -84,17 +84,15 @@ router.get("/", requireUserAuth, async (req, res) => { // [F1] + [F2]
     let filter = {};
     const isAdmin = req.role === "admin";
 
-    if (isAdmin) {
-      // Admin can filter by any userId, phone, or status
-      if (userId) filter.user = userId;
-      else if (phone) filter["shippingAddress.phone"] = phone.trim();
-      if (status) filter.status = status;
-    } else {
-      // [F2]: Regular user can ONLY see their own orders
-      if (!req.userId) return res.status(401).json({ message: "Authentication required" });
-      filter.user = req.userId;
-      // Users cannot filter by arbitrary status (they can see all their own)
-    }
+if (isAdmin) {
+  if (userId) filter.user = userId;
+  else if (phone) filter["shippingAddress.phone"] = phone.trim();
+  if (status) filter.status = status;
+} else {
+  if (!req.userId) return res.status(401).json({ message: "Authentication required" });
+  filter.user = req.userId;
+  if (status) filter.status = status;
+}
 
     const pageNum  = Math.max(Number(page), 1);
     const limitNum = Math.min(Math.max(Number(limit), 1), 50);

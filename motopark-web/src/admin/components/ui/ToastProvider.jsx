@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useRef, useState, memo } from "react";
 import { createPortal } from "react-dom";
-import "./AdminLayout.css";
+
+// import "@AdminLayout.css";
 
 /* ================================================================
    TOAST SYSTEM
@@ -92,16 +93,16 @@ export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
     const counterRef = useRef(0);
 
-    const add = useCallback((type, title, message, duration = 4000) => {
-        const id = ++counterRef.current;
-        setToasts((prev) => [...prev, { id, type, title, message }]);
-        if (duration > 0) setTimeout(() => dismiss(id), duration);
-        return id;
-    }, []);
+const dismiss = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+}, []);
 
-    const dismiss = useCallback((id) => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, []);
+const add = useCallback((type, title, message, duration = 4000) => {
+    const id = ++counterRef.current;
+    setToasts((prev) => [...prev, { id, type, title, message }]);
+    if (duration > 0) setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), duration);
+    return id;
+}, []);
 
     const api = {
         success: (title, message, duration)  => add("success", title, message, duration),

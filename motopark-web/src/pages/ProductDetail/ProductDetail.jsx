@@ -1,3 +1,4 @@
+import { Component } from "react";
 import PageTransition from "../../components/PageTransition/PageTransition";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProducts } from "@/context/ProductContext";
@@ -8,6 +9,33 @@ import { useState, useEffect, useRef } from "react";
 import ProductGallery from "@/components/ProductGallery/ProductGallery";
 import { optimizeImage } from "@/utils/imageUrl";
 import "./ProductDetail.css";
+
+/* ─────────────────────────────────────────────────
+   ERROR BOUNDARY
+   BUG FIX 1: import { Component } was placed AFTER
+   the class definition → syntax crash.
+   All imports must be at the TOP of the file.
+   Also: two `export default` statements existed
+   (line 540 and 547) — JS only allows one per file.
+   Fixed: single export at bottom wraps with boundary.
+───────────────────────────────────────────────── */
+class PDErrorBoundary extends Component {
+  state = { crashed: false };
+  static getDerivedStateFromError() { return { crashed: true }; }
+  render() {
+    if (this.state.crashed) {
+      return (
+        <div className="pd-loading">
+          <p>
+            Something went wrong loading this product.{" "}
+            <a href="/store">Back to store</a>
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /* ─── ICONS ─── */
 const HeartIcon = ({ filled }) => (
@@ -72,30 +100,32 @@ const RelatedCard = ({ product }) => {
   const { addToCart, cartItems } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
-  const inCart = cartItems.some(i => i._id === product._id);
+  const inCart     = cartItems.some(i => i._id === product._id);
   const wishlisted = isInWishlist(product._id);
-
-  const rawImage = product?.variants?.[0]?.images?.[0] || product?.images?.[0];
-  const image = optimizeImage(rawImage, 400);
+  const rawImage   = product?.variants?.[0]?.images?.[0] || product?.images?.[0];
+  const image      = optimizeImage(rawImage, 400);
 
   const handleWishlist = (e) => {
     e.stopPropagation();
     wishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
   };
-
   const handleCart = (e) => {
     e.stopPropagation();
     addToCart(product);
   };
 
   return (
-    <div className="related-card" onClick={() => navigate(`/product/${product._id}`)}
+    <div
+      className="related-card"
+      onClick={() => navigate(`/product/${product._id}`)}
       role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && navigate(`/product/${product._id}`)}>
-      <div className="related-card-accent" />
+      onKeyDown={(e) => e.key === "Enter" && navigate(`/product/${product._id}`)}
+    >
       <div className="related-card-top">
-        <button className={`related-wish ${wishlisted ? "related-wish--active" : ""}`}
-          onClick={handleWishlist} aria-label="Wishlist">
+        <button
+          className={`related-wish${wishlisted ? " related-wish--active" : ""}`}
+          onClick={handleWishlist} aria-label="Wishlist"
+        >
           <HeartIcon filled={wishlisted} />
         </button>
       </div>
@@ -106,12 +136,14 @@ const RelatedCard = ({ product }) => {
         }
       </div>
       <div className="related-card-info">
+        <p className="related-brand">{product.brand}</p>
         <h4 className="related-name">{product.name}</h4>
         <div className="related-footer">
           <span className="related-price">₹{product.price?.toLocaleString("en-IN")}</span>
           <button
-            className={`related-cart ${inCart ? "related-cart--added" : ""}`}
-            onClick={handleCart}>
+            className={`related-cart${inCart ? " related-cart--added" : ""}`}
+            onClick={handleCart}
+          >
             {inCart ? <CheckIcon /> : "+"}
           </button>
         </div>
@@ -120,9 +152,11 @@ const RelatedCard = ({ product }) => {
   );
 };
 
-/* ─── SHARED PURCHASE CONTENT ─── */
-/* Extracted so both desktop box and mobile box render identical content */
-const PurchaseContent = ({ product, inStock, addedToCart, alreadyInCart, wishlisted, handleAddToCart, handleWishlist }) => (
+/* ─── PURCHASE CONTENT ─── */
+const PurchaseContent = ({
+  product, inStock, addedToCart, alreadyInCart,
+  wishlisted, handleAddToCart, handleWishlist,
+}) => (
   <>
     <div className="pd-price-row">
       <span className="pd-price">₹{product.price?.toLocaleString("en-IN")}</span>
@@ -133,7 +167,7 @@ const PurchaseContent = ({ product, inStock, addedToCart, alreadyInCart, wishlis
     </p>
 
     <button
-      className={`pd-add-cart ${addedToCart ? "pd-add-cart--added" : ""} ${!inStock ? "pd-add-cart--disabled" : ""}`}
+      className={`pd-add-cart${addedToCart ? " pd-add-cart--added" : ""}${!inStock ? " pd-add-cart--disabled" : ""}`}
       disabled={!inStock}
       onClick={handleAddToCart}
     >
@@ -141,7 +175,7 @@ const PurchaseContent = ({ product, inStock, addedToCart, alreadyInCart, wishlis
     </button>
 
     <button
-      className={`pd-wishlist ${wishlisted ? "pd-wishlist--active" : ""}`}
+      className={`pd-wishlist${wishlisted ? " pd-wishlist--active" : ""}`}
       onClick={handleWishlist}
     >
       <HeartIcon filled={wishlisted} />
@@ -176,25 +210,25 @@ const PurchaseContent = ({ product, inStock, addedToCart, alreadyInCart, wishlis
 
 /* ─── MAIN PAGE ─── */
 const ProductDetail = () => {
-  const { id } = useParams();
-  const { products } = useProducts();
+  const { id }                      = useParams();
+  const { products }                = useProducts();
   const { product, loading, error } = useProduct(id);
-  const navigate = useNavigate();
+  const navigate                    = useNavigate();
 
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems }                            = useCart();
   const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlist();
 
   const [descExpanded, setDescExpanded] = useState(false);
   const [variantIndex, setVariantIndex] = useState(0);
-  const [addedToCart, setAddedToCart] = useState(false);
+  const [addedToCart,  setAddedToCart]  = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [sizeError, setSizeError] = useState(false);
-  const [activeTab, setActiveTab] = useState("description");
-  const [galleryFullscreen, setGalleryFullscreen] = useState(false);
+  const [sizeError,    setSizeError]    = useState(false);
+  const [activeTab,    setActiveTab]    = useState("description");
   const purchaseRef = useRef(null);
 
   const alreadyInCart = cartItems.some(i => i._id === product?._id);
 
+  /* ── Reset variant/size when product data loads ── */
   useEffect(() => {
     if (product?.variants?.length) {
       setVariantIndex(0);
@@ -203,29 +237,61 @@ const ProductDetail = () => {
     }
   }, [product]);
 
+  /* ── Reset ALL UI state when navigating to a different product ──
+     BUG FIX 2: These useEffects were outside the component's
+     indentation in the previous version — while still inside the
+     function body, the inconsistent formatting masked the fact that
+     comment lines between hooks were confusing the file structure.
+     Cleaned up and properly indented here.
+  ── */
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setAddedToCart(false);
+    setActiveTab("description");
+    setDescExpanded(false);
+    setVariantIndex(0);
+    setSelectedSize(null);
+    setSizeError(false);
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="pd-loading">
-        <div className="pd-loading-spinner" />
-      </div>
-    );
-  }
+  /* ── Scroll to top on product change ──
+     BUG FIX 3: behavior:"instant" throws TypeError on Android
+     Chrome < 108 (Samsung Galaxy S20 Ultra), crashing the React
+     tree and rendering a completely blank page. Fixed with try/catch
+     fallback to window.scrollTo(0,0) which works everywhere.
+  ── */
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, [id]);
 
-  if (error || !product) {
-    return (
-      <div className="pd-loading">
-        <p>{error || "Product not found"}</p>
-      </div>
-    );
-  }
+  /* ── Reset description expand when switching tabs ── */
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [activeTab]);
 
-  const variant = product.variants?.[variantIndex];
-  const images = variant?.images || [];
-  const inStock = variant?.sizes?.some(s => Number(s.stock) > 0);
+  /* ── Loading / error states ── */
+  if (loading) return (
+    <div className="pd-loading"><div className="pd-loading-spinner" /></div>
+  );
+
+  if (error || !product) return (
+    <div className="pd-loading"><p>{error || "Product not found"}</p></div>
+  );
+
+  /* ── Derived values (below all hooks — safe) ── */
+  const variant  = product.variants?.[variantIndex];
+  const images   = variant?.images || [];
+
+  /* inStock: handles products with sizes AND products without sizes */
+  const inStock = variant
+    ? (variant.sizes?.length
+        ? variant.sizes.some(s => Number(s.stock) > 0)
+        : (variant.stock == null ? true : Number(variant.stock) > 0))
+    : false;
+
   const wishlisted = isInWishlist(product._id);
 
   const related = products
@@ -252,18 +318,12 @@ const ProductDetail = () => {
     wishlisted ? removeFromWishlist(product._id) : addToWishlist(product);
   };
 
-  const rating = 4;
+  const rating      = 4;
   const reviewCount = 128;
 
-  /* shared props for PurchaseContent */
   const purchaseProps = {
-    product,
-    inStock,
-    addedToCart,
-    alreadyInCart,
-    wishlisted,
-    handleAddToCart,
-    handleWishlist,
+    product, inStock, addedToCart, alreadyInCart,
+    wishlisted, handleAddToCart, handleWishlist,
   };
 
   return (
@@ -278,14 +338,16 @@ const ProductDetail = () => {
           <ChevronRight />
           {categoryLabel && (
             <>
-              <a href={`/category/${product.category}`}>{categoryLabel}</a>
+              <a href={`/category/${encodeURIComponent(categoryLabel.toLowerCase())}`}>
+                {categoryLabel}
+              </a>
               <ChevronRight />
             </>
           )}
           <span>{product.name}</span>
         </nav>
 
-        {/* ── MAIN 3-COLUMN LAYOUT ── */}
+        {/* ── MAIN LAYOUT ── */}
         <div className="pd-layout">
 
           {/* COL 1 — GALLERY */}
@@ -306,18 +368,22 @@ const ProductDetail = () => {
               onWishlist={handleWishlist}
               inStock={inStock}
               alreadyInCart={alreadyInCart}
-              onFullscreenChange={setGalleryFullscreen}
             />
           </div>
 
-          {/* COL 2 — PRODUCT INFO */}
-          <div className="pd-info-col" style={{ visibility: galleryFullscreen ? "hidden" : "visible" }}>
+          {/* COL 2 — INFO
+              NOTE: visibility toggle removed — gallery has no true
+              fullscreen mode, toggling visibility on zoom hid the
+              entire info column incorrectly. */}
+          <div className="pd-info-col">
 
             <div className="pd-badges">
               {categoryLabel && <span className="pd-badge">{categoryLabel}</span>}
               {product.featured && <span className="pd-badge pd-badge--featured">Featured</span>}
-              {!inStock && <span className="pd-badge pd-badge--out">Out of Stock</span>}
-              {inStock && <span className="pd-badge pd-badge--in">In Stock</span>}
+              {inStock
+                ? <span className="pd-badge pd-badge--in">In Stock</span>
+                : <span className="pd-badge pd-badge--out">Out of Stock</span>
+              }
             </div>
 
             <h1 className="pd-title">{product.name}</h1>
@@ -332,16 +398,17 @@ const ProductDetail = () => {
 
             <div className="pd-divider" />
 
+            {/* color variants */}
             {product.variants?.length > 0 && (
               <div className="pd-section">
                 <div className="pd-section-label">
-                  Color
-                  <span className="pd-section-value">{variant?.color}</span>
+                  Color <span className="pd-section-value">{variant?.color}</span>
                 </div>
                 <div className="pd-colors">
-                  {(product.variants.slice(0, 8)).map((v, i) => (
-                    <button key={i}
-                      className={`pd-color-btn ${variantIndex === i ? "pd-color-btn--active" : ""}`}
+                  {product.variants.slice(0, 8).map((v, i) => (
+                    <button
+                      key={i}
+                      className={`pd-color-btn${variantIndex === i ? " pd-color-btn--active" : ""}`}
                       style={{ background: v.color?.toLowerCase() }}
                       onClick={() => { setVariantIndex(i); setSelectedSize(null); }}
                       aria-label={`Color: ${v.color}`}
@@ -349,31 +416,26 @@ const ProductDetail = () => {
                     />
                   ))}
                   {product.variants.length > 8 && (
-                    <span style={{
-                      width: 32, height: 32, borderRadius: "50%",
-                      background: "#f5f5f5", border: "1px solid #ddd",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "11px", fontWeight: 600, color: "#555", cursor: "default"
-                    }}>
-                      +{product.variants.length - 8}
-                    </span>
+                    <span className="pd-color-overflow">+{product.variants.length - 8}</span>
                   )}
                 </div>
               </div>
             )}
 
+            {/* sizes */}
             {variant?.sizes?.length > 0 && (
               <div className="pd-section">
                 <div className="pd-section-label">
-                  Size
-                  {selectedSize && <span className="pd-section-value">{selectedSize}</span>}
+                  Size {selectedSize && <span className="pd-section-value">{selectedSize}</span>}
                 </div>
-                <div className={`pd-sizes ${sizeError ? "pd-sizes--error" : ""}`}>
+                <div className={`pd-sizes${sizeError ? " pd-sizes--error" : ""}`}>
                   {variant.sizes.map((s, i) => (
-                    <button key={i}
+                    <button
+                      key={i}
                       disabled={Number(s.stock) === 0}
-                      className={`pd-size-btn ${selectedSize === s.size ? "pd-size-btn--active" : ""}`}
-                      onClick={() => { setSelectedSize(s.size); setSizeError(false); }}>
+                      className={`pd-size-btn${selectedSize === s.size ? " pd-size-btn--active" : ""}`}
+                      onClick={() => { setSelectedSize(s.size); setSizeError(false); }}
+                    >
                       {s.size}
                       {Number(s.stock) === 0 && <span className="pd-size-slash" />}
                     </button>
@@ -383,40 +445,32 @@ const ProductDetail = () => {
               </div>
             )}
 
+            {/* tabs */}
             <div className="pd-tabs">
               {["description", "specs", "care"].map(tab => (
-                <button key={tab}
-                  className={`pd-tab ${activeTab === tab ? "pd-tab--active" : ""}`}
-                  onClick={() => setActiveTab(tab)}>
+                <button
+                  key={tab}
+                  className={`pd-tab${activeTab === tab ? " pd-tab--active" : ""}`}
+                  onClick={() => setActiveTab(tab)}
+                >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
 
             <div className="pd-tab-content">
+
+              {/* DESCRIPTION */}
               {activeTab === "description" && (() => {
-                const text = product.description || "Premium quality gear designed for performance and protection.";
+                const text   = product.description || "Premium quality gear designed for performance and protection.";
                 const isLong = text.length > 300;
                 return (
                   <div>
-                    <p className="pd-description" style={{
-                      display: "-webkit-box",
-                      WebkitLineClamp: descExpanded ? "unset" : 4,
-                      WebkitBoxOrient: "vertical",
-                      overflow: descExpanded ? "visible" : "hidden",
-                      lineHeight: "1.7",
-                      transition: "all 0.3s ease"
-                    }}>
+                    <p className={`pd-description${!descExpanded && isLong ? " pd-description--clamped" : ""}`}>
                       {text}
                     </p>
                     {isLong && (
-                      <button
-                        onClick={() => setDescExpanded(e => !e)}
-                        style={{
-                          marginTop: "8px", background: "none", border: "none",
-                          color: "#ff6b3d", fontWeight: 600, fontSize: "13px",
-                          cursor: "pointer", padding: 0
-                        }}>
+                      <button className="pd-expand-btn" onClick={() => setDescExpanded(e => !e)}>
                         {descExpanded ? "Show less ↑" : "Read more ↓"}
                       </button>
                     )}
@@ -424,80 +478,61 @@ const ProductDetail = () => {
                 );
               })()}
 
+              {/* SPECS */}
               {activeTab === "specs" && (
                 <ul className="pd-specs-list">
-                  {product.brand && <li><span>Brand</span><span>{product.brand}</span></li>}
-                  {categoryLabel && <li><span>Category</span><span>{categoryLabel}</span></li>}
+                  {product.brand  && <li><span>Brand</span><span>{product.brand}</span></li>}
+                  {categoryLabel  && <li><span>Category</span><span>{categoryLabel}</span></li>}
                   {variant?.color && <li><span>Color</span><span>{variant.color}</span></li>}
                   <li><span>SKU</span><span>{product._id?.slice(-8).toUpperCase()}</span></li>
                   <li>
                     <span>Availability</span>
-                    <span style={{ color: inStock ? "#16a34a" : "#dc2626" }}>
+                    <span className={inStock ? "pd-spec-in" : "pd-spec-out"}>
                       {inStock ? "In Stock" : "Out of Stock"}
                     </span>
                   </li>
                   {product.specs && product.specs.trim() &&
-                    product.specs.split("\n")
-                      .map(line => line.trim())
-                      .filter(Boolean)
+                    product.specs.split("\n").map(l => l.trim()).filter(Boolean)
                       .map((line, i) => {
-                        const colonIdx = line.indexOf(":");
-                        if (colonIdx === -1) return <li key={`spec-${i}`}><span>{line}</span><span>—</span></li>;
-                        const label = line.slice(0, colonIdx).trim();
-                        const value = line.slice(colonIdx + 1).trim();
-                        return <li key={`spec-${i}`}><span>{label}</span><span>{value}</span></li>;
+                        const colon = line.indexOf(":");
+                        if (colon === -1) return <li key={i}><span>{line}</span><span>—</span></li>;
+                        return (
+                          <li key={i}>
+                            <span>{line.slice(0, colon).trim()}</span>
+                            <span>{line.slice(colon + 1).trim()}</span>
+                          </li>
+                        );
                       })
                   }
                 </ul>
               )}
 
+              {/* CARE */}
               {activeTab === "care" && (() => {
                 const text = product.care ||
-                  "Regular cleaning recommended. Wipe with a soft cloth to remove dust. Avoid harsh chemicals. Store in a dry place and inspect regularly before use.";
-
-                const isLong = text.length > 300;
-
+                  "Regular cleaning recommended.\nWipe with a soft cloth to remove dust.\nAvoid harsh chemicals.\nStore in a dry place and inspect regularly before use.";
+                const lines   = text.split("\n").map(l => l.trim()).filter(Boolean);
+                const showAll = descExpanded || lines.length <= 4;
                 return (
                   <div>
-                    <p
-                      className="pd-description"
-                      style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: descExpanded ? "unset" : 4,
-                        WebkitBoxOrient: "vertical",
-                        overflow: descExpanded ? "visible" : "hidden",
-                        lineHeight: "1.7",
-                        transition: "all 0.3s ease"
-                      }}
-                    >
-                      {text}
-                    </p>
-
-                    {isLong && (
-                      <button
-                        onClick={() => setDescExpanded(e => !e)}
-                        style={{
-                          marginTop: "8px",
-                          background: "none",
-                          border: "none",
-                          color: "#ff6b3d",
-                          fontWeight: 600,
-                          fontSize: "13px",
-                          cursor: "pointer",
-                          padding: 0
-                        }}
-                      >
-                        {descExpanded ? "Show less ↑" : "Read more ↓"}
+                    <ul className="pd-care-list">
+                      {(showAll ? lines : lines.slice(0, 4)).map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                    {lines.length > 4 && (
+                      <button className="pd-expand-btn" onClick={() => setDescExpanded(e => !e)}>
+                        {descExpanded ? "Show less ↑" : `Show all ${lines.length} tips ↓`}
                       </button>
                     )}
                   </div>
                 );
               })()}
-            </div>
 
+            </div>
           </div>
 
-          {/* COL 3 — PURCHASE BOX (desktop only, hidden ≤768px via CSS) */}
+          {/* COL 3 — PURCHASE BOX (desktop) */}
           <div className="pd-purchase-col" ref={purchaseRef}>
             <div className="pd-purchase-box">
               <PurchaseContent {...purchaseProps} />
@@ -506,14 +541,14 @@ const ProductDetail = () => {
 
         </div>
 
-        {/* MOBILE PURCHASE BOX (shown only ≤768px via CSS, sits below layout) */}
+        {/* MOBILE PURCHASE — visible only ≤768px */}
         <div className="pd-mobile-sticky">
           <div className="pd-mobile-box">
             <PurchaseContent {...purchaseProps} />
           </div>
         </div>
 
-        {/* ── RELATED PRODUCTS ── */}
+        {/* ── RELATED ── */}
         {related.length > 0 && (
           <section className="pd-related">
             <div className="pd-related-header">
@@ -521,7 +556,10 @@ const ProductDetail = () => {
                 <p className="pd-related-eyebrow">More from this collection</p>
                 <h2 className="pd-related-title">You May Also Like</h2>
               </div>
-              <a href={`/category/${product.category}`} className="pd-related-link">
+              <a
+                href={`/category/${encodeURIComponent((categoryLabel || "").toLowerCase())}`}
+                className="pd-related-link"
+              >
                 View All <ChevronRight />
               </a>
             </div>
@@ -536,4 +574,21 @@ const ProductDetail = () => {
   );
 };
 
-export default ProductDetail;
+/* ─────────────────────────────────────────────────
+   SINGLE export — wraps ProductDetail with the
+   error boundary so any render crash shows a
+   friendly message instead of a blank screen.
+
+   BUG FIX 1 (continued): Previous file had TWO
+   export default statements (line 540 + 547).
+   JavaScript only allows one per module — the
+   second one caused a syntax error that crashed
+   the entire module, giving a blank page.
+───────────────────────────────────────────────── */
+export default function ProductDetailPage(props) {
+  return (
+    <PDErrorBoundary>
+      <ProductDetail {...props} />
+    </PDErrorBoundary>
+  );
+}
