@@ -99,6 +99,28 @@ const app = express();
 // [S6]: Trust Railway's single reverse proxy so rate-limiter
 // sees real client IPs instead of the internal load balancer IP.
 app.set("trust proxy", 1);
+app.set("trust proxy", 1);
+
+// ── www → non-www redirect ──
+app.use((req, res, next) => {
+  if (req.headers.host?.startsWith("www.")) {
+    return res.redirect(301, `https://motoparkvizag.in${req.url}`);
+  }
+  next();
+});
+
+// ── Sitemap ──
+app.get("/sitemap.xml", (req, res) => {
+  res.header("Content-Type", "application/xml");
+  res.header("Cache-Control", "public, max-age=86400");
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://motoparkvizag.in/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://motoparkvizag.in/store</loc><priority>0.9</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://motoparkvizag.in/about</loc><priority>0.5</priority></url>
+  <url><loc>https://motoparkvizag.in/contact</loc><priority>0.5</priority></url>
+</urlset>`);
+});
 
 // Dev request logging
 if (!IS_PROD) {

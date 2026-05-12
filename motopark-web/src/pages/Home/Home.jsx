@@ -11,6 +11,7 @@
    ✅ Clean lazy loading with stable Suspense fallbacks
    ================================================ */
 import { useState, lazy, Suspense, useMemo } from "react"; // add useMemo
+import { Helmet } from "react-helmet-async"; 
 import { useProducts } from "@/context/ProductContext";
 import "./Home.css";
 
@@ -66,7 +67,18 @@ function Home() {
 
     return (
         <div className="home-page">
+             {/* ── SEO ── */}
+        <Helmet>
+          <title>MotoPark Vizag — Premium Motorcycle Gear</title>
+          <meta name="description" content="Shop helmets, jackets, gloves and riding gear at MotoPark Vizag. Best motorcycle gear store in Visakhapatnam." />
+          <link rel="canonical" href="https://motoparkvizag.in/" />
+          <meta property="og:title"       content="MotoPark Vizag — Premium Motorcycle Gear" />
+          <meta property="og:description" content="Best motorcycle helmets, jackets and riding gear in Vizag." />
+          <meta property="og:url"         content="https://motoparkvizag.in/" />
+          <meta property="og:image"       content="https://motoparkvizag.in/og-image.jpg" />
+        </Helmet>
 
+        
             {/* CSS-only ambient background — no JS, no canvas */}
             <div className="home-ambient" aria-hidden="true">
                 <div className="ambient-orb ambient-orb--1" />

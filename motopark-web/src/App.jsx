@@ -32,6 +32,7 @@ import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ProtectedRoute from "@/admin/utils/ProtectedRoute";
 import "./App.css";
+import { ToastProvider } from "@/admin/components/ui/ToastProvider";
 
 // ── Layout shell — lazy (Navbar/OfferBar/Footer are not needed for FCP)
 const OfferBar = lazy(() => import("@/components/OfferBar/OfferBar"));
@@ -121,6 +122,7 @@ function App() {
   }, [location.pathname]);
 
   return (
+    <ToastProvider>
     <div className="app-container">
 
       {/*
@@ -195,6 +197,7 @@ function App() {
       </div>
 
     </div>
+    </ToastProvider>
   );
 }
 

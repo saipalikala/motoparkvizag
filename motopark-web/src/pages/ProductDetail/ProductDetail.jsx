@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async"; 
 import { Component } from "react";
 import PageTransition from "../../components/PageTransition/PageTransition";
 import { useParams, useNavigate } from "react-router-dom";
@@ -329,6 +330,34 @@ const ProductDetail = () => {
   return (
     <PageTransition>
       <div className="pd-page">
+           {/* ── SEO ── ADD THIS BLOCK ── */}
+      <Helmet>
+        <title>{product.name} — MotoPark Vizag</title>
+        <meta name="description" content={product.description?.slice(0, 155) || `Buy ${product.name} at MotoPark Vizag`} />
+        <link rel="canonical" href={`https://motoparkvizag.in/product/${product._id}`} />
+        <meta property="og:title"       content={`${product.name} — MotoPark Vizag`} />
+        <meta property="og:description" content={product.description?.slice(0, 155) || `Buy ${product.name} at MotoPark Vizag`} />
+        <meta property="og:image"       content={product.variants?.[0]?.images?.[0] || product.images?.[0] || "https://motoparkvizag.in/og-image.jpg"} />
+        <meta property="og:url"         content={`https://motoparkvizag.in/product/${product._id}`} />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": product.name,
+          "image": product.variants?.[0]?.images?.[0] || product.images?.[0],
+          "description": product.description,
+          "brand": { "@type": "Brand", "name": product.brand || "MotoPark" },
+          "offers": {
+            "@type": "Offer",
+            "price": String(product.price),
+            "priceCurrency": "INR",
+            "availability": inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            "url": `https://motoparkvizag.in/product/${product._id}`
+          }
+        })}</script>
+      </Helmet>
+      {/* ── END SEO ── */}
 
         {/* ── BREADCRUMB ── */}
         <nav className="pd-breadcrumb">
