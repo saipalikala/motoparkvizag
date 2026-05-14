@@ -234,18 +234,27 @@ const AdminOrders = () => {
     const [selected, setSelected] = useState(null);
     const toast = useToast(); // ✅ Now works — import is restored above
 
-    const load = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res  = await fetch(`${API}/orders`, { headers: AUTH() });
-            const data = await res.json();
-            setOrders(data.orders ?? data ?? []);
-        } catch {
-            toast.error("Load failed", "Could not fetch orders.");
-        } finally {
-            setLoading(false);
+const load = useCallback(async () => {
+    setLoading(true);
+    try {
+        const res  = await fetch(`${API}/orders`, { headers: AUTH() });
+        if (!res.ok) {
+            toast.error("Session expired", "Please log in again.");
+            setOrders([]);
+            return;
         }
-    }, []);
+        const data = await res.json();
+        const list = Array.isArray(data.orders) ? data.orders
+                   : Array.isArray(data)         ? data
+                   : [];
+        setOrders(list);
+    } catch {
+        toast.error("Load failed", "Could not fetch orders.");
+        setOrders([]);
+    } finally {
+        setLoading(false);
+    }
+}, []);
 
     useEffect(() => { load(); }, [load]);
 
