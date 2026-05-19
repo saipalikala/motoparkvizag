@@ -3,6 +3,16 @@
  *
  * FIXES APPLIED:
  * ─────────────────────────────────────────────────────────────
+ * [N1] MOBILE VIDEO SUPPRESSION
+ *      On mobile (<768px or touch device), the main <video> element is
+ *      replaced with a <img> showing the poster. No MP4 bytes are fetched.
+ *      The mute button is hidden (no audio to control). The progress bar,
+ *      dots, counter, and CTA buttons all remain fully functional.
+ *      Auto-advance is driven by a 6-second timer instead of video "ended".
+ *
+ *      PreviewCard hover-play is also disabled on mobile: the video src is
+ *      never assigned, preventing speculative network requests on touch.
+ *
  * [F1] Raw fetch → cachedFetch
  *      Before: fetch(`${API}/video-showcase`) on every mount.
  *      VideoShowcase is on the Home page — every Home visit = new request.
@@ -95,6 +105,8 @@ const FALLBACK_VIDEOS = [
 ];
 
 const EASE = [0.22, 1, 0.36, 1];
+
+const MOBILE_SLIDE_DURATION_MS = 6000; // auto-advance interval used on mobile
 
 const detectMobile = () =>
   typeof window !== "undefined" &&
@@ -295,6 +307,24 @@ const handleBuyNow = useCallback(() => {
 
   const handleMuteToggle = useCallback(() => setIsMuted(m => !m), []);
 
+  // [N1]: on mobile, video never plays so we use a timer for auto-advance
+  useEffect(() => {
+    if (!mobile) return;
+    const t = setTimeout(() => {
+      setActiveIdx(i => (i + 1) % videos.length);
+    }, MOBILE_SLIDE_DURATION_MS);
+    return () => clearTimeout(t);
+  }, [activeIdx, mobile, videos.length]);
+
+  // Video natural-end handler (desktop only — never fires on mobile)
+  const handleVideoEnd = useCallback(() => {
+    setActiveIdx(i => (i + 1) % videos.length);
+  }, [videos.length]);
+
+  const handleMetadata = useCallback((e) => {
+    setVideoDuration(e.target.duration || 10);
+  }, []);
+
   const v = videos[activeIdx];
 
   return (
@@ -303,26 +333,38 @@ const handleBuyNow = useCallback(() => {
       <div className="vs-stage">
 
         {/*
-          Single video in DOM — only active slide rendered.
-          key={videos[activeIdx].id} forces React to remount the
-          <video> element when slide changes, resetting src+currentTime
-          without any imperative management.
-          [F3]: useEffect on activeIdx handles play() after remount.
+          [N1]: On mobile, render only the poster image — no <video>, no src,
+          zero MP4 bytes fetched. On desktop, single video in DOM with key-based
+          remount for slide changes. [F3]: useEffect on activeIdx handles play().
         */}
         <motion.div className="vs-video-layer" style={{ scale: videoScale }}>
-          <video
-            key={videos[activeIdx].id}
-            ref={videoRef}
-            className="vs-video vs-video--active"
-            src={videos[activeIdx].src}
-            poster={videos[activeIdx].poster || undefined}
-            muted
-            playsInline
-            loop
-            preload="metadata"  // [F4]: header only — NOT preload="auto"
-            autoPlay={false}    // [F3]: play() called imperatively
-            aria-hidden="true"
-          />
+          {mobile ? (
+            <img
+              key={videos[activeIdx].id}
+              className="vs-video vs-video--active"
+              src={videos[activeIdx].poster || videos[activeIdx].src}
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              decoding="async"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <video
+              key={videos[activeIdx].id}
+              ref={videoRef}
+              className="vs-video vs-video--active"
+              src={videos[activeIdx].src}
+              poster={videos[activeIdx].poster || undefined}
+              muted
+              playsInline
+              preload="metadata"
+              autoPlay={false}
+              aria-hidden="true"
+              onEnded={handleVideoEnd}
+              onLoadedMetadata={handleMetadata}
+            />
+          )}
         </motion.div>
 
         <motion.div className="vs-overlay" style={{ opacity: overlayOpacity }} />
@@ -387,6 +429,8 @@ const handleBuyNow = useCallback(() => {
           </motion.div>
         </AnimatePresence>
 
+        {/* [N1]: mute button hidden on mobile — no video audio to control */}
+        {!mobile && (
         <motion.button
           className="vs-mute"
           onClick={handleMuteToggle}
@@ -397,6 +441,7 @@ const handleBuyNow = useCallback(() => {
         >
           {isMuted ? <MuteIcon /> : <UnmuteIcon />}
         </motion.button>
+        )}
 
         <div className="vs-dots" role="tablist" aria-label="Select video">
           {videos.map((_, i) => (
@@ -440,6 +485,7 @@ const handleBuyNow = useCallback(() => {
             vid={vid}
             index={i}
             isActive={i === activeIdx}
+            isMobile={mobile}
             onClick={() => handlePreview(i)}
           />
         ))}
@@ -449,10 +495,12 @@ const handleBuyNow = useCallback(() => {
   );
 }
 
-function PreviewCard({ vid, isActive, onClick }) {
+function PreviewCard({ vid, isActive, onClick, isMobile }) {
   const videoRef = useRef(null);
 
+  // [N1]: on mobile, never assign src or play — prevents speculative fetch
   const handleMouseEnter = useCallback(() => {
+    if (isMobile) return;
     const v = videoRef.current;
     if (!v) return;
     if (!v.src) {
@@ -460,12 +508,13 @@ function PreviewCard({ vid, isActive, onClick }) {
       v.load();
     }
     v.play().catch(() => {});
-  }, [vid.src]);
+  }, [vid.src, isMobile]);
 
   const handleMouseLeave = useCallback(() => {
+    if (isMobile) return;
     const v = videoRef.current;
     if (v) { v.pause(); v.currentTime = 0; }
-  }, []);
+  }, [isMobile]);
 
   return (
     <motion.button

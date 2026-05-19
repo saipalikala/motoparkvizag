@@ -33,7 +33,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ProtectedRoute from "@/admin/utils/ProtectedRoute";
 import "./App.css";
 import { ToastProvider } from "@/admin/components/ui/ToastProvider";
-
+import MaintenancePage from "@/pages/Maintenance/MaintenancePage";
 // ── Layout shell — lazy (Navbar/OfferBar/Footer are not needed for FCP)
 const OfferBar = lazy(() => import("@/components/OfferBar/OfferBar"));
 const Navbar   = lazy(() => import("@/components/Navbar/Navbar"));
@@ -111,6 +111,8 @@ const PageLoader = () => {
 };
 
 function App() {
+  const MAINTENANCE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
+  if (MAINTENANCE) return <MaintenancePage />;
   const location = useLocation();
   const isAdmin  = location.pathname.startsWith("/admin");
 

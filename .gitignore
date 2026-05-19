@@ -11,3 +11,5 @@ motopark-web/.env
 # build files
 dist/
 build/
+backend/uploads
+uploads

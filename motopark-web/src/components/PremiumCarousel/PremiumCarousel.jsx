@@ -25,6 +25,21 @@
  *
  * ─── NEW FIXES IN THIS PASS ───────────────────────────────────────────────────
  *
+ * [N3] VIDEO → POSTER on mobile
+ *      VideoBackground previously rendered a <video> element on all devices.
+ *      On mobile the MP4 was requested even with preload="none" because the
+ *      <source> element is present — some Android WebViews speculatively fetch
+ *      the first few KB regardless of the preload hint.
+ *      Fix: VideoBackground accepts an isMobile prop. When true, it renders
+ *      only the poster <img> — no <video>, no <source>, zero bytes fetched.
+ *      The poster image is already preloaded eagerly by the existing image
+ *      preload loop, so there's no visible delay.
+ *      Mobile users still see the carousel; they just get a still image
+ *      instead of a video for video-type slides. The slide auto-advances
+ *      after AUTO_DURATION_MS (same as image slides) because onEnded never
+ *      fires — the timer handles it via the existing [B] logic by treating
+ *      the slide as a non-video slide when isMobile is true.
+ *
  * [N1] SLIDE_VARIANTS blur removed on mobile
  *      filter:blur() was a module-level constant — applied on ALL devices.
  *      blur() triggers a full GPU composite on every animation frame.
@@ -147,12 +162,32 @@ const ICON_UNMUTED = (
 );
 
 // ─── VIDEO BACKGROUND ─────────────────────────────────────────────────────────
-const VideoBackground = memo(({ src, poster, isPaused, isMuted, onEnded }) => {
+const VideoBackground = memo(({ src, poster, isPaused, isMuted, onEnded, isMobile }) => {
     const videoRef       = useRef(null);
     const rafRef         = useRef(null);
     const resolvedSrc    = useMemo(() => resolveAsset(src),    [src]);
     const resolvedPoster = useMemo(() => resolveAsset(poster), [poster]);
     const [errored, setErrored] = useState(false);
+
+    // [N3]: on mobile, render only the poster image — no video element,
+    // no bytes fetched. onEnded is intentionally never called so the
+    // carousel timer handles auto-advance (same as image slides).
+    if (isMobile) {
+        return (
+            <img
+                src={resolvedPoster}
+                alt=""
+                className="carousel-bg-img"
+                aria-hidden="true"
+                loading="eager"
+                fetchPriority="auto"
+                decoding="async"
+                width="1920"
+                height="1080"
+                onError={(e) => { e.target.style.display = "none"; }}
+            />
+        );
+    }
 
     useEffect(() => {
         const v = videoRef.current;
@@ -441,18 +476,24 @@ const PremiumCarousel = () => {
         });
     }, [slides]);
 
-    /* [B] Stable timer — skips video slides, waits for onEnded */
+    /* [B] Stable timer — skips video slides on desktop (waits for onEnded),
+       advances normally on mobile since VideoBackground renders a static image
+       and onEnded never fires [N3] */
     const startTimer = useCallback(() => {
         clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             if (pausedRef.current) return;
             const s = slidesRef.current;
             if (!s) return;
-            if (s[indexRef.current]?.type === "video") return; // [B]
+            // [B] + [N3]: on desktop, pause timer on video slides and let
+            // onEnded drive the advance. On mobile, video slides render as
+            // images so we treat them identically to image slides.
+            const currentSlide = s[indexRef.current];
+            if (currentSlide?.type === "video" && !isMobileDevice) return;
             setDirection(1);
             setIndex((p) => (p + 1) % s.length);
         }, AUTO_DURATION_MS);
-    }, []);
+    }, [isMobileDevice]);
 
     useEffect(() => {
         if (!slides) return;
@@ -534,6 +575,7 @@ const PremiumCarousel = () => {
                                 isPaused={paused}
                                 isMuted={isMuted}
                                 onEnded={handleVideoEnded}
+                                isMobile={isMobileDevice}
                             />
                         ) : slide.image ? (
                             <img
@@ -554,8 +596,8 @@ const PremiumCarousel = () => {
 
                     <div className="carousel-overlay" aria-hidden="true"/>
 
-                    {/* ── VIDEO CONTROLS  [U3] ── */}
-                    {isVideo && (
+                    {/* ── VIDEO CONTROLS  [U3] — hidden on mobile [N3] ── */}
+                    {isVideo && !isMobileDevice && (
                         <>
                             <motion.div
                                 className="carousel-video-badge"
