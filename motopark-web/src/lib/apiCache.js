@@ -99,19 +99,29 @@ export function cachedFetch(url, { force = false, freshOnly = false, signal } = 
   // ── fire ONE network request ──────────────────────────────────────────────
   // No signal on the underlying fetch intentionally — individual callers can
   // cancel their own wait without killing the shared request.
-  const p = fetch(url)
+const p = (() => {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000); // 8s timeout
+
+  return fetch(url, { signal: ctrl.signal })
     .then((r) => {
+      clearTimeout(timer);
       if (!r.ok) throw new Error(`HTTP ${r.status} from ${url}`);
       return r.json();
     })
     .then((data) => {
       const entry = { data, time: Date.now() };
       memCache.set(memKey, entry);
-      // freshOnly callers don't pollute the session cache
       if (!freshOnly) writeSession(url, data);
       return data;
     })
+    .catch((err) => {
+      clearTimeout(timer);
+      inFlight.delete(memKey); // don't let a failed request poison the in-flight map
+      throw err;
+    })
     .finally(() => inFlight.delete(memKey));
+})();
 
   inFlight.set(memKey, p);
 

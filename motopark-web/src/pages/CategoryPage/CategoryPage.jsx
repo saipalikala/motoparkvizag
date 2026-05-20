@@ -223,9 +223,10 @@ const CatProductCard = ({ product, view, index, isMobile }) => {
 const CategoryPage = () => {
   const { slug } = useParams();
 
-  const [allProducts,  setAllProducts]  = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [activeFilters, setActiveFilters] = useState({});
+const [allProducts, setAllProducts] = useState([]);
+const [loading, setLoading] = useState(true);
+const [fetchError, setFetchError] = useState(null);
+const [activeFilters, setActiveFilters] = useState({});
   const [sort,         setSort]         = useState("newest");
   const [view,         setView]         = useState("grid");
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
@@ -252,80 +253,68 @@ const CategoryPage = () => {
   }, [mobileOpen]);
 
   /* fetch categories (cached) then products (dynamic) */
-  useEffect(() => {
-    if (!slug) return;
+// CategoryPage.jsx — replace the entire useEffect fetch block
 
-    let cancelled = false;
-    setLoading(true);
-    setAllProducts([]);
-    setActiveFilters({});
+useEffect(() => {
+  if (!slug) return;
 
-const run = async () => {
-  try {
-    // Step 1: fetch categories
-    const catData = await cachedFetch(`${API}/categories`);
-    const cats = catData.categories || catData || [];
+  let cancelled = false;
+  setLoading(true);
+  setAllProducts([]);
+  setActiveFilters({});
+  setFetchError(null); // add this state: const [fetchError, setFetchError] = useState(null);
 
-    // Step 2: find match by slug OR name OR _id
-    const match = cats.find(c =>
-      c.slug?.toLowerCase() === slug.toLowerCase() ||
-      c.name?.toLowerCase() === slug.toLowerCase() ||
-      c.name?.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase() ||
-      c._id === slug
-    );
+  const run = async () => {
+    try {
+      const catData = await cachedFetch(`${API}/categories`);
+      const cats = catData.categories || catData || [];
 
-    // Step 3: ALWAYS use _id if found. NEVER pass raw slug to API.
-    // If no match found, still try — backend may handle it.
-    // But log it so you can debug.
-    if (!match) {
-      console.warn(
-        `[CategoryPage] No category match for slug: "${slug}". ` +
-        `Available: ${cats.map(c => `name="${c.name}" slug="${c.slug}"`).join(", ")}`
+      const match = cats.find(c =>
+        c.slug?.toLowerCase() === slug.toLowerCase() ||
+        c.name?.toLowerCase() === slug.toLowerCase() ||
+        c.name?.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase() ||
+        c._id === slug
       );
+
+      if (!match) {
+        console.warn(`[CategoryPage] No category match for slug: "${slug}". Available: ${cats.map(c => `name="${c.name}" slug="${c.slug}"`).join(", ")}`);
+      }
+
+      const categoryId = match?._id || null;
+      if (cancelled) return;
+
+      if (!categoryId) {
+        setAllProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      const sortParam = sort === "low" ? "price_asc" : sort === "high" ? "price_desc" : "newest";
+      const qs = new URLSearchParams({ category: categoryId, sort: sortParam, limit: 200 }).toString();
+
+      const prodRes = await fetch(`${API}/products?${qs}`);
+      if (!prodRes.ok) throw new Error(`HTTP ${prodRes.status}`);
+      const prodData = await prodRes.json();
+
+      if (cancelled) return;
+      setAllProducts(prodData.products || []);
+
+    } catch (err) {
+      if (!cancelled) {
+        console.error("CategoryPage fetch error:", err);
+        // CRITICAL: distinguish network failure from empty category
+        setFetchError(err.message);
+        setAllProducts([]);
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
     }
+  };
 
-    const categoryId = match?._id || null;
-
-    if (cancelled) return;
-
-    // Step 4: Only fetch if we have a real categoryId
-    if (!categoryId) {
-      setAllProducts([]);
-      setLoading(false);
-      return;
-    }
-
-    const sortParam =
-      sort === "low" ? "price_asc" :
-      sort === "high" ? "price_desc" : "newest";
-
-    const qs = new URLSearchParams({
-      category: categoryId,
-      sort: sortParam,
-      limit: 200,
-    }).toString();
-
-    const prodRes = await fetch(`${API}/products?${qs}`);
-    if (!prodRes.ok) throw new Error(`HTTP ${prodRes.status}`);
-    const prodData = await prodRes.json();
-
-    if (cancelled) return;
-    setAllProducts(prodData.products || []);
-  } catch (err) {
-    if (!cancelled) {
-      console.error("CategoryPage fetch error:", err);
-      setAllProducts([]);
-    }
-  } finally {
-    if (!cancelled) setLoading(false);
-  }
-};
-
-    run();
-    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    return () => { cancelled = true; };
-  }, [slug, sort]);
+  run();
+  topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  return () => { cancelled = true; };
+}, [slug, sort]);
 
   /* local filtering */
   let filtered = [...allProducts];
@@ -402,7 +391,15 @@ const run = async () => {
             <div className={`cat-grid ${view === "list" ? "cat-grid--list" : ""}`}>
               {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : fetchError ? (
+  <div className="cat-empty">
+    <h3>Something went wrong</h3>
+    <p>Could not load products. Please refresh the page.</p>
+    <button className="cat-empty-btn" onClick={() => window.location.reload()}>
+      Retry
+    </button>
+  </div>
+) : filtered.length === 0 ? (
             <div className="cat-empty">
               <div className="cat-empty-icon">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
