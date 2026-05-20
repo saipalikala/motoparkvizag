@@ -11,7 +11,7 @@
 
 const CACHE_VERSION = "v2";          // ← bump when Cloudinary URLs change shape
 const SESSION_PREFIX = `api:${CACHE_VERSION}:`;
-const TTL = 5 * 60 * 1000;          // 5 min
+const TTL = 60 * 1000;
 
 const memCache = new Map();
 const inFlight = new Map();

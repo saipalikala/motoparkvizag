@@ -260,39 +260,66 @@ const CategoryPage = () => {
     setAllProducts([]);
     setActiveFilters({});
 
-    const run = async () => {
-      try {
-        // [F1]: cachedFetch for categories — same list for 5 min across all category pages
-        const catData = await cachedFetch(`${API}/categories`);
-        const cats    = catData.categories || catData || [];
-        const match   = cats.find(c =>
-          c.name?.toLowerCase() === slug.toLowerCase() ||
-          c.slug?.toLowerCase() === slug.toLowerCase()
-        );
-        const categoryId = match ? match._id : slug;
+const run = async () => {
+  try {
+    // Step 1: fetch categories
+    const catData = await cachedFetch(`${API}/categories`);
+    const cats = catData.categories || catData || [];
 
-        if (cancelled) return;
+    // Step 2: find match by slug OR name OR _id
+    const match = cats.find(c =>
+      c.slug?.toLowerCase() === slug.toLowerCase() ||
+      c.name?.toLowerCase() === slug.toLowerCase() ||
+      c.name?.toLowerCase().replace(/\s+/g, "-") === slug.toLowerCase() ||
+      c._id === slug
+    );
 
-        // [F2]: products stay as raw fetch — dynamic, filter-dependent
-        const sortParam = sort === "low" ? "price_asc" : sort === "high" ? "price_desc" : "newest";
-        const qs = new URLSearchParams({ category: categoryId, sort: sortParam, limit: 200 }).toString();
-        const prodRes = await fetch(`${API}/products?${qs}`);
+    // Step 3: ALWAYS use _id if found. NEVER pass raw slug to API.
+    // If no match found, still try — backend may handle it.
+    // But log it so you can debug.
+    if (!match) {
+      console.warn(
+        `[CategoryPage] No category match for slug: "${slug}". ` +
+        `Available: ${cats.map(c => `name="${c.name}" slug="${c.slug}"`).join(", ")}`
+      );
+    }
 
-        // [F5]: r.ok guard
-        if (!prodRes.ok) throw new Error(`HTTP ${prodRes.status}`);
-        const prodData = await prodRes.json();
+    const categoryId = match?._id || null;
 
-        if (cancelled) return;
-        setAllProducts(prodData.products || []);
-      } catch (err) {
-        if (!cancelled) {
-          console.error("CategoryPage fetch error:", err);
-          setAllProducts([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+    if (cancelled) return;
+
+    // Step 4: Only fetch if we have a real categoryId
+    if (!categoryId) {
+      setAllProducts([]);
+      setLoading(false);
+      return;
+    }
+
+    const sortParam =
+      sort === "low" ? "price_asc" :
+      sort === "high" ? "price_desc" : "newest";
+
+    const qs = new URLSearchParams({
+      category: categoryId,
+      sort: sortParam,
+      limit: 200,
+    }).toString();
+
+    const prodRes = await fetch(`${API}/products?${qs}`);
+    if (!prodRes.ok) throw new Error(`HTTP ${prodRes.status}`);
+    const prodData = await prodRes.json();
+
+    if (cancelled) return;
+    setAllProducts(prodData.products || []);
+  } catch (err) {
+    if (!cancelled) {
+      console.error("CategoryPage fetch error:", err);
+      setAllProducts([]);
+    }
+  } finally {
+    if (!cancelled) setLoading(false);
+  }
+};
 
     run();
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
