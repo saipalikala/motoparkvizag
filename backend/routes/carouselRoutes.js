@@ -1,30 +1,5 @@
 /**
  * routes/carouselRoutes.js
- *
- * FIXES APPLIED:
- * ─────────────────────────────────────────────────────────────
- * [F1] try/catch on ALL routes
- *      Before: no error handling. Any DB error crashed the route
- *      and fell through to Express's default error handler as an
- *      unhandled promise rejection.
- *      After: every async handler has try/catch with proper status codes.
- *
- * [F2] Auth guard on write routes (POST, PUT, DELETE)
- *      Before: no authentication. Anyone could create, update, or
- *      delete carousel slides with a direct API call.
- *      After: authMiddleware applied to all mutations.
- *
- * [F3] Input validation on POST/PUT
- *      Before: req.body passed directly to new Carousel(req.body).
- *      An empty body or malformed object saved a broken document.
- *      After: title/image required for create; sanitized on update.
- *
- * [F4] ObjectId validation before DB calls
- *      Before: invalid :id param caused Mongoose CastError which
- *      bubbled as 500. After: explicit 400 on invalid ObjectId.
- *
- * [F5] .lean() on GET — plain objects are faster than Mongoose docs
- *      Read-only endpoint has no need for Mongoose document methods.
  */
 
 import express        from "express";
@@ -34,10 +9,12 @@ import mongoose       from "mongoose";
 
 const router = express.Router();
 
-/* ── GET ALL SLIDES (public) ── */
+/* ── GET ALL ACTIVE SLIDES (public) ── */
 router.get("/", async (req, res) => {
   try {
-    const slides = await Carousel.find().sort({ createdAt: 1 }).lean(); // [F5]
+    const slides = await Carousel.find({ active: true })
+      .sort({ order: 1, createdAt: 1 })
+      .lean();
     res.json(slides);
   } catch (err) {
     res.status(500).json({ message: "Failed to load carousel", error: err.message });
@@ -45,16 +22,15 @@ router.get("/", async (req, res) => {
 });
 
 /* ── CREATE SLIDE (admin only) ── */
-router.post("/", authMiddleware, async (req, res) => { // [F2]
+router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, subtitle, image, route } = req.body;
+    const { title, subtitle, image, video, poster, route, order, active } = req.body;
 
-    // [F3]: image is required — a slide with no image is useless
     if (!image?.trim()) {
       return res.status(400).json({ message: "Slide image URL is required" });
     }
 
-    const slide = new Carousel({ title, subtitle, image, route });
+    const slide = new Carousel({ title, subtitle, image, video, poster, route, order, active });
     await slide.save();
     res.status(201).json(slide);
   } catch (err) {
@@ -63,17 +39,16 @@ router.post("/", authMiddleware, async (req, res) => { // [F2]
 });
 
 /* ── UPDATE SLIDE (admin only) ── */
-router.put("/:id", authMiddleware, async (req, res) => { // [F2]
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
-    // [F4]: validate ObjectId before hitting DB
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid slide ID" });
     }
 
-    const { title, subtitle, image, route } = req.body; // [F3]: destructure, don't spread whole body
+    const { title, subtitle, image, video, poster, route, order, active } = req.body;
     const updated = await Carousel.findByIdAndUpdate(
       req.params.id,
-      { title, subtitle, image, route },
+      { title, subtitle, image, video, poster, route, order, active },
       { new: true, runValidators: true }
     );
 
@@ -85,9 +60,8 @@ router.put("/:id", authMiddleware, async (req, res) => { // [F2]
 });
 
 /* ── DELETE SLIDE (admin only) ── */
-router.delete("/:id", authMiddleware, async (req, res) => { // [F2]
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
-    // [F4]: validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ message: "Invalid slide ID" });
     }

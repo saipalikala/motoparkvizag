@@ -23,6 +23,7 @@
 import express              from "express";
 import VideoShowcaseConfig  from "../models/videoShowcaseModel.js";
 import authMiddleware       from "../middleware/authMiddleware.js";
+import { clearHomeCache } from "../controllers/homeController.js";
 
 const router = express.Router();
 
@@ -64,13 +65,15 @@ router.post("/", authMiddleware, async (req, res) => { // [F1]
       exploreLink: String(s.exploreLink || "/store"),
     }));
 
-    const config = await VideoShowcaseConfig.findOneAndUpdate(
-      {},
-      { slides },
-      { returnDocument: "after", upsert: true }
-    );
+const config = await VideoShowcaseConfig.findOneAndUpdate(
+  {},
+  { slides },
+  { returnDocument: "after", upsert: true }
+);
 
-    res.json({ ok: true, count: config.slides.length });
+clearHomeCache();
+
+res.json({ ok: true, count: config.slides.length });
   } catch (err) {
     res.status(500).json({ message: "Failed to save video showcase config", error: err.message });
   }

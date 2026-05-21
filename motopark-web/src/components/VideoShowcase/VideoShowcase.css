@@ -1,7 +1,37 @@
 /* =========================================================
-   VideoShowcase.css  —  Light Premium Edition
-   Apple-minimal layout  ·  Nike bold type  ·  H&M spacing
-   100vh cinematic hero  ·  Option-C mobile split layout
+   VideoShowcase.css  —  Optimized Premium Edition v2
+   =========================================================
+
+   PERFORMANCE DECISIONS
+   ─────────────────────
+   • will-change removed from all static elements. Each will-change
+     promotes an element to its own GPU compositor layer (a texture
+     upload). With 3 slides × 4 elements = 12 persistent textures
+     in VRAM. We now only apply will-change during active animations.
+
+   • mix-blend-mode: screen is disabled on mobile (.vs-mobile .vs-glare).
+     This property forces the browser to composite the glare layer against
+     every layer beneath it — extremely expensive on Mali/Adreno GPUs.
+
+   • contain: layout style on .vs-stage prevents any layout change
+     inside from propagating to the rest of the page, eliminating
+     scroll-linked reflow on the full document.
+
+   • color-mix() used with @supports fallback so the button glow
+     degrades gracefully on Chrome < 111 / old Android.
+
+   • .vs-progress-fill has no CSS animation — it is driven by rAF
+     in VideoShowcase.jsx via progressFillRef. This eliminates the
+     timing mismatch where --vd was set after the animation started.
+
+   • .vs-dot transitions use CSS (height, opacity, background)
+     instead of Framer Motion animate prop. Motion.button with
+     animate re-evaluates all dots on every slide change.
+
+   • On .vs-low-end: all animations are disabled via
+     animation-duration:0 and transition-duration:0, keeping the
+     UI functional but frame-budget safe on budget hardware.
+
    ========================================================= */
 
 
@@ -21,6 +51,8 @@
 
 /* ══════════════════════════════════════════════
    STAGE  —  full-viewport cinematic hero
+   contain: layout style  → prevents layout from
+   escaping during scroll/animation (no global reflow).
 ══════════════════════════════════════════════ */
 .vs-stage {
   position   : relative;
@@ -30,15 +62,16 @@
   overflow   : hidden;
   background : #0c0a07;
   cursor     : crosshair;
+  contain    : layout style;   /* NEW: isolates layout calculations */
 }
 
 
-/* ── Video layer ── */
+/* ── Video / image layer ── */
 .vs-video-layer {
   position         : absolute;
-  inset            : -2%;        /* oversized — scale(1.13) never reveals edges */
-  will-change      : transform;
+  inset            : -2%;
   transform-origin : center center;
+  /* will-change applied by Framer via inline style only while animating */
 }
 
 .vs-video {
@@ -49,27 +82,25 @@
   object-fit     : cover;
   opacity        : 0;
   transition     : opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change    : opacity;
   pointer-events : none;
+  /* No will-change here — opacity transition is GPU-accelerated automatically */
 }
 
 .vs-video--active { opacity: 1; }
 
 
-/* ── Bottom-anchored scrim — warm charcoal, not heavy cold black ── */
+/* ── Bottom-anchored scrim ── */
 .vs-overlay {
   position       : absolute;
   inset          : 0;
   z-index        : 2;
   pointer-events : none;
   background     :
-    /* warm charcoal bottom — text zone always readable */
     linear-gradient(to top,
       rgba(14, 11, 8, 0.88)  0%,
       rgba(14, 11, 8, 0.40)  38%,
       transparent            62%
     ),
-    /* subtle top vignette — cinematic framing */
     linear-gradient(to bottom,
       rgba(0, 0, 0, 0.26) 0%,
       transparent         18%
@@ -77,7 +108,9 @@
 }
 
 
-/* ── Cursor glare — desktop highlight, GPU composited ── */
+/* ── Cursor glare — mix-blend-mode:screen
+   Expensive compositor layer. Hidden on .vs-mobile
+   to prevent compositor allocation on constrained GPUs. ── */
 .vs-glare {
   position       : absolute;
   inset          : 0;
@@ -91,24 +124,20 @@
    CONTENT OVERLAY
 ══════════════════════════════════════════════ */
 
-/* Empty Framer motion scroll anchor — no visual output */
 .vs-content {
   position    : absolute;
   bottom      : 11%;
   left        : 6%;
   z-index     : 10;
-  will-change : transform, opacity;
 }
 
-/* Animated content block — anchored to stage bottom */
 .vs-content-inner {
-  
   position        : absolute;
   inset           : 0;
   z-index         : 10;
   display         : flex;
   flex-direction  : column;
-  justify-content : flex-end;   /* content sits at the bottom */
+  justify-content : flex-end;
   padding         : 0 6% 7.5%;
   pointer-events  : none;
 }
@@ -116,7 +145,7 @@
 .vs-content-inner > * { pointer-events: auto; }
 
 
-/* ── Season / collection tag pill ── */
+/* ── Tag pill ── */
 .vs-tag {
   display        : inline-flex;
   align-items    : center;
@@ -150,7 +179,7 @@
 }
 
 
-/* ── Nike-style bold headline ── */
+/* ── Headline ── */
 .vs-headline {
   display        : flex;
   flex-direction : column;
@@ -163,14 +192,12 @@
   letter-spacing : 0.02em;
   color          : #ffffff;
   user-select    : none;
-  /* Dual text-shadow = safety net on any bright video frame */
   text-shadow    : 0 2px 28px rgba(0, 0, 0, 0.52),
                    0 0   8px  rgba(0, 0, 0, 0.26);
 }
 
 .vs-headline__line {
-  display    : block;
-  will-change: transform, opacity;
+  display : block;
 }
 
 
@@ -187,7 +214,7 @@
 }
 
 
-/* ── CTA row — inline flow with content, not floating absolute ── */
+/* ── CTA row ── */
 .vs-cta-row {
   display     : flex;
   gap         : 12px;
@@ -208,22 +235,32 @@
   letter-spacing : 0.025em;
   cursor         : pointer;
   border         : none;
-  will-change    : transform;
   outline        : none;
   transition     : box-shadow 0.28s ease, background 0.22s ease;
   white-space    : nowrap;
 }
 
+/*
+ * Primary button shadow:
+ * Base fallback (rgba) for Chrome < 111 / old Android.
+ * color-mix() progressive enhancement via @supports.
+ */
 .vs-btn--primary {
   background : var(--va, #f06a2c);
   color      : #ffffff;
-  box-shadow : 0 4px 24px -6px color-mix(in srgb, var(--va, #f06a2c) 56%, transparent),
+  box-shadow : 0 4px 24px -6px rgba(240, 106, 44, 0.56),
                inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
-.vs-btn--primary:hover {
-  box-shadow : 0 8px 34px -4px color-mix(in srgb, var(--va, #f06a2c) 70%, transparent),
-               inset 0 1px 0 rgba(255, 255, 255, 0.22);
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+  .vs-btn--primary {
+    box-shadow : 0 4px 24px -6px color-mix(in srgb, var(--va, #f06a2c) 56%, transparent),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  .vs-btn--primary:hover {
+    box-shadow : 0 8px 34px -4px color-mix(in srgb, var(--va, #f06a2c) 70%, transparent),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
 }
 
 .vs-btn--ghost {
@@ -239,25 +276,25 @@
 
 
 /* ══════════════════════════════════════════════
-   MUTE TOGGLE  (class fixed: vs-mute, was vs-sound in old CSS)
+   MUTE TOGGLE
 ══════════════════════════════════════════════ */
 .vs-mute {
-  position       : absolute;
-  bottom         : 28px;
-  left           : 6%;
-  z-index        : 20;
-  width          : 40px;
-  height         : 40px;
-  border-radius  : 50%;
-  background     : rgba(255, 255, 255, 0.08);
-  border         : 1px solid rgba(255, 255, 255, 0.16);
-  color          : rgba(255, 255, 255, 0.82);
-  display        : flex;
-  align-items    : center;
-  justify-content: center;
-  cursor         : pointer;
-  outline        : none;
-  transition     : background 0.22s ease, border-color 0.22s ease;
+  position        : absolute;
+  bottom          : 28px;
+  left            : 6%;
+  z-index         : 20;
+  width           : 40px;
+  height          : 40px;
+  border-radius   : 50%;
+  background      : rgba(255, 255, 255, 0.08);
+  border          : 1px solid rgba(255, 255, 255, 0.16);
+  color           : rgba(255, 255, 255, 0.82);
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  cursor          : pointer;
+  outline         : none;
+  transition      : background 0.22s ease, border-color 0.22s ease;
 }
 
 .vs-mute:hover {
@@ -267,7 +304,10 @@
 
 
 /* ══════════════════════════════════════════════
-   DOT NAVIGATION  (right rail, desktop)
+   DOT NAVIGATION
+   Transitions via CSS — not Framer Motion animate prop.
+   Plain CSS transition costs nothing at runtime vs Framer
+   re-evaluating all dots on every activeIdx change.
 ══════════════════════════════════════════════ */
 .vs-dots {
   position       : absolute;
@@ -282,26 +322,35 @@
 }
 
 .vs-dot {
-  width         : 5px;
-  border-radius : 100px;
-  background    : rgba(255, 255, 255, 0.86);
-  cursor        : pointer;
-  border        : none;
-  padding       : 0;
-  outline       : none;
-  will-change   : height, opacity;
-  transition    : background 0.28s ease;
+  width            : 5px;
+  height           : 6px;          /* default (inactive) */
+  border-radius    : 100px;
+  background       : rgba(255, 255, 255, 0.86);
+  cursor           : pointer;
+  border           : none;
+  padding          : 0;
+  outline          : none;
+  opacity          : 0.38;
+  /* CSS transitions replace Framer animate prop */
+  transition       : height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+                     opacity 0.28s ease,
+                     background 0.28s ease,
+                     box-shadow 0.28s ease;
 }
 
 .vs-dot--active {
+  height     : 22px;
+  opacity    : 1;
   background : var(--va, #f06a2c);
   box-shadow : 0 0 7px var(--va, #f06a2c);
 }
 
 
 /* ══════════════════════════════════════════════
-   CSS PROGRESS BAR  (@keyframes — zero JS per frame)
-   key={activeIdx} on fill div restarts animation each slide
+   PROGRESS BAR
+   No CSS animation — driven by rAF in VideoShowcase.jsx
+   via progressFillRef. transform is set directly via JS.
+   This keeps the bar perfectly synced to actual playback.
 ══════════════════════════════════════════════ */
 .vs-progress-track {
   position   : absolute;
@@ -319,20 +368,14 @@
   width            : 100%;
   background       : var(--va, #f06a2c);
   transform-origin : left center;
-  transform        : scaleX(0);
-  will-change      : transform;
-  animation        : vs-progress 4s linear forwards;
-  box-shadow       : 0 0 5px color-mix(in srgb, var(--va, #f06a2c) 60%, transparent);
-}
-
-@keyframes vs-progress {
-  from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
+  transform        : scaleX(0);    /* initial state; rAF drives to scaleX(1) */
+  will-change      : transform;    /* justified: rAF updates this every frame */
+  box-shadow       : 0 0 5px rgba(240, 106, 44, 0.60);
 }
 
 
 /* ══════════════════════════════════════════════
-   VIDEO COUNTER  (top-right corner)
+   VIDEO COUNTER
 ══════════════════════════════════════════════ */
 .vs-counter {
   position       : absolute;
@@ -368,164 +411,160 @@
 
 
 /* ══════════════════════════════════════════════
-   PREVIEW STRIP  —  removed from design
-   Dot nav + counter handle all navigation needs
+   PREVIEW STRIP — unused (display:none)
 ══════════════════════════════════════════════ */
 .vs-previews,
-.vs-preview {
-  display: none;
+.vs-preview { display: none; }
+
+
+/* ══════════════════════════════════════════════
+   MOBILE (.vs-mobile class added by JS)
+   Split layout — image above, text below.
+   All expensive GPU effects disabled.
+══════════════════════════════════════════════ */
+.vs-mobile .vs-stage {
+  display   : flex;
+  flex-direction : column;
+  height    : auto;
+  min-height: unset;
+  overflow  : visible;
+  contain   : style;    /* layout cannot be contained on flex-column */
+}
+
+.vs-mobile .vs-video-layer {
+  position    : relative;
+  flex-shrink : 0;
+  height      : min(85vw, 420px);
+  overflow    : hidden;
+  inset       : unset;    /* override -2% expansion used for parallax */
+}
+
+.vs-mobile .vs-overlay {
+  height     : min(85vw, 420px);
+  bottom     : auto;
+  top        : 0;
+  background :
+    linear-gradient(to top,
+      rgba(14, 11, 8, 0.55) 0%,
+      rgba(14, 11, 8, 0.08) 52%,
+      transparent           75%
+    );
+}
+
+/* Disable glare entirely on mobile: eliminates mix-blend-mode compositor layer */
+.vs-mobile .vs-glare { display: none; }
+
+.vs-mobile .vs-mute  { display: none; }
+
+.vs-mobile .vs-dots {
+  flex-direction : row;
+  top            : calc(min(85vw, 420px) - 28px);
+  right          : 50%;
+  transform      : translateX(50%);
+  bottom         : auto;
+  gap            : 6px;
+}
+
+.vs-mobile .vs-dot {
+  width            : 18px !important;
+  height           : 4px  !important;
+  opacity          : 0.50;
+  /* Disable height transition on mobile — transition width only */
+  transition       : width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                     opacity 0.22s ease,
+                     background 0.22s ease;
+}
+
+.vs-mobile .vs-dot--active {
+  width   : 24px !important;
+  height  : 4px  !important;
+  opacity : 1;
+}
+
+.vs-mobile .vs-progress-track {
+  top    : calc(min(85vw, 420px) - 2px);
+  bottom : auto;
+  left   : 0;
+  right  : 0;
+}
+
+.vs-mobile .vs-content { display: none; }
+
+.vs-mobile .vs-content-inner {
+  position        : relative;
+  inset           : unset;
+  background      : #0e0e12;
+  padding         : 18px 16px 24px;
+  justify-content : flex-start;
+  flex            : 0;
+  z-index         : 10;
+}
+
+.vs-mobile .vs-headline {
+  font-size     : clamp(48px, 13.5vw, 76px);
+  text-shadow   : none;             /* text-shadow on large text is expensive */
+  margin-bottom : 12px;
+  color         : #ffffff;
+}
+
+.vs-mobile .vs-sub {
+  font-size     : 12.5px;
+  max-width     : none;
+  text-shadow   : none;
+  color         : rgba(255, 255, 255, 0.54);
+  display       : -webkit-box;
+  -webkit-line-clamp  : 3;
+  -webkit-box-orient  : vertical;
+  overflow      : hidden;
+  margin-bottom : 24px;
+}
+
+.vs-mobile .vs-tag {
+  font-size    : 9.5px;
+  padding      : 5px 12px 5px 9px;
+  background   : rgba(255, 255, 255, 0.07);
+  border-color : rgba(255, 255, 255, 0.12);
+  margin-bottom: 14px;
+}
+
+.vs-mobile .vs-btn {
+  padding   : 10px 20px;
+  font-size : 13px;
+}
+
+.vs-mobile .vs-cta-row { gap: 10px; }
+
+
+/* ══════════════════════════════════════════════
+   LOW-END DEVICE (.vs-low-end class added by JS)
+   Budget phones / slow connections: strip all
+   animations to guarantee 60fps at all times.
+══════════════════════════════════════════════ */
+.vs-low-end *,
+.vs-low-end *::before,
+.vs-low-end *::after {
+  animation-duration       : 0.01ms !important;
+  animation-iteration-count: 1      !important;
+  transition-duration      : 0.01ms !important;
+}
+
+/* Keep video opacity crossfade — it's CSS-only and cheap */
+.vs-low-end .vs-video {
+  transition-duration : 0.3s !important;
+}
+
+/* Keep progress fill transitions (driven by rAF, not CSS) */
+.vs-low-end .vs-progress-fill {
+  transition : none;
 }
 
 
 /* ══════════════════════════════════════════════
-   MOBILE  —  Option C: Split Layout
-   ─────────────────────────────────────────────
-   Desktop: unchanged 100vh cinematic hero
-   Mobile:  video top block (~55vw) + solid dark
-            text panel below — zero JSX changes
+   EXTRA-SMALL PHONES
 ══════════════════════════════════════════════ */
-@media (max-width: 768px) {
-
-.vs-stage {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  min-height: unset; /* 🔥 FIX */
-  overflow: visible;
-}
-
-  /* Video block — top of column, self-clips its oversized element */
-  .vs-video-layer {
-    position    : relative;     /* exits absolute, becomes flex item */
-    flex-shrink : 0;
-    height      : min(85vw, 420px);
-    overflow    : hidden;       /* clips the -6% inset oversizing */
-  }
-
-  /* Scrim — covers only the video block height, not the text panel */
-  .vs-overlay {
-    height     : min(85vw, 420px); 
-    bottom     : auto;
-    top        : 0;
-    background :
-      linear-gradient(to top,
-        rgba(14, 11, 8, 0.55) 0%,
-        rgba(14, 11, 8, 0.08) 52%,
-        transparent           75%
-      );
-  }
-
-  .vs-glare {
-    height : min(85vw, 420px); 
-    bottom : auto;
-    top    : 0;
-  }
-
-  /* Mute — top-right of the video area */
-  .vs-mute {
-    top    : 12px;
-    right  : 12px;
-    left   : auto;
-    bottom : auto;
-    width  : 36px;
-    height : 36px;
-  }
-
-  /* Counter — hidden on mobile */
-  .vs-counter { display: none; }
-
-  /* Dots — repositioned to bottom of video area, centered */
-  .vs-dots {
-    flex-direction : row;
-    top            : calc(min(85vw, 420px) - 28px);
-    right          : 50%;
-    transform      : translateX(50%);
-    bottom         : auto;
-    gap            : 6px;
-  }
-
-  .vs-dot {
-    width  : 18px !important;
-    height : 4px !important;
-  }
-
-  .vs-dot--active {
-    width  : 24px !important;
-    height : 4px !important;
-  }
-
-  /* Progress bar — at the video / text panel boundary */
-  .vs-progress-track {
-    top    : calc(min(85vw, 420px) - 2px);
-    bottom : auto;
-    left   : 0;
-    right  : 0;
-  }
-
-  /* Text panel — exits absolute, solid background, zero transparency */
-  .vs-content-inner {
-    
-    position        : relative;
-    inset           : unset;
-    background      : #0e0e12;   /* solid — guaranteed no video bleed-through */
-    padding         : 18px 16px 20px;
-    justify-content : flex-start;
-    flex            : 0;
-    z-index         : 10;
-  }
-
-  /* Empty Framer scroll anchor — invisible on mobile */
-  .vs-content { display: none; }
-
-  /* Typography — no text-shadow needed (solid background) */
-  .vs-headline {
-    font-size     : clamp(48px, 13.5vw, 76px);
-    text-shadow   : none;
-    margin-bottom : 12px;
-    color         : #ffffff;
-  }
-
-  .vs-sub {
-    font-size   : 12.5px;
-    max-width   : none;
-    text-shadow : none;
-    color       : rgba(255, 255, 255, 0.54);
-    display     : -webkit-box;
-    -webkit-line-clamp  : 3;
-    -webkit-box-orient  : vertical;
-    overflow    : hidden;
-    margin-bottom: 24px;
-  }
-
-  .vs-tag {
-    font-size   : 9.5px;
-    padding     : 5px 12px 5px 9px;
-    background  : rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.12);
-    margin-bottom: 14px;
-  }
-
-  .vs-btn {
-    padding   : 10px 20px;
-    font-size : 13px;
-  }
-
-  .vs-cta-row {
-    gap: 10px;
-  }
-}
-
-
-/* ── Extra-small phones ── */
 @media (max-width: 480px) {
-  .vs-headline { font-size: 13.5vw; }
-
-  .vs-tag {
-    font-size : 9px;
-    padding   : 5px 10px 5px 8px;
-  }
-
-  .vs-mute { width: 34px; height: 34px; }
+  .vs-mobile .vs-headline { font-size: 13.5vw; }
+  .vs-mobile .vs-tag { font-size: 9px; padding: 5px 10px 5px 8px; }
 }
 
 
@@ -533,7 +572,7 @@
    ACCESSIBILITY — reduced motion
 ══════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
-  .vs-video         { transition: opacity 0.2s; }
-  .vs-tag__dot      { animation: none; }
-  .vs-progress-fill { animation: none; transform: scaleX(1); }
+  .vs-video      { transition: opacity 0.2s; }
+  .vs-tag__dot   { animation: none; }
+  .vs-dot        { transition: none; }
 }

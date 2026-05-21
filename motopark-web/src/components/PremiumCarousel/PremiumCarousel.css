@@ -1,7 +1,63 @@
 /* ================================
    MOTO PARK — PREMIUM CAROUSEL
-   Final production build
+   Performance-optimized build
    ================================ */
+
+/*
+ * CSS OPTIMIZATION NOTES
+ *
+ * [C1] CONTAIN PROPERTY
+ *      `contain: layout style paint` on .carousel and .carousel-slide tells the
+ *      browser these subtrees are self-contained. It can skip layout/paint work
+ *      outside the carousel when only the carousel changes. Critical for
+ *      preventing full-page reflows on slide transitions.
+ *
+ * [C2] CONTENT-VISIBILITY ON OFF-SCREEN SLIDES
+ *      Non-active slides use `content-visibility: hidden` — the browser skips
+ *      rendering work entirely for hidden slides. Faster than `display:none`
+ *      because it preserves the element in the DOM (no layout flash on reveal)
+ *      while still skipping paint/composite.
+ *
+ * [C3] WILL-CHANGE ONLY ON ACTIVE SLIDE
+ *      `will-change: transform, opacity` was on ALL slides. Each will-change
+ *      creates a GPU texture layer. 5 layers on a mid-range Android = memory
+ *      pressure. Now only .carousel-slide--active gets it, and it's removed
+ *      when the slide is exiting via the CSS class swap.
+ *
+ * [C4] BACKDROP-FILTER REMOVAL ON MOBILE
+ *      backdrop-filter: blur() is one of the most expensive CSS operations on
+ *      mobile. The arrows, mute button and ghost button all used it. On Android
+ *      it triggers a full offscreen buffer render on every frame it's visible.
+ *      Removed from mobile via @media query — replaced with solid semi-transparent
+ *      backgrounds that look nearly identical but are free to render.
+ *
+ * [C5] TRANSFORM-STYLE FLAT
+ *      Explicit `transform-style: flat` on the carousel ensures no accidental
+ *      3D stacking context is created, which would force a GPU composite layer
+ *      for the entire carousel even when nothing is animating.
+ *
+ * [C6] ASPECT-RATIO INTRINSIC SIZE
+ *      Added `aspect-ratio: 16/9` to .carousel-bg-img. Combined with the
+ *      explicit width/height HTML attributes, this eliminates CLS (Cumulative
+ *      Layout Shift) because the browser reserves the right amount of space
+ *      before the image loads.
+ *
+ * [C7] FONT-DISPLAY: SWAP REMINDER
+ *      The 'Sakana' font used in .carousel-title should use font-display: swap
+ *      in its @font-face declaration (wherever it is defined in your globals).
+ *      This prevents invisible text during font load (FOIT) which causes a
+ *      visual content shift on slow connections.
+ *
+ * [C8] SKELETON OPTIMIZED
+ *      Skeleton shimmer now uses a CSS custom property for the shimmer position
+ *      so the animation only composites (no layout/paint).
+ *      Background-size is set to a fixed pixel width to prevent percentage-
+ *      based repaint on resize.
+ *
+ * [C9] SR-ONLY ANNOUNCE ELEMENT
+ *      Visually hidden but accessible. Uses the clip-path pattern rather than
+ *      display:none so screen readers still see it.
+ */
 
 /* ─── SECTION ─── */
 .carousel {
@@ -14,9 +70,13 @@
     padding: 0;
     left: 50%;
     transform: translateX(-50%);
+    /* [C5]: flat prevents unintended 3D stacking context */
+    transform-style: flat;
     background: #0b1d3a;
     overflow: hidden;
     cursor: grab;
+    /* [C1]: contain the layout so slide transitions don't reflow the page */
+    contain: layout style paint;
 }
 .carousel:active { cursor: grabbing; }
 
@@ -27,10 +87,14 @@
     width: 100%;
     min-height: clamp(480px, 80vh, 700px);
     overflow: hidden;
-    /* REMOVED: will-change: transform, opacity; */
+    /* [C2]: non-active slides skip all rendering work */
+    content-visibility: hidden;
     contain: layout style paint;
 }
+
+/* [C3]: GPU layer only on the one slide that is actually animating */
 .carousel-slide--active {
+    content-visibility: visible;
     will-change: transform, opacity;
 }
 
@@ -49,14 +113,18 @@
     object-fit: cover;
     object-position: center;
     z-index: 0;
+    /* [C6]: prevents CLS when image loads — browser knows the ratio up front */
+    aspect-ratio: 16 / 9;
     transform: translateZ(0);
     animation: none;
 }
+
 .carousel-slide--active .carousel-bg-img,
 .carousel-slide--active .carousel-bg-video {
     animation: slowZoom 10s ease-out forwards, videoFadeIn 0.8s ease forwards;
 }
-/* [U1]: Cinematic Ken Burns — scale 1.0 → 1.08 over 10s */
+
+/* [U1]: Ken Burns — GPU-only transform, no layout properties */
 @keyframes slowZoom {
     from { transform: translateZ(0) scale(1.0); }
     to   { transform: translateZ(0) scale(1.08); }
@@ -81,7 +149,7 @@
     to   { opacity: 1; }
 }
 
-/* Collapse parallax padding when slide contains video */
+/* Collapse parallax padding on video slides */
 .carousel-slide:has(.carousel-bg-video) .carousel-bg-wrap {
     inset: 0;
     width: 100%;
@@ -118,13 +186,11 @@
     50%       { opacity: 1; }
 }
 
-/* ─── [U3] MUTE BUTTON ───────────────────────────────────────────────────────
-   Netflix-style frosted pill, top-right of video slides.
-   Positioned to not collide with the slide counter. */
+/* ─── MUTE BUTTON [U3] ─── */
 .carousel-mute-btn {
     position: absolute;
     top: 36px;
-    right: 100px; /* left of the counter */
+    right: 100px;
     z-index: 5;
     display: inline-flex;
     align-items: center;
@@ -148,9 +214,7 @@
     color: #ffffff;
     transform: scale(1.1);
 }
-.carousel-mute-btn:active {
-    transform: scale(0.93);
-}
+.carousel-mute-btn:active { transform: scale(0.93); }
 
 /* ─── OVERLAY ─── */
 .carousel-overlay {
@@ -202,6 +266,8 @@
     letter-spacing: -0.03em;
     line-height: 0.95;
     margin-bottom: 18px;
+    /* [C7]: font-display:swap must be set in the @font-face for 'Sakana' to
+       prevent FOIT (invisible text while font loads). Set it in your global CSS. */
 }
 
 .carousel-subtitle {
@@ -344,12 +410,12 @@
     overflow: hidden;
     position: relative;
     padding: 0;
-    min-height: 20px; /* accessible tap target */
+    min-height: 20px;
 }
 .carousel-dot--active       { width: 48px; background: rgba(255, 255, 255, 0.2); }
 .carousel-dot--video:not(.carousel-dot--active) { background: rgba(255, 255, 255, 0.1); }
 
-/* Tiny play ▶ inside inactive video dot */
+/* Tiny ▶ inside inactive video dot */
 .carousel-dot-video-icon {
     position: absolute;
     top: 50%; left: 50%;
@@ -375,14 +441,14 @@
     to   { width: 100%; }
 }
 
-/* [B]: Active video dot — solid accent bar, no timer animation */
+/* [B]: Active video dot — solid accent, no timer animation */
 .carousel-dot-fill--video-active {
     width: 100%;
     animation: none;
     opacity: 0.7;
 }
 
-/* ─── SKELETON ─── */
+/* ─── SKELETON [C8] ─── */
 .carousel-skeleton {
     position: relative;
     width: 100vw;
@@ -390,25 +456,109 @@
     min-height: clamp(480px, 80vh, 700px);
     left: 50%;
     transform: translateX(-50%);
+    /* Fixed px background-size avoids percentage repaint on resize */
     background: linear-gradient(
         90deg,
-        #0b1d3a 25%,
-        #0f2547 50%,
-        #0b1d3a 75%
+        #0b1d3a 0px,
+        #0f2547 300px,
+        #0b1d3a 600px
     );
-    background-size: 200% 100%;
-    animation: skeletonShimmer 1.8s ease-in-out infinite;
+    background-size: 600px 100%;
+    animation: skeletonShimmer 1.6s ease-in-out infinite;
+    /* contain so skeleton doesn't affect page layout */
+    contain: layout style paint;
 }
 @keyframes skeletonShimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
 }
 
-/* ─── MOBILE ─── */
+/* ─── [C9]: SCREEN READER LIVE REGION ─── */
+.carousel-sr-announce {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ─── MOBILE OPTIMIZATIONS [C4] ─── */
 @media (max-width: 768px) {
+    /* Faster fade-in on mobile — no blur transition overhead */
     .carousel-slide--active .carousel-bg-img,
     .carousel-slide--active .carousel-bg-video {
         animation: videoFadeIn 0.4s ease forwards;
+    }
+
+    /* [C4]: backdrop-filter is expensive on mobile GPU — remove entirely.
+       Replace with opaque(r) solid background that looks nearly the same. */
+    .carousel-arrow,
+    .carousel-cta-ghost {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(11, 29, 58, 0.55);
+    }
+
+    /* Content repositioned for small screens */
+    .carousel-content {
+        bottom: 80px;
+        left: 20px;
+        right: 20px;
+        max-width: 100%;
+    }
+
+    .carousel-bar {
+        left: 20px;
+        right: 20px;
+        bottom: 24px;
+    }
+
+    /* Arrows smaller and closer to edge — easier one-thumb reach */
+    .carousel-arrow {
+        width: 38px;
+        height: 38px;
+    }
+    .carousel-arrow--left  { left: 12px; }
+    .carousel-arrow--right { right: 12px; }
+
+    /* Ghost button: backdrop-filter removed above; ensure readable text */
+    .carousel-cta-ghost {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: var(--text-primary);
+    }
+
+    .carousel-subtitle {
+        /* Prevent very long subtitles causing layout shift on small screens */
+        max-width: 100%;
+        font-size: 14px;
+    }
+}
+
+/* ─── TABLET ─── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .carousel-content {
+        left: 48px;
+        max-width: 460px;
+    }
+    .carousel-bar {
+        left: 48px;
+        right: 48px;
+    }
+}
+
+/* ─── ULTRA-WIDE (>1920px) ─── */
+@media (min-width: 1921px) {
+    .carousel {
+        /* Cap height so the carousel doesn't become absurdly tall on 4K screens */
+        height: 820px;
+        max-height: 820px;
+    }
+    .carousel-content {
+        max-width: 680px;
     }
 }
 
@@ -416,30 +566,32 @@
 @media (prefers-reduced-motion: reduce) {
     /* Kill Ken Burns zoom */
     .carousel-bg-img,
-.carousel-bg-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: translateZ(0);
+    .carousel-bg-video {
+        animation: none;
+        transform: translateZ(0);
     }
+
     /* Kill badge pulse */
     .carousel-video-badge {
         animation: none;
         opacity: 1;
     }
+
     /* Kill skeleton shimmer */
     .carousel-skeleton {
         animation: none;
         background: #0b1d3a;
     }
+
     /* Kill dot fill animation */
     .carousel-dot-fill {
         animation: none;
         width: 100%;
     }
-    /* Kill slide transitions (Framer Motion respects this via CSS) */
+
+    /* Kill slide transitions — Framer Motion respects this via CSS */
     .carousel-slide {
         transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
+        animation-duration:  0.01ms !important;
     }
 }

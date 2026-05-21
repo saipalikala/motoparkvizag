@@ -110,7 +110,7 @@ const makeVideoStorage = (folder) =>
    ================================================================ */
 
 const IMAGE_MAX = 5   * 1024 * 1024;   
-const VIDEO_MAX = 100 * 1024 * 1024;  
+const VIDEO_MAX = 50 * 1024 * 1024;
 const PROD_MAX  = 20 * 1024 * 1024;   // 20 MB — product images
 
 export const uploadProducts = multer({
