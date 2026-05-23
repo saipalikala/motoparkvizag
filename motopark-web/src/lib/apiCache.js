@@ -101,7 +101,7 @@ export function cachedFetch(url, { force = false, freshOnly = false, signal } = 
   // cancel their own wait without killing the shared request.
 const p = (() => {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000); // 8s timeout
+  const timer = setTimeout(() => ctrl.abort(), 30000);// 8s timeout
 
   return fetch(url, { signal: ctrl.signal })
     .then((r) => {

@@ -280,17 +280,17 @@ useEffect(() => {
         console.warn(`[CategoryPage] No category match for slug: "${slug}". Available: ${cats.map(c => `name="${c.name}" slug="${c.slug}"`).join(", ")}`);
       }
 
-      const categoryId = match?._id || null;
-      if (cancelled) return;
+const categoryName = match?.name || null;
+if (cancelled) return;
 
-      if (!categoryId) {
-        setAllProducts([]);
-        setLoading(false);
-        return;
-      }
+if (!categoryName) {
+  setAllProducts([]);
+  setLoading(false);
+  return;
+}
 
-      const sortParam = sort === "low" ? "price_asc" : sort === "high" ? "price_desc" : "newest";
-      const qs = new URLSearchParams({ category: categoryId, sort: sortParam, limit: 200 }).toString();
+const sortParam = sort === "low" ? "price_asc" : sort === "high" ? "price_desc" : "newest";
+const qs = new URLSearchParams({ category: categoryName, sort: sortParam, limit: 200 }).toString();
 
       const prodRes = await fetch(`${API}/products?${qs}`);
       if (!prodRes.ok) throw new Error(`HTTP ${prodRes.status}`);

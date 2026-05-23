@@ -53,6 +53,7 @@
 
 import Product   from "../models/productModel.js";
 import mongoose  from "mongoose";
+import Category from "../models/categoryModel.js";
 
 // ─── REGEX ESCAPE ─────────────────────────────────────────────────────────────
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -173,11 +174,15 @@ export const getProducts = async (req, res) => {
 
         if (flags) query.$or = flags.split(",").map(flag => ({ [flag]: true }));
 
-        if (category) {
-            query.category = mongoose.Types.ObjectId.isValid(category)
-                ? category
-                : category.toLowerCase();
-        }
+if (category) {
+    if (mongoose.Types.ObjectId.isValid(category)) {
+        const cat = await Category.findById(category).select("name").lean();
+        if (!cat) return res.json({ products: [], total: 0, page, pages: 0 });
+        query.category = { $regex: new RegExp(`^${escapeRegex(cat.name.trim())}$`, "i") };
+    } else {
+        query.category = { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, "i") };
+    }
+}
 
         if (minPrice || maxPrice) {
             query.price = {};
