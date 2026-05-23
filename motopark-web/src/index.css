@@ -80,6 +80,8 @@
 html {
   scroll-behavior: smooth;
   background: var(--bg-primary);
+  overflow-x: hidden;  /* ← ADD */
+  max-width: 100%;     /* ← ADD */
 }
 
 body {

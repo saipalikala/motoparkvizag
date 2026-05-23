@@ -43,7 +43,6 @@ process.on("unhandledRejection", (reason) => {
 
 const app = express();
 
-// Trust Railway's single reverse proxy — fixes rate limiter IP detection
 app.set("trust proxy", 1);
 
 // ── www → non-www redirect ──
@@ -84,6 +83,15 @@ app.get("/api/health", (req, res) =>
     env      : process.env.NODE_ENV,
   })
 );
+
+// ── Version endpoint — never cached, used by frontend to detect new deployments
+// Set APP_VERSION in Railway env vars and increment on every deploy
+app.get("/api/version", (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.json({ version: process.env.APP_VERSION || "1.0.0" });
+});
 
 app.use(
   cors({
