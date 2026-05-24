@@ -175,13 +175,21 @@ export const getProducts = async (req, res) => {
         if (flags) query.$or = flags.split(",").map(flag => ({ [flag]: true }));
 
 if (category) {
-    if (mongoose.Types.ObjectId.isValid(category)) {
-        const cat = await Category.findById(category).select("name").lean();
-        if (!cat) return res.json({ products: [], total: 0, page, pages: 0 });
-        query.category = { $regex: new RegExp(`^${escapeRegex(cat.name.trim())}$`, "i") };
-    } else {
-        query.category = { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, "i") };
-    }
+    // Find the category doc by name OR by _id — works regardless of what was sent
+    const catQuery = mongoose.Types.ObjectId.isValid(category)
+        ? { _id: category }
+        : { name: { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, "i") } };
+
+    const cat = await Category.findOne(catQuery).select("_id name").lean();
+
+    if (!cat) return res.json({ products: [], total: 0, page, pages: 0 });
+
+    // products.category may be stored as ObjectId string OR as name string
+    // query both so it works regardless of how admin saved them
+    query.$or = [
+        { category: cat._id.toString() },
+        { category: { $regex: new RegExp(`^${escapeRegex(cat.name.trim())}$`, "i") } },
+    ];
 }
 
         if (minPrice || maxPrice) {
