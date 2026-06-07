@@ -46,7 +46,7 @@
   background  : #0c0a07;
   font-family : var(--vs-font-body);
   overflow    : hidden;
-  margin-top  : -68px; /* reclaim fixed navbar offset so hero is truly full-viewport */
+    margin-top  : 0;
 }
 
 
@@ -435,13 +435,15 @@
 .vs-mobile .vs-video-layer {
   position    : relative;
   flex-shrink : 0;
-  height      : min(85vw, 420px);
+  height      : 56vw;
+  max-height  : 340px;
+  min-height  : 220px;
   overflow    : hidden;
   inset       : unset;    /* override -2% expansion used for parallax */
 }
 
 .vs-mobile .vs-overlay {
-  height     : min(85vw, 420px);
+  height     : 100%;
   bottom     : auto;
   top        : 0;
   background :
@@ -459,10 +461,10 @@
 
 .vs-mobile .vs-dots {
   flex-direction : row;
-  top            : calc(min(85vw, 420px) - 28px);
+  top            : auto;
+  bottom         : 10px;
   right          : 50%;
   transform      : translateX(50%);
-  bottom         : auto;
   gap            : 6px;
 }
 
@@ -483,8 +485,8 @@
 }
 
 .vs-mobile .vs-progress-track {
-  top    : calc(min(85vw, 420px) - 2px);
-  bottom : auto;
+  top    : auto;
+  bottom : 0;
   left   : 0;
   right  : 0;
 }
