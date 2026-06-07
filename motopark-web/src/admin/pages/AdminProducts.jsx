@@ -298,6 +298,8 @@ const AdminProducts = () => {
     /* ── Submit ── */
     const handleSubmit = async (ev) => {
         ev.preventDefault();
+         console.log("Submit fired, editingId:", editingId); // ADD THIS
+    console.log("Token:", TOKEN()); // ADD THIS
         setError("");
 
         const validationError = validateForm(form, variants, products, editingId);
@@ -333,17 +335,24 @@ const AdminProducts = () => {
                     sizes: v.sizes,
                 }))
             ));
+fixedVariants.forEach((v, i) => {
+    // Tell backend which existing images to keep
+    const keepUrls = v.images
+        .filter(img => img.url && !(img.file instanceof File))
+        .map(img => img.url);
+    fd.append(`keepImages_${i}`, JSON.stringify(keepUrls));
 
-            fixedVariants.forEach((v, i) => {
-                v.images.forEach(img => {
-                    if (img.file instanceof File) fd.append(`variantImages_${i}`, img.file);
-                });
-            });
+    // New uploads
+    v.images.forEach(img => {
+        if (img.file instanceof File) fd.append(`variantImages_${i}`, img.file);
+    });
+});
 
             const method = editingId ? "PUT" : "POST";
             const url = editingId ? `${PROD_URL}/${editingId}` : PROD_URL;
 
             const res = await fetch(url, { method, headers: AUTH(), body: fd });
+            console.log("Response status:", res.status); // ADD THIS
             let data;
             try { data = await res.json(); }
             catch { const t = await res.text(); console.error("Non-JSON:", t); return setError("Server error — check backend"); }
@@ -353,7 +362,7 @@ const AdminProducts = () => {
             setIsDirty(false);
             setPanelOpen(false);
             setEditingId(null);
-            load(page, debouncedSearch);
+            setProducts(prev => prev.map(p => p._id === editingId ? { ...p, ...data.product ?? data } : p));
         } catch (err) {
             console.error(err);
             setError("Network error — backend not reachable");

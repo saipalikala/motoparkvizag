@@ -91,6 +91,8 @@ body {
   text-rendering: optimizeLegibility;
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-x: hidden;   /* ← ADD */
+  max-width: 100vw;     /* ← ADD */
 }
 
 /* ── SELECTION ── */

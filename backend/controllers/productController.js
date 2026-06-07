@@ -98,7 +98,7 @@ const safeParseVariants = (raw) => {
    HELPER — build variants array
    Shared by create and update.
 =============================== */
-const buildVariants = (rawVariants, files, existingVariants = []) => {
+const buildVariants = (rawVariants, files, existingVariants = [], body = {}) => {
     return rawVariants
         .map((variant, index) => {
             const colorValue =
@@ -117,8 +117,10 @@ const buildVariants = (rawVariants, files, existingVariants = []) => {
                 return url;
             });
 
-            const existingImages = existingVariants?.[index]?.images || [];
-            const images         = newImages.length > 0 ? newImages : existingImages;
+           // Parse which existing images to keep (sent from frontend)
+const keepRaw = body[`keepImages_${index}`];
+const keepImages = keepRaw ? JSON.parse(keepRaw) : (existingVariants?.[index]?.images || []);
+const images = [...keepImages, ...newImages];
 
             let sizes = (variant.sizes || [])
                 .filter(s => s.size && s.size.trim() !== "")
@@ -339,6 +341,8 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const updateData = { ...req.body };
+console.log("BODY KEYS:", Object.keys(req.body));
+console.log("keepImages_0:", req.body.keepImages_0);
 
         // Normalize booleans
         ["newArrival", "featured", "trending"].forEach(flag => {
@@ -373,7 +377,7 @@ export const updateProduct = async (req, res) => {
 
             let variants;
             try {
-                variants = buildVariants(rawVariants, req.files, existing.variants);
+                variants = buildVariants(rawVariants, req.files, existing.variants, req.body);
             } catch (err) {
                 return res.status(500).json({ message: err.message });
             }

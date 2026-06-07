@@ -5,8 +5,10 @@
 
 /* ─── NAVBAR SHELL ─── */
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   width: 100%;
   background: #0b1d3a;
@@ -257,8 +259,7 @@
   transition: opacity var(--dur-mid) ease;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  visibility: hidden; 
-  display: none !important;
+  visibility: hidden;
 }
 
 .mobile-overlay--open {
@@ -578,7 +579,7 @@
   gap: 10px;
   width: 100%;
   padding: 11px 16px;
-  background: #fff;
+  background: transparent;
   border: none;
   font-size: 13px;
   font-weight: 500;

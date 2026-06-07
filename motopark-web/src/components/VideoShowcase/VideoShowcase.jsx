@@ -518,7 +518,13 @@ export default function VideoShowcase() {
       const link = resolveLink(rawLink);
       if (!link) return;
       if (link.startsWith("http")) { window.location.href = link; return; }
-      window.scrollTo({ top: 0, behavior: "instant" });
+      // behavior:"instant" throws TypeError on Android Chrome < 108
+      // (Samsung Galaxy S20 Ultra). Fallback to scrollTo(0,0).
+      try {
+        window.scrollTo({ top: 0, behavior: "instant" });
+      } catch {
+        window.scrollTo(0, 0);
+      }
       navigate(link);
     },
     [navigate, resolveLink],

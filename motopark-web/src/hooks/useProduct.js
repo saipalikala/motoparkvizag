@@ -10,13 +10,18 @@ const singleProductCache = new Map();
 export const useProduct = (id) => {
     const { products } = useProducts();
     const [product, setProduct] = useState(() => {
-        // Synchronous fast-path: if already in context or single cache, use it immediately
-        // This prevents any loading flicker when navigating within the app
-        return singleProductCache.get(id)
+        // Synchronous fast-path: only use cache if it's a valid product object
+        const cached = singleProductCache.get(id);
+        return (cached?._id ? cached : null)
             || products.find(p => String(p._id) === String(id))
             || null;
     });
-    const [loading, setLoading] = useState(!product);
+    const [loading, setLoading] = useState(() => {
+        const cached = singleProductCache.get(id);
+        if (cached?._id) return false;
+        if (products.find(p => String(p._id) === String(id))) return false;
+        return true;
+    });
     const [error, setError] = useState(null);
     const abortRef = useRef(null);
 
@@ -31,7 +36,8 @@ export const useProduct = (id) => {
         }
 
         // Single-cache hit: already fetched individually before (back navigation, etc.)
-        if (singleProductCache.has(id)) {
+        // Guard: only use cache if value is a valid product object (not null/undefined)
+        if (singleProductCache.has(id) && singleProductCache.get(id)?._id) {
             setProduct(singleProductCache.get(id));
             setLoading(false);
             return;

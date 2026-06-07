@@ -8,6 +8,8 @@
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -149,8 +151,11 @@
   flex-direction: row;
   gap: 8px;
   overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
   padding-bottom: 4px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pg-thumbs::-webkit-scrollbar { display: none; }
@@ -196,10 +201,32 @@
   .pg-thumb {
     width: 54px;
     height: 54px;
+    flex-shrink: 0;   /* prevent shrinking — scroll instead */
   }
 
   /* zoom hint redundant on touch — hide it */
   .pg-zoom-hint { display: none; }
+
+  /* Thumbs row: scrollable, never breaks viewport */
+  .pg-thumbs {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .pg-thumbs::-webkit-scrollbar { display: none; }
+
+  /* Wrap the whole gallery in a constrained box */
+  .pg-wrap {
+    max-width: 100%;
+    overflow: hidden;
+  }
 }
 
 /* ═══════════════════════════════════════════

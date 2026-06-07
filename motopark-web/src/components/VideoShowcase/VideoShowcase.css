@@ -43,9 +43,10 @@
   --vs-font-body : 'DM Sans', system-ui, sans-serif;
 
   width       : 100%;
-  background  : #ffffff;
+  background  : #0c0a07;
   font-family : var(--vs-font-body);
   overflow    : hidden;
+  margin-top  : -68px; /* reclaim fixed navbar offset so hero is truly full-viewport */
 }
 
 

@@ -43,8 +43,9 @@ import "./AdminVideoShowcase.css";
    to match wherever your authSlice / login stores it.
 ───────────────────────────────────────────── */
 function getToken() {
-  // Try both common keys — change to match your app
+  // "adminToken" is the key set by AdminLogin.jsx → localStorage.setItem("adminToken", ...)
   return (
+    localStorage.getItem("adminToken") ||
     localStorage.getItem("token") ||
     localStorage.getItem("authToken") ||
     sessionStorage.getItem("token") ||
