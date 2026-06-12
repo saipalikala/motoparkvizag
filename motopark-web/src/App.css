@@ -2,13 +2,7 @@
    MOTO PARK — APP GLOBAL STYLES
    Uses design tokens from index.css
    ================================================ */
-@font-face {
-  font-family: 'Sakana';
-  src: url('/assets/fonts/Sakana.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+
 * {
   margin: 0;
   padding: 0;
@@ -29,25 +23,16 @@ body {
   font-family: var(--font-body);
 }
 
-h1, h2, h3, h4, h5, h6 {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  font-family: var(--font-head);
-  letter-spacing: 0.02em;
-}
-
-
+/* REPLACE BOTH h1-h6 blocks with this single block */
 h1, h2, h3, h4, h5, h6,
 [class*="title"],
 [class*="heading"] {
   font-family: var(--font-head);
   letter-spacing: 0.04em;
   color: inherit;
-
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
-/* 🔥 AUTO HEADING DETECTION SYSTEM */
 
 
 /* ── Page Loader ── */

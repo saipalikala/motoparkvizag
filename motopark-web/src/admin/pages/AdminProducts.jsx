@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import "./AdminProducts.css";
 import detectColor from "@/utils/detectColor";
 import { API } from "@/config/api";
@@ -121,6 +121,7 @@ const AdminProducts = () => {
     const [variants, setVariants] = useState([emptyVariant()]);
     const [tab, setTab] = useState("info");
     const [error, setError] = useState("");
+    const [toast, setToast] = useState("");
     const [bulkStatus, setBulkStatus] = useState("");
     const [isDirty, setIsDirty] = useState(false);
 
@@ -138,9 +139,18 @@ const AdminProducts = () => {
     const load = useCallback(async (p = 1, q = "") => {
         setLoading(true);
         try {
-            const qs = new URLSearchParams({ page: p, limit: PAGE_SIZE, ...(q ? { search: q } : {}) }).toString();
+            const qs = new URLSearchParams({
+    page: p,
+    limit: PAGE_SIZE,
+    ...(q && q.trim().length >= 2 ? { search: q } : {}),
+}).toString();
             const [pr, cr] = await Promise.all([
-                fetch(`${PROD_URL}?${qs}`, { headers: AUTH() }),
+               fetch(`${PROD_URL}?${qs}`, {
+    headers: {
+        ...AUTH(),
+        "x-admin": "1",
+    },
+}),
                 fetch(CAT_URL),
             ]);
             const pd = await pr.json();
@@ -359,10 +369,13 @@ fixedVariants.forEach((v, i) => {
 
             if (!res.ok) return setError(data?.message || data?.error || `Error ${res.status}`);
 
-            setIsDirty(false);
+           setIsDirty(false);
             setPanelOpen(false);
+            setToast(editingId ? "✅ Product updated successfully!" : "✅ Product added successfully!");
+            setTimeout(() => setToast(""), 3000);
+
             setEditingId(null);
-            setProducts(prev => prev.map(p => p._id === editingId ? { ...p, ...data.product ?? data } : p));
+            load(page, debouncedSearch); // refresh list — handles both create & update correctly
         } catch (err) {
             console.error(err);
             setError("Network error — backend not reachable");
@@ -372,7 +385,10 @@ fixedVariants.forEach((v, i) => {
     };
 
     /* ── Derived UI values ── */
-    const isFormValid = !validateForm(form, variants, products, editingId);
+   const isFormValid = useMemo(
+    () => !validateForm(form, variants, products, editingId),
+    [form, variants, products, editingId]
+);
 
     const thumbSrc = (p) => {
         const img = p.variants?.[0]?.images?.[0];
@@ -387,7 +403,7 @@ fixedVariants.forEach((v, i) => {
     ════════════════════════════════════════════ */
     return (
         <div className="ap-page">
-
+                {toast && <div className="ap-toast">{toast}</div>}
             {/* TOOLBAR */}
             <div className="ap-toolbar">
                 <div className="ap-search-wrap">

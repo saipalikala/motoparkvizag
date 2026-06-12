@@ -28,6 +28,7 @@ const variantSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        colorName: { type: String, default: "" },
         images: [String],
         sizes: [sizeSchema],
     },
@@ -89,6 +90,10 @@ const productSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        isShowcase: {
+    type: Boolean,
+    default: false,
+},
     },
     {
         timestamps: true, // adds createdAt + updatedAt automatically
@@ -133,7 +138,7 @@ productSchema.index({ category: 1,   createdAt: -1 });
 productSchema.index({ featured: 1,   createdAt: -1 });
 productSchema.index({ trending: 1,   createdAt: -1 });
 productSchema.index({ newArrival: 1, createdAt: -1 });
-
+productSchema.index({ isShowcase: 1, createdAt: -1 });
 // ── Store page — category + brand filter + price sort in one scan
 productSchema.index({ category: 1, brand: 1, price: 1 });
 

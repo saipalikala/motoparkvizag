@@ -128,7 +128,12 @@ const images = [...keepImages, ...newImages];
 
             if (sizes.length === 0) sizes = [{ size: "Standard", stock: 0 }];
 
-            return { color: colorValue, images, sizes };
+            return {
+    color: variant.color?.trim() || "Default",
+    colorName: variant.colorName?.trim() || "",
+    images,
+    sizes,
+};
         })
         .filter(Boolean);
 };
@@ -174,25 +179,45 @@ export const getProducts = async (req, res) => {
             if (colors.length) query["variants.color"] = { $in: colors };
         }
 
-        if (flags) query.$or = flags.split(",").map(flag => ({ [flag]: true }));
+const orClauses = [];
+
+if (flags) {
+    flags.split(",").forEach(flag => orClauses.push({ [flag]: true }));
+}
 
 if (category) {
-    // Find the category doc by name OR by _id — works regardless of what was sent
     const catQuery = mongoose.Types.ObjectId.isValid(category)
         ? { _id: category }
-        : { name: { $regex: new RegExp(`^${escapeRegex(category.trim())}$`, "i") } };
+        : {
+            name: {
+                $regex: new RegExp(
+                    `^${escapeRegex(category.trim())}$`,
+                    "i"
+                ),
+            },
+        };
 
-    const cat = await Category.findOne(catQuery).select("_id name").lean();
+    const cat = await Category.findOne(catQuery)
+        .select("_id name")
+        .lean();
 
-    if (!cat) return res.json({ products: [], total: 0, page, pages: 0 });
+    if (!cat)
+        return res.json({ products: [], total: 0, page, pages: 0 });
 
-    // products.category may be stored as ObjectId string OR as name string
-    // query both so it works regardless of how admin saved them
-    query.$or = [
+    orClauses.push(
         { category: cat._id.toString() },
-        { category: { $regex: new RegExp(`^${escapeRegex(cat.name.trim())}$`, "i") } },
-    ];
+        {
+            category: {
+                $regex: new RegExp(
+                    `^${escapeRegex(cat.name.trim())}$`,
+                    "i"
+                ),
+            },
+        }
+    );
 }
+
+if (orClauses.length) query.$or = orClauses;
 
         if (minPrice || maxPrice) {
             query.price = {};
@@ -209,7 +234,7 @@ if (category) {
         const [products, total] = await Promise.all([
             Product
                 .find(query)
-                .select("name price brand category variants description specs care createdAt featured trending newArrival")
+               .select("name price brand category variants description specs care createdAt featured trending newArrival isShowcase")
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
@@ -217,9 +242,21 @@ if (category) {
             Product.countDocuments(query),
         ]);
 
-        res
-            .set("Cache-Control", "public, max-age=60, stale-while-revalidate=300")
-            .json({ products, total, page, pages: Math.ceil(total / limit) });
+const isAdmin = req.headers["x-admin"] === "1";
+
+res
+    .set(
+        "Cache-Control",
+        isAdmin
+            ? "no-store"
+            : "public, max-age=60, stale-while-revalidate=300"
+    )
+    .json({
+        products,
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+    });
 
     } catch (error) {
         console.error("❌ GET PRODUCTS ERROR:", error);
@@ -290,9 +327,10 @@ export const createProduct = async (req, res) => {
         const category = req.body.category?.trim();
         if (!category) return res.status(400).json({ message: "Category is required" });
 
-        const newArrival = req.body.newArrival === "true" || req.body.newArrival === true;
-        const featured   = req.body.featured   === "true" || req.body.featured   === true;
-        const trending   = req.body.trending   === "true" || req.body.trending   === true;
+const newArrival = req.body.newArrival === "true" || req.body.newArrival === true;
+const featured   = req.body.featured   === "true" || req.body.featured   === true;
+const trending   = req.body.trending   === "true" || req.body.trending   === true;
+const isShowcase = req.body.isShowcase === "true" || req.body.isShowcase === true;
 
         const rawVariants = safeParseVariants(req.body.variants);
         if (rawVariants === null) {
@@ -311,19 +349,20 @@ export const createProduct = async (req, res) => {
             return res.status(400).json({ message: "At least one variant is required" });
         }
 
-        const product = new Product({
-            name:        name.trim(),
-            price:       parsedPrice,
-            brand:       brand.trim(),
-            description: description || "",
-            specs:       specs || "",
-            care:        care  || "",
-            category,
-            newArrival,
-            featured,
-            trending,
-            variants,
-        });
+const product = new Product({
+    name:        name.trim(),
+    price:       parsedPrice,
+    brand:       brand.trim(),
+    description: description || "",
+    specs:       specs || "",
+    care:        care  || "",
+    category,
+    newArrival,
+    featured,
+    trending,
+    isShowcase,
+    variants,
+});
 
         await product.save();
         filterCache.clear();
@@ -341,11 +380,10 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const updateData = { ...req.body };
-console.log("BODY KEYS:", Object.keys(req.body));
-console.log("keepImages_0:", req.body.keepImages_0);
+
 
         // Normalize booleans
-        ["newArrival", "featured", "trending"].forEach(flag => {
+        ["newArrival", "featured", "trending", "isShowcase"].forEach(flag => {
             if (flag in updateData)
                 updateData[flag] = updateData[flag] === "true" || updateData[flag] === true;
         });
@@ -515,7 +553,7 @@ export const bulkCreateProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-            .select("name price brand category variants description specs care featured trending newArrival originalPrice")
+           .select("name price brand category variants description specs care featured trending newArrival isShowcase originalPrice")
             .lean();
         if (!product) return res.status(404).json({ message: "Product not found" });
         res.json(product);

@@ -111,9 +111,9 @@ const PageLoader = () => {
 };
 
 function App() {
-  const MAINTENANCE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
-  if (MAINTENANCE) return <MaintenancePage />;
-  const location = useLocation();
+const MAINTENANCE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
+const location = useLocation();
+if (MAINTENANCE) return <MaintenancePage />;
   const isAdmin  = location.pathname.startsWith("/admin");
 
   useEffect(() => {

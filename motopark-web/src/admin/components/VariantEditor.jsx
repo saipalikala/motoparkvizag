@@ -4,7 +4,7 @@ const VariantEditor = ({ variant, updateVariant }) => {
 
         const newSizes = [...variant.sizes];
 
-        newSizes[index].stock = value;
+       newSizes[index].stock = Number(value);
 
         updateVariant({
             ...variant,
