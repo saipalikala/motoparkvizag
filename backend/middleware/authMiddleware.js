@@ -50,10 +50,15 @@ const authMiddleware = (req, res, next) => {
         req.admin = decoded;
         req.token = token; // make token available for logout route
         next();
-    } catch (err) {
+} catch (err) {
         const msg = err.name === "TokenExpiredError"
             ? "Unauthorized: Token expired"
             : "Unauthorized: Invalid token";
+
+        console.error(
+            `[AUTH] 401 - ${err.name}: ${err.message} | path=${req.method} ${req.originalUrl} | ip=${req.ip}`
+        );
+
         return res.status(401).json({ message: msg });
     }
 };

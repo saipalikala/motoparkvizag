@@ -84,14 +84,6 @@ app.get("/api/health", (req, res) =>
   })
 );
 
-// ── Version endpoint — never cached, used by frontend to detect new deployments
-// Set APP_VERSION in Railway env vars and increment on every deploy
-app.get("/api/version", (req, res) => {
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-  res.set("Pragma", "no-cache");
-  res.set("Expires", "0");
-  res.json({ version: process.env.APP_VERSION || "1.0.0" });
-});
 
 app.use(
   cors({
@@ -105,6 +97,15 @@ app.use(
     allowedHeaders : ["Content-Type", "Authorization"],
   })
 );
+
+// ── Version endpoint — never cached, used by frontend to detect new deployments
+// Set APP_VERSION in Railway env vars and increment on every deploy
+app.get("/api/version", (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.json({ version: process.env.APP_VERSION || "1.0.0" });
+});
 
 app.use(
   helmet({
