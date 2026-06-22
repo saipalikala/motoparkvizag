@@ -332,17 +332,23 @@ const qs = new URLSearchParams({ category: categoryName, sort: sortParam, limit:
       <div className="cat-hero">
         <div className="cat-hero-bg" aria-hidden="true" />
         <div className="cat-hero-content">
-          <nav className="cat-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">Home</a>
-            <ChevronRight />
-            <a href="/store">Store</a>
-            <ChevronRight />
-            <span>{label}</span>
-          </nav>
-          <h1 className="cat-title">{label}</h1>
-          <p className="cat-subtitle">
-            {loading ? "Loading…" : `${filtered.length} product${filtered.length !== 1 ? "s" : ""} available`}
-          </p>
+<div className="cat-title-row">
+  <h1 className="cat-title">{label}</h1>
+
+  <nav className="cat-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <ChevronRight />
+    <a href="/store">Store</a>
+    <ChevronRight />
+    <span>{label}</span>
+  </nav>
+</div>
+
+<p className="cat-subtitle">
+  {loading
+    ? "Loading..."
+    : `${filtered.length} PRODUCT${filtered.length !== 1 ? "S" : ""} AVAILABLE`}
+</p>
         </div>
       </div>
 

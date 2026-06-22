@@ -423,35 +423,32 @@
    Split layout — image above, text below.
    All expensive GPU effects disabled.
 ══════════════════════════════════════════════ */
-.vs-mobile .vs-stage {
-  display   : flex;
-  flex-direction : column;
-  height    : auto;
-  min-height: unset;
-  overflow  : visible;
-  contain   : style;    /* layout cannot be contained on flex-column */
+css.vs-mobile .vs-stage {
+  display: block;                 /* was: flex column */
+  height: 100svh;                 /* matches .carousel on mobile */
+  min-height: clamp(480px, 80vh, 700px);
+  max-height: none;
+  overflow: hidden;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* clears bottom nav, same as .carousel */
 }
 
 .vs-mobile .vs-video-layer {
-  position    : relative;
-  flex-shrink : 0;
-  height      : 56vw;
-  max-height  : 340px;
-  min-height  : 220px;
-  overflow    : hidden;
-  inset       : unset;    /* override -2% expansion used for parallax */
+  position: absolute;
+  inset: -2%;                     /* same expansion as desktop, no more cropped strip */
+  height: auto;
+  max-height: none;
+  min-height: unset;
+  overflow: hidden;
 }
 
 .vs-mobile .vs-overlay {
-  height     : 100%;
-  bottom     : auto;
-  top        : 0;
-  background :
-    linear-gradient(to top,
-      rgba(14, 11, 8, 0.55) 0%,
-      rgba(14, 11, 8, 0.08) 52%,
-      transparent           75%
-    );
+  top: auto;
+  height: 100%;
+  background:
+    linear-gradient(to bottom,
+      rgba(14, 11, 8, 0.10) 0%,
+      rgba(14, 11, 8, 0.30) 50%,
+      rgba(14, 11, 8, 0.75) 100%);
 }
 
 /* Disable glare entirely on mobile: eliminates mix-blend-mode compositor layer */
@@ -494,13 +491,11 @@
 .vs-mobile .vs-content { display: none; }
 
 .vs-mobile .vs-content-inner {
-  position        : relative;
-  inset           : unset;
-  background      : #0e0e12;
-  padding         : 18px 16px 24px;
-  justify-content : flex-start;
-  flex            : 0;
-  z-index         : 10;
+  position: absolute;
+  inset: 0;
+  background: transparent;        /* was solid #0e0e12 panel */
+  justify-content: flex-end;
+  padding: 0 20px 90px;            /* text sits near the bottom, like carousel-content */
 }
 
 .vs-mobile .vs-headline {

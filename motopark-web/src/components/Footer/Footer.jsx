@@ -82,7 +82,7 @@ const Footer = () => {
                             </p>
                         </div>
                         <a
-                            href="https://www.google.com/maps?q=Seethammapeta+Main+Rd+Visakhapatnam"
+                            href="https://maps.app.goo.gl/YSRdTuZ4wKAbdG2P9"
                             target="_blank" rel="noreferrer"
                             className="footer-map-link"
                         >

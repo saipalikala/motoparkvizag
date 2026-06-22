@@ -24,13 +24,14 @@
  * • Next video begins metadata preload when activeIdx changes, so the
  *   first keyframe is already buffered before the transition starts.
  *
- * MOBILE — STATIC POSTERS
- * • On mobile we render <img> elements instead of <video>.
- *   Decoding video on low-end Android burns battery, causes thermal
- *   throttling, and triggers WebKit's video-frame compositor layer.
- *   Static posters are indistinguishable to most users and use 95%
- *   less GPU memory. All images use stable keys too — CSS
- *   opacity transition handles the crossfade, no remount flash.
+ * MOBILE — VIDEO WITH NETWORK-AWARE STATIC FALLBACK
+ * • Mobile now plays the actual video, same as desktop, UNLESS the
+ *   connection is flagged slow (effectiveType 2g/slow-2g/3g or
+ *   saveData on) — in that case we render <img> posters instead.
+ *   Decoding video on a poor connection means stalled buffering and
+ *   wasted data; a static poster is the safer default there.
+ *   All images/videos use stable keys — CSS opacity transition
+ *   handles the crossfade, no remount flash either way.
  *
  * SAFARI / iOS AUTOPLAY
  * • muted + playsInline + a 80ms setTimeout after src assignment.
@@ -57,6 +58,7 @@
  *   New approach: rAF loop reads video.currentTime / video.duration
  *   every frame and sets fill.style.transform directly via a ref.
  *   No state updates, perfectly synced, zero re-renders.
+ *   On mobile-with-image-fallback, falls back to a timestamp-based tick.
  *
  * GPU / COMPOSITOR
  * • will-change removed from elements that are not actively animating.
@@ -90,6 +92,13 @@
  *   (<= 2 GB), and navigator.connection.effectiveType.
  *   On flagged devices: no skew animations, no hover scale on buttons,
  *   no glare rAF loop. This keeps FPS stable on budget Android phones.
+ *
+ * NETWORK SPEED DETECTION (separate from low-end device detection)
+ * • detectSlowNetwork() checks navigator.connection.effectiveType /
+ *   saveData specifically to decide image-vs-video on mobile. This is
+ *   intentionally decoupled from detectLowEnd() (which also factors in
+ *   CPU/RAM) because a fast device on a slow network should still get
+ *   the lightweight poster fallback, and vice versa.
  */
 
 import { useNavigate }                          from "react-router-dom";
@@ -199,6 +208,19 @@ const detectLowEnd = () => {
   return false;
 };
 
+/**
+ * Slow-network detector — decoupled from detectLowEnd().
+ * Used specifically to decide whether mobile renders the real
+ * <video> or falls back to a static poster <img>.
+ */
+const detectSlowNetwork = () => {
+  if (typeof navigator === "undefined") return false;
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!conn) return false;
+  if (conn.saveData) return true;
+  return ["slow-2g", "2g", "3g"].includes(conn.effectiveType);
+};
+
 /* ═══════════════════════════════════════════════════
    COMPONENT
 ═══════════════════════════════════════════════════ */
@@ -211,8 +233,9 @@ export default function VideoShowcase() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isMuted,   setIsMuted]   = useState(true);
   // Lazy initialise to avoid SSR mismatch and first-render flash on mobile
-  const [mobile,   setMobile]   = useState(detectMobile);
-  const [isLowEnd, setIsLowEnd] = useState(detectLowEnd);
+  const [mobile,      setMobile]      = useState(detectMobile);
+  const [isLowEnd,    setIsLowEnd]    = useState(detectLowEnd);
+  const [slowNetwork, setSlowNetwork] = useState(detectSlowNetwork);
 
   /* ── DOM refs ── */
   const sectionRef      = useRef(null);
@@ -277,8 +300,11 @@ export default function VideoShowcase() {
   }, []);
 
   /* ─────────────────────────────────────────────
-     EFFECT: Mobile & low-end detection (debounced)
+     EFFECT: Mobile, low-end & network detection (debounced)
      Debounce prevents setState storms during resize.
+     Also listens for connection.change so a network drop
+     mid-session correctly switches mobile from video to
+     poster fallback (and back when it recovers).
   ───────────────────────────────────────────── */
   useEffect(() => {
     let timer = null;
@@ -287,10 +313,17 @@ export default function VideoShowcase() {
       timer = setTimeout(() => {
         setMobile(detectMobile());
         setIsLowEnd(detectLowEnd());
+        setSlowNetwork(detectSlowNetwork());
       }, 150);
     };
     window.addEventListener("resize", check, { passive: true });
-    return () => { clearTimeout(timer); window.removeEventListener("resize", check); };
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    conn?.addEventListener?.("change", check);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", check);
+      conn?.removeEventListener?.("change", check);
+    };
   }, []);
 
   /* ─────────────────────────────────────────────
@@ -315,7 +348,7 @@ export default function VideoShowcase() {
   }, []);
 
   /* ─────────────────────────────────────────────
-     EFFECT: Video switching (desktop)
+     EFFECT: Video switching (desktop + mobile-with-video)
      Imperative control avoids React re-render chain.
      - Active video: set src once (guard via dataset),
        call play() after 80ms for iOS AVPlayer init.
@@ -323,9 +356,11 @@ export default function VideoShowcase() {
        ready before transition fires.
      - All others: release src + call load() to abort
        pending network requests and free decoder memory.
+     Skipped entirely when mobile + slowNetwork — that
+     path renders <img> posters instead (see render below).
   ───────────────────────────────────────────── */
   useEffect(() => {
-    if (mobile) return;
+    if (mobile && slowNetwork) return;
     const total = videos.length;
     if (!total) return;
 
@@ -337,7 +372,7 @@ export default function VideoShowcase() {
 
       if (idx === activeIdx) {
         const rawSrc    = videos[idx]?.src;
-        const targetSrc = injectCloudinaryTransforms(rawSrc, false);
+        const targetSrc = injectCloudinaryTransforms(rawSrc, mobile);
         if (!targetSrc) return;
 
         // Guard: only reload if src changed (prevents double-decode)
@@ -357,7 +392,7 @@ export default function VideoShowcase() {
       } else if (idx === nextIdx) {
         // Preload next slide so transition is seamless
         const rawSrc    = videos[idx]?.src;
-        const targetSrc = injectCloudinaryTransforms(rawSrc, false);
+        const targetSrc = injectCloudinaryTransforms(rawSrc, mobile);
         if (targetSrc && vid.dataset.vsSrc !== targetSrc) {
           vid.dataset.vsSrc = targetSrc;
           vid.src           = targetSrc;
@@ -377,7 +412,7 @@ export default function VideoShowcase() {
     });
 
     return () => clearTimeout(playTimer);
-  }, [activeIdx, videos, mobile, isMuted]);
+  }, [activeIdx, videos, mobile, slowNetwork, isMuted]);
 
   /* ─────────────────────────────────────────────
      EFFECT: Mute sync
@@ -396,6 +431,8 @@ export default function VideoShowcase() {
      New approach: rAF reads video.currentTime each
      frame and writes to fill.style.transform directly.
      Zero state updates, perfectly synced to real playback.
+     Falls back to a timestamp-based tick only when
+     mobile is showing static posters (slowNetwork).
   ───────────────────────────────────────────── */
   useEffect(() => {
     const fill = progressFillRef.current;
@@ -404,8 +441,8 @@ export default function VideoShowcase() {
     let animId = null;
     fill.style.transform = "scaleX(0)";
 
-    if (mobile) {
-      // Mobile: timestamp-based since we show images, not videos
+    if (mobile && slowNetwork) {
+      // Mobile poster fallback: timestamp-based since we show images, not videos
       const startTime = performance.now();
       const tick = (ts) => {
         const pct = Math.min((ts - startTime) / MOBILE_SLIDE_MS, 1);
@@ -414,7 +451,7 @@ export default function VideoShowcase() {
       };
       animId = requestAnimationFrame(tick);
     } else {
-      // Desktop: sync progress to actual video.currentTime
+      // Desktop or mobile-with-video: sync progress to actual video.currentTime
       const tick = () => {
         const vid = videoRefs.current[activeIdxRef.current];
         if (vid && vid.duration > 0) {
@@ -429,7 +466,7 @@ export default function VideoShowcase() {
     }
 
     return () => cancelAnimationFrame(animId);
-  }, [activeIdx, mobile]); // Restarts cleanly on every slide change
+  }, [activeIdx, mobile, slowNetwork]); // Restarts cleanly on every slide change
 
   /* ─────────────────────────────────────────────
      EFFECT: Cursor glare + parallax rAF
@@ -489,15 +526,18 @@ export default function VideoShowcase() {
 
   /* ─────────────────────────────────────────────
      EFFECT: Mobile auto-advance timer
+     Only needed for the static-poster fallback path —
+     when mobile plays the real video, handleVideoEnd
+     (via onEnded) advances the slide instead, same as desktop.
   ───────────────────────────────────────────── */
   useEffect(() => {
-    if (!mobile) return;
+    if (!mobile || !slowNetwork) return;
     const t = setTimeout(
       () => setActiveIdx((i) => (i + 1) % videos.length),
       MOBILE_SLIDE_MS,
     );
     return () => clearTimeout(t);
-  }, [activeIdx, mobile, videos.length]);
+  }, [activeIdx, mobile, slowNetwork, videos.length]);
 
   /* ── Handlers ── */
   const handleVideoEnd    = useCallback(() => setActiveIdx((i) => (i + 1) % slidesRef.current.length), []);
@@ -556,9 +596,9 @@ export default function VideoShowcase() {
           // Only pass Framer style on desktop — undefined = no MotionValue subscription
           style={!mobile ? { scale: videoScale } : undefined}
         >
-          {mobile ? (
+          {mobile && slowNetwork ? (
             /*
-             * Mobile: render all poster images with stable keys.
+             * Mobile + slow network: render poster images with stable keys.
              * CSS opacity transition (0.9s) handles crossfade — no remount flash.
              * Lazy-load non-first images to avoid competing for bandwidth.
              */
@@ -576,8 +616,8 @@ export default function VideoShowcase() {
             ))
           ) : (
             /*
-             * Desktop: all videos in DOM, stable keys.
-             * src is set imperatively in the video-switching effect.
+             * Desktop, or mobile on a normal connection: all videos in DOM,
+             * stable keys. src is set imperatively in the video-switching effect.
              * preload="none" here — the effect sets "auto"/"metadata"
              * after evaluating which slot is active/next.
              */

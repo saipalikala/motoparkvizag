@@ -87,6 +87,7 @@ const makeStorage = (folder) =>
             resource_type    : "image",
             allowed_formats  : ["jpg", "jpeg", "png", "webp", "gif"],
             transformation   : [{ width: 1920, crop: "limit", quality: "auto:good", fetch_format: "auto" }],
+            invalidate       : true,
         }),
     });
 

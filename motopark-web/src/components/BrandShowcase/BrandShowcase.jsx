@@ -9,7 +9,7 @@ const brands = [
   "/brands/MotoTorque.png",
   "/brands/NGK.png",
   "/brands/REDROOSTER.jpg",
-  "/brands/shad.png",
+//   "/brands/shad.png",
   "/brands/SMK.png",
   "/brands/VIATERRA.png",
 ];

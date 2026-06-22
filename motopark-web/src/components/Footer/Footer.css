@@ -3,11 +3,19 @@
    ================================ */
 
 .footer {
-    background: #0b1d3a;
     color: #e6e9f0;
     position: relative;
     overflow: hidden;
-    border-top: 1px solid var(--border-subtle);
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(13, 36, 78, 0.45) 0%,
+            rgba(7, 18, 38, 0.95) 60%,
+            #050b16 100%
+        );
+
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .footer * {
@@ -16,23 +24,13 @@
 
 /* ambient glow */
 .footer::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        circle at 70% 120%,
-        rgba(255, 77, 45, 0.10),
-        transparent 55%
-    );
-    pointer-events: none;
+    display: none;
 }
-
 /* ─── TOP ACCENT ─── */
 .footer-accent {
-    height: 2px;
-    background: linear-gradient(to right, transparent, #ff4d2d, transparent);
+    height: 1px;
+    background: rgba(255,255,255,0.06);
 }
-
 /* ─── INNER GRID: Brand left + Cols right ─── */
 .footer-inner {
     max-width: var(--container-max);
@@ -432,3 +430,4 @@
         height: 18px;
     }
 }
+

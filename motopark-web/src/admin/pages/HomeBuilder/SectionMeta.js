@@ -33,11 +33,11 @@ export const sectionMeta = {
         description: "Category cards navigation"
     },
 
-    BentoGrid: {
-        icon: Star,
-        title: "Featured Grid",
-        description: "Highlighted products grid"
-    },
+BentoGrid: {
+    icon: Star,
+    title: "Product Spotlight",
+    description: "Premium featured product showcase"
+},
 
     TrendingProducts: {
         icon: Tag,

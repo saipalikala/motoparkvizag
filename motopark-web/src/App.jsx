@@ -34,6 +34,7 @@ import ProtectedRoute from "@/admin/utils/ProtectedRoute";
 import "./App.css";
 import { ToastProvider } from "@/admin/components/ui/ToastProvider";
 import MaintenancePage from "@/pages/Maintenance/MaintenancePage";
+
 // ── Layout shell — lazy (Navbar/OfferBar/Footer are not needed for FCP)
 const OfferBar = lazy(() => import("@/components/OfferBar/OfferBar"));
 const Navbar   = lazy(() => import("@/components/Navbar/Navbar"));
@@ -70,7 +71,6 @@ const AdminOrders         = lazy(() => import("@/admin/pages/AdminOrders"));
 const AdminHomeLayout     = lazy(() => import("@/admin/pages/AdminHomeLayout"));
 const InventoryManager    = lazy(() => import("@/admin/pages/InventoryManager"));
 const AdminVideoShowcase  = lazy(() => import("@/admin/pages/AdminVideoShowcase"));
-
 // ── Idle prefetch — warm up likely-next pages after first load
 if (typeof window !== "undefined") {
   const prefetch = () => {

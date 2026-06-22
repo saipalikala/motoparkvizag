@@ -1,0 +1,531 @@
+/* ================================================
+   VerticalCarousel.css  — MotoPark Home Section
+   Vertical-swipe, image-only, premium feel.
+   Matches PremiumCarousel design system tokens.
+   ================================================ */
+
+/*
+ * SCOPE
+ * Full-bleed section (100vw × 100vh) under Navbar.
+ * All nav chrome belongs to Navbar.css.
+ *
+ * [D4]  CROSSFADE + VERTICAL TRANSLATE
+ *       AnimatePresence mode="sync" — both slides in DOM during transition.
+ *       Exit: opacity 0 + y up + scale 0.97.
+ *       Enter: opacity 0 + y below + scale 1.03.
+ *
+ * [D3]  DOT RAIL
+ *       Right-side vertical dot track (clickable).
+ *       Active dot has an animated progress ring via CSS clip-path / fill.
+ *
+ * [RE5] HOVER PAUSE → data-paused attribute drives animation-play-state.
+ *
+ * PERFORMANCE
+ * [C1]  contain on .vc and .vc-slide
+ * [C3]  will-change only on .vc-slide--active
+ * [C4]  backdrop-filter removed on mobile
+ * [C5]  transform-style: flat
+ * [C6]  aspect-ratio on bg img
+ * [C8]  Skeleton shimmer
+ * [C9]  Screen reader clip
+ * [C10] data-page-hidden pauses animations
+ */
+
+/* ─── Tokens (mirrors PremiumCarousel root vars) ──────────────────────────── */
+:root {
+    --vc-accent:      #ff5500;
+    --vc-accent-dk:   #cc4400;
+    --vc-text:        #ffffff;
+    --vc-text-sub:    rgba(255,255,255,0.7);
+    --vc-text-muted:  rgba(255,255,255,0.38);
+    --vc-border:      rgba(255,255,255,0.11);
+    --vc-bg:          #0b1d3a;
+    --vc-dur-fast:    160ms;
+    --vc-dur-mid:     300ms;
+    --vc-ease:        cubic-bezier(0.16,1,0.3,1);
+    --vc-radius:      100px;
+}
+
+/* ─── Section ─────────────────────────────────────────────────────────────── */
+.vc {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    min-height: clamp(500px, 80vh, 900px);
+    max-height: 1000px;
+    margin: 0;
+    padding: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-style: flat;           /* [C5] */
+    background: var(--vc-bg);
+    overflow: hidden;
+    cursor: grab;
+    contain: layout style paint;     /* [C1] */
+    outline: none;
+    touch-action: pan-x;             /* allow vertical swipe, block horizontal page scroll */
+}
+.vc:active { cursor: grabbing; }
+
+/* ─── Slide ───────────────────────────────────────────────────────────────── */
+.vc-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    content-visibility: hidden;
+    contain: layout style paint;
+    z-index: 0;
+}
+.vc-slide--active {
+    content-visibility: visible;
+    will-change: transform, opacity;  /* [C3] */
+    z-index: 1;
+}
+
+/* ─── Background wrap ─────────────────────────────────────────────────────── */
+.vc-bg-wrap {
+    position: absolute;
+    inset: -8%;
+    width: 116%;
+    height: 116%;
+}
+
+/* ─── Background image [C6] ──────────────────────────────────────────────── */
+.vc-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    aspect-ratio: 16 / 9;
+    transform: translateZ(0);
+    animation: none;
+}
+.vc-slide--active .vc-bg-img {
+    animation: vcZoom 12s ease-out forwards, vcFadeIn 0.9s ease forwards;
+}
+@keyframes vcZoom {
+    from { transform: translateZ(0) scale(1.0); }
+    to   { transform: translateZ(0) scale(1.1); }
+}
+@keyframes vcFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* [C10]: pause on hidden tab */
+:root:is([data-page-hidden="true"]) .vc-bg-img,
+:root:is([data-page-hidden="true"]) .vc-dot-fill,
+:root:is([data-page-hidden="true"]) .vc-skeleton,
+:root:is([data-page-hidden="true"]) .vc-scroll-line::after {
+    animation-play-state: paused;
+}
+
+/* ─── Overlays ────────────────────────────────────────────────────────────── */
+.vc-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(to right,
+            rgba(11,29,58,0.72) 0%,
+            rgba(11,29,58,0.28) 55%,
+            rgba(11,29,58,0.04) 100%);
+    pointer-events: none;
+}
+.vc-overlay-bottom {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(to bottom,
+            transparent 50%,
+            rgba(11,29,58,0.55) 100%);
+    pointer-events: none;
+}
+
+/* ─── Content ─────────────────────────────────────────────────────────────── */
+.vc-content {
+    position: absolute;
+    left: 72px;
+    bottom: 108px;
+    max-width: 520px;
+    z-index: 2;
+    color: var(--vc-text);
+}
+
+/* Eyebrow */
+.vc-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--vc-accent);
+    margin-bottom: 18px;
+}
+.vc-eyebrow::before {
+    content: '';
+    width: 22px;
+    height: 2px;
+    background: var(--vc-accent);
+    border-radius: 2px;
+    display: block;
+}
+
+/* Title */
+.vc-title {
+    font-family: 'Sakana', -apple-system, sans-serif;
+    font-size: clamp(38px, 5vw, 72px);
+    font-weight: 400;
+    color: var(--vc-text);
+    letter-spacing: -0.03em;
+    line-height: 0.93;
+    margin-bottom: 20px;
+}
+
+/* Subtitle */
+.vc-subtitle {
+    font-size: clamp(14px, 1.5vw, 17px);
+    color: var(--vc-text-sub);
+    line-height: 1.65;
+    margin-bottom: 34px;
+    max-width: 380px;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.vc-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+.vc-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--vc-accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 13px 26px;
+    border-radius: var(--vc-radius);
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--vc-dur-fast) ease, transform var(--vc-dur-fast) ease;
+}
+.vc-cta:hover { opacity: 0.87; transform: translateY(-2px); }
+.vc-cta:active { transform: translateY(0); }
+
+.vc-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.07);
+    color: var(--vc-text-sub);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 13px 22px;
+    border-radius: var(--vc-radius);
+    border: 1px solid var(--vc-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    transition:
+        background var(--vc-dur-fast) ease,
+        color      var(--vc-dur-fast) ease,
+        border-color var(--vc-dur-fast) ease;
+}
+.vc-ghost:hover {
+    background: rgba(255,255,255,0.13);
+    color: var(--vc-text);
+    border-color: rgba(255,255,255,0.24);
+}
+
+/* ─── Slide meta (counter) ────────────────────────────────────────────────── */
+.vc-meta {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+.vc-meta-cur   { color: var(--vc-accent); font-weight: 700; font-size: 14px; }
+.vc-meta-total { color: var(--vc-text-muted); }
+.vc-meta-sep   { width: 16px; height: 1px; background: rgba(255,255,255,0.2); }
+
+/* ─── Right rail — dot track ─────────────────────────────────────────────── */
+.vc-dots {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.vc-dot {
+    width: 2px;
+    height: 18px;
+    background: rgba(255,255,255,0.18);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    /* Accessible hit target */
+    min-width: 20px;
+    transition: height var(--vc-dur-mid) var(--vc-ease),
+                background var(--vc-dur-mid) var(--vc-ease);
+}
+.vc-dot--active {
+    height: 36px;
+    background: rgba(255,255,255,0.25);
+}
+
+/* Animated fill — progress bar inside dot */
+.vc-dot-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: var(--vc-accent);
+    border-radius: 2px;
+    animation: vcDotFill linear forwards;
+    animation-duration: 5500ms; /* matches AUTO_DURATION_MS */
+}
+/* [RE5]: Pause on hover */
+.vc[data-paused] .vc-dot-fill {
+    animation-play-state: paused;
+}
+@keyframes vcDotFill {
+    from { height: 0%; }
+    to   { height: 100%; }
+}
+
+/* ─── Right rail — nav arrows ────────────────────────────────────────────── */
+.vc-arrows {
+    position: absolute;
+    right: 28px;
+    bottom: 80px;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.vc-arrow {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--vc-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+        background    var(--vc-dur-fast) ease,
+        color         var(--vc-dur-fast) ease,
+        border-color  var(--vc-dur-fast) ease,
+        transform     var(--vc-dur-fast) ease;
+}
+.vc-arrow:hover {
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    border-color: rgba(255,255,255,0.25);
+    transform: scale(1.08);
+}
+.vc-arrow:active { transform: scale(0.92); }
+
+/* ─── Scroll hint ─────────────────────────────────────────────────────────── */
+.vc-scroll-hint {
+    position: absolute;
+    bottom: 36px;
+    left: 72px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+    /* Hide after user interacts via JS class — or just let it fade with the overlay */
+    pointer-events: none;
+}
+
+.vc-scroll-line {
+    width: 1px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+}
+.vc-scroll-line::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--vc-accent);
+    border-radius: 1px;
+    animation: vcScrollPulse 2s cubic-bezier(0.4,0,0.2,1) infinite;
+}
+@keyframes vcScrollPulse {
+    0%   { top: -100%; opacity: 1; }
+    60%  { top: 100%;  opacity: 1; }
+    61%  { top: -100%; opacity: 0; }
+    100% { top: -100%; opacity: 0; }
+}
+
+.vc-scroll-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+/* ─── Skeleton [C8] ───────────────────────────────────────────────────────── */
+.vc-skeleton {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    min-height: clamp(500px, 80vh, 900px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, #0b1d3a 0px, #0f2547 300px, #0b1d3a 600px);
+    background-size: 600px 100%;
+    animation: vcShimmer 1.6s ease-in-out infinite;
+    contain: layout style paint;
+}
+@keyframes vcShimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+}
+
+/* ─── Screen reader [C9] ──────────────────────────────────────────────────── */
+.vc-sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ─── Focus ───────────────────────────────────────────────────────────────── */
+.vc:focus-visible            { outline: 2px solid var(--vc-accent); outline-offset: -2px; }
+.vc-dot:focus-visible        { outline: 2px solid var(--vc-accent); outline-offset: 3px; }
+.vc-arrow:focus-visible      { outline: 2px solid var(--vc-accent); outline-offset: 2px; }
+
+/* ─── Mobile [C4] ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .vc {
+        height: 100svh;
+        max-height: none;
+        touch-action: none; /* allow full swipe capture */
+    }
+
+    /* Repositioned content */
+    .vc-content {
+        left: 20px;
+        right: 20px;
+        bottom: 96px;
+        max-width: 100%;
+    }
+    .vc-subtitle { max-width: 100%; font-size: 14px; }
+
+    /* Remove expensive backdrop-filter on mobile [C4] */
+    .vc-ghost,
+    .vc-arrow {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(11,29,58,0.5);
+    }
+
+    /* Dot track repositioned to bottom-right */
+    .vc-dots {
+        right: auto;
+        left: 50%;
+        top: auto;
+        bottom: 28px;
+        transform: translateX(-50%);
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    /* Horizontal dot on mobile */
+    .vc-dot {
+        width: 28px;
+        height: 3px;
+        min-width: 0;
+        min-height: 20px;
+    }
+    .vc-dot--active {
+        width: 44px;
+        height: 3px;
+    }
+    /* Fill goes left→right on horizontal dot */
+    .vc-dot-fill {
+        width: 0%;
+        height: 100%;
+        animation-name: vcDotFillH;
+    }
+    @keyframes vcDotFillH {
+        from { width: 0%; }
+        to   { width: 100%; }
+    }
+
+    /* Scroll hint: hide on mobile */
+    .vc-scroll-hint { display: none; }
+
+    /* Faster image fade on mobile */
+    .vc-slide--active .vc-bg-img {
+        animation: vcFadeIn 0.4s ease forwards;
+    }
+}
+
+/* ─── Tablet ─────────────────────────────────────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .vc-content { left: 48px; max-width: 440px; }
+    .vc-scroll-hint { left: 48px; }
+}
+
+/* ─── Ultra-wide ─────────────────────────────────────────────────────────── */
+@media (min-width: 1921px) {
+    .vc { height: 880px; max-height: 880px; }
+    .vc-content { max-width: 640px; }
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .vc-bg-img         { animation: none; transform: translateZ(0); }
+    .vc-skeleton       { animation: none; background: var(--vc-bg); }
+    .vc-dot-fill       { animation: none; height: 100%; width: 100%; }
+    .vc-scroll-line::after { animation: none; }
+    .vc-slide {
+        transition-duration: 0.01ms !important;
+        animation-duration:  0.01ms !important;
+    }
+}
+.vc {
+    touch-action: pan-y; /* let normal page scroll through */
+}

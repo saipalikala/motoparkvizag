@@ -1,126 +1,27 @@
 /**
- * PremiumCarousel.jsx — Perf-optimized production build
+ * PremiumCarousel.jsx — MotoPark Hero Section
  *
- * ─── OPTIMIZATION LEGEND ──────────────────────────────────────────────────────
+ * IMAGE ONLY. Video support removed.
+ * Each slide serves desktopImage (> 768 px) or mobileImage (≤ 768 px).
+ * Falls back: mobileImage → desktopImage, desktopImage → legacy image field.
  *
- * [CL1] CLOUDINARY CACHE-BUSTING
- *       Uses `updatedAt` timestamp (if present in API data) as a Cloudinary
- *       version param: `/v<timestamp>/` in the URL path. This forces CDN
- *       cache invalidation only when the image has actually changed — unlike
- *       a random cache-buster that defeats CDN caching entirely. Also strips
- *       any existing stale `?v=` query params before appending our own.
- *
- * [CL2] CLOUDINARY RESPONSIVE TRANSFORMS
- *       Appends f_auto,q_auto,w_<breakpoint>,dpr_auto to every Cloudinary URL.
- *       f_auto = best format (WebP/AVIF on supported browsers).
- *       q_auto = Cloudinary's perceptual quality algorithm (saves 30-60%).
- *       w_<breakpoint> = right-sized image for the viewport width.
- *       dpr_auto = serves 1x on low-end, 2x on retina — prevents loading 4MB
- *       images on a 375px screen. Non-Cloudinary URLs pass through unchanged.
- *
- * [CL3] SRCSET ON CLOUDINARY IMAGES
- *       Generates a proper srcset (640, 960, 1280, 1920) + sizes attribute so
- *       the browser picks the right image rather than always fetching 1920px.
- *
- * [IM1] FIRST-SLIDE PRELOAD ONLY
- *       Only the very first slide's image is preloaded with fetchPriority="high".
- *       Slides 2-5 are preloaded lazily after a 300ms idle timeout so the first
- *       paint is never blocked by non-visible images. Previously ALL images were
- *       preloaded simultaneously — on slow 3G this competed with the first slide.
- *
- * [IM2] INTERSECTION-BASED LAZY BACKGROUND
- *       Non-active slides no longer have their img src set at all (they render
- *       a blank div). Only the active slide and the adjacent ±1 neighbour are
- *       given actual `src` values. This prevents the browser from fetching all
- *       5 carousel images on load.
- *
- * [RE1] SPLIT INDEX STATE FROM ANIMATION STATE
- *       Previously a single setIndex() triggered re-renders in every child.
- *       Now `direction` lives in a ref (not state) and is only passed to the
- *       motion.div via `custom` prop — no extra render cycle needed.
- *
- * [RE2] PAUSE/UNPAUSE VIA REF, NOT STATE
- *       `paused` was a boolean state that triggered a full re-render on every
- *       mouseenter/mouseleave. Replaced with pausedRef.current = true/false +
- *       a shallow `forcePauseRender` boolean state that only updates the dots
- *       fill animation (the only visible thing that changes on pause).
- *
- * [RE3] DOTS BAR ISOLATION
- *       DotsBar is memoized and receives only primitive props (index number,
- *       paused boolean, slide count). Previously received the full `slides`
- *       array — any API re-hydration caused DotsBar to re-render even when
- *       nothing visible changed.
- *
- * [RE4] SLIDE_VARIANTS STABLE REFERENCE
- *       SLIDE_VARIANTS was a useMemo inside the component but referenced
- *       `isMobileDevice` which changed on every resize event — causing the
- *       entire AnimatePresence tree to remount. Now variants only rebuild when
- *       the mobile breakpoint actually crosses (boolean flip), not on every px.
- *
- * [AN1] FRAMER MOTION LAYOUT PROP REMOVED
- *       The motion.div had no `layout` prop but was inside AnimatePresence
- *       mode="wait", which still does a layout read on every entry. Replaced
- *       with mode="popLayout" which skips the synchronous layout measurement.
- *
- * [AN2] TRANSITION OBJECT STABLE REFERENCE
- *       `transition={{ duration: 0.7, ease: EASE }}` was an inline object,
- *       causing Framer Motion to diff it on every render. Extracted to a module
- *       constant so referential equality is always true.
- *
- * [AN3] CSS-ONLY KEN BURNS — NO JS
- *       The slow-zoom animation is driven entirely by CSS keyframes (already in
- *       the CSS). The JS was doing nothing extra — confirmed no duplicate logic.
- *
- * [SW1] SWIPEABLE DELTA THRESHOLD
- *       Added delta:10 and preventScrollOnSwipe:true to useSwipeable. Without
- *       delta, a 1px drag triggered a slide change. Without preventScrollOnSwipe,
- *       Android Chrome's pull-to-refresh competed with horizontal swipes causing
- *       jank and accidental refreshes.
- *
- * [VIS1] PAGE VISIBILITY API
- *       Pause autoplay when the tab is hidden (user switches tabs/apps). Without
- *       this the timer fires in the background, burns CPU/GPU, and the user
- *       returns to a different slide than expected. ResumE on visibilitychange.
- *
- * [MEM1] TIMER CLEANUP ON UNMOUNT
- *       Existing clearInterval was correct but the visibility listener was
- *       missing from cleanup. Added visibility listener to the cleanup fn.
- *
- * [MEM2] VIDEO BUFFER RELEASE
- *       VideoBackground already did v.src = ""; v.load() on unmount — retained.
- *       Added src="" on poster img to allow GC of the decoded bitmap.
- *
- * [NET1] SINGLE API CALL GUARD
- *       AbortController already present. Added a module-level `_fetching` flag
- *       to prevent duplicate in-flight requests when React 18 StrictMode double-
- *       invokes effects in development. The second effect sees the flag and bails.
- *
- * [SSR1] HYDRATION-SAFE MOBILE DETECTION
- *       Already uses lazy useState initializer — retained. Added matchMedia for
- *       more accurate mobile detection (width alone misses some landscape tablets).
- *
- * [A11] ARIA LIVE REGION
- *       Added aria-live="polite" on a visually-hidden span that announces the
- *       current slide title on change. Screen readers previously got no
- *       announcement when autoplay advanced the carousel.
- *
- * ─── RETAINED FROM PREVIOUS BUILD ────────────────────────────────────────────
- * [F1] SSR / hydration crash fix (lazy useState)
- * [F2] Resize handler stability (useCallback)
- * [F3] Fetch r.ok guard
- * [F4] HMR cache invalidation
- * [O1] enforceCarouselOrder
- * [O2] preload="none" on all videos
- * [O3] data-saver → video → image
- * [A]  v.load() only on readyState === 0
- * [B]  Auto-advance skips video slides; waits for onEnded
- * [C]  Video error → poster fallback
- * [N1] Blur removed on mobile (SLIDE_VARIANTS)
- * [N2] Single navigate instance
- * [N3] Video → poster on mobile
- * [U1] Ken Burns CSS
- * [U2] Blur cross-fade (desktop only) [N1]
- * [U3] Netflix mute toggle
+ * ALL RETAINED OPTIMISATIONS:
+ * [CL1-3] Cloudinary versioning / transforms / srcset
+ * [IM1]   Preload strategy
+ * [RE1-4] Ref-based direction / mobile / pause
+ * [AN2]   Stable transition objects / CSS Ken Burns
+ * [SW1]   Native pointer events (usePointerDrag)
+ * [VIS1]  Page Visibility API
+ * [MEM1]  Timer cleanup
+ * [NET1]  In-flight fetch guard
+ * [SSR1]  Hydration-safe mobile detection
+ * [D2]    Arrows hidden on desktop
+ * [D3]    Progress bar segments
+ * [D4]    Crossfade + scale transition
+ * [D5]    Content animation
+ * [RE5]   Hover pause via data attribute
+ * [A11a]  ARIA live region
+ * [A11b]  Keyboard navigation
  */
 
 import {
@@ -132,60 +33,45 @@ import {
     memo,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate }  from "react-router-dom";
-import { useSwipeable } from "react-swipeable";
+import { useNavigate } from "react-router-dom";
 import "./PremiumCarousel.css";
-import { API }                       from "@/config/api";
-import useParallax                   from "@/hooks/useParallax";
-import { cachedFetch }               from "@/lib/apiCache";
+import { API }         from "@/config/api";
+import useParallax     from "@/hooks/useParallax";
+import { cachedFetch } from "@/lib/apiCache";
 
-// ─── HMR CACHE INVALIDATION [F4] ─────────────────────────────────────────────
+// ─── HMR CACHE INVALIDATION ──────────────────────────────────────────────────
 if (import.meta.hot) {
     import.meta.hot.accept(() => { _fetching = false; });
 }
 
-// ─── MODULE-LEVEL FETCH GUARD [NET1] ─────────────────────────────────────────
-// React 18 StrictMode double-invokes effects. This flag prevents two concurrent
-// API calls being made to the carousel endpoint on first mount.
+// ─── FETCH GUARD [NET1] ───────────────────────────────────────────────────────
+// NOTE: module-level guard only prevents duplicate fetches within the same
+// render cycle. It is reset in the cleanup so remounts always re-fetch.
 let _fetching = false;
 
 // ─── FALLBACK ASSETS ──────────────────────────────────────────────────────────
 const slide1 = "/assets/carousel/carousel-1.svg";
 const slide2 = "/assets/carousel/carousel-2.svg";
 const slide3 = "/assets/carousel/carousel-3.svg";
-const video1 = "/assets/carousel/carousel-video-1.mp4";
-const video2 = "/assets/carousel/carousel-video-2.mp4";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const EASE             = [0.22, 1, 0.36, 1];
+const EASE_OUT         = [0.0, 0.0, 0.2, 1.0];
 const AUTO_DURATION_MS = 5000;
 
-// [AN2]: Stable object reference — Framer Motion skips the diff on every render
-const SLIDE_TRANSITION = { duration: 0.65, ease: EASE };
+// Stable Framer Motion transition refs [AN2]
+const SLIDE_TRANSITION   = { duration: 0.7,  ease: EASE };
+const CONTENT_TR_EYEBROW = { duration: 0.55, delay: 0.1, ease: EASE_OUT };
+const CONTENT_TR_TITLE   = { duration: 0.65, delay: 0.2, ease: EASE_OUT };
+const CONTENT_TR_SUB     = { duration: 0.65, delay: 0.3, ease: EASE_OUT };
+const CONTENT_TR_ACTIONS = { duration: 0.65, delay: 0.4, ease: EASE_OUT };
 
-// [O1]: Enforce image/video alternating pattern
-const CAROUSEL_PATTERN = ["image", "video", "image", "video", "image"];
-
-const enforceCarouselOrder = (raw) => {
-    if (!Array.isArray(raw) || raw.length === 0) return raw;
-    return raw
-        .slice(0, CAROUSEL_PATTERN.length)
-        .map((slide, i) => ({ ...slide, type: CAROUSEL_PATTERN[i] }));
-};
-
-// [O3]: Data saver detection
-const IS_DATA_SAVER =
-    typeof navigator !== "undefined" &&
-    navigator.connection?.saveData === true;
-
-// ─── FALLBACK DATA ────────────────────────────────────────────────────────────
-const fallbackSlides = enforceCarouselOrder([
-    { id: 1, type: "image", title: "Premium Riding Helmets",  subtitle: "Engineered for safety, designed for style",  cta: "Shop Helmets", image: slide1, route: "helmets"  },
-    { id: 2, type: "video", title: "Feel The Ride",           subtitle: "Experience the road like never before",      cta: "Explore Now",  video: video1, image: slide1, route: "helmets"  },
-    { id: 3, type: "image", title: "All Weather Jackets",     subtitle: "Protection for every ride, every season",   cta: "Shop Jackets", image: slide2, route: "jackets"  },
-    { id: 4, type: "video", title: "Born For Adventure",      subtitle: "Every trail. Every terrain. Every time.",   cta: "Shop Now",     video: video2, image: slide2, route: "jackets"  },
-    { id: 5, type: "image", title: "Travel Luggage Systems",  subtitle: "Adventure-ready gear built to last",        cta: "Shop Luggage", image: slide3, route: "luggage" },
-]);
+// ─── FALLBACK SLIDES (image-only) ─────────────────────────────────────────────
+const fallbackSlides = [
+    { id: 1, title: "Premium Riding Helmets", subtitle: "Engineered for safety, designed for style", cta: "Shop Helmets", desktopImage: slide1, mobileImage: slide1, route: "helmets"  },
+    { id: 2, title: "All Weather Jackets",    subtitle: "Protection for every ride, every season",  cta: "Shop Jackets", desktopImage: slide2, mobileImage: slide2, route: "jackets"  },
+    { id: 3, title: "Travel Luggage Systems", subtitle: "Adventure-ready gear built to last",       cta: "Shop Luggage", desktopImage: slide3, mobileImage: slide3, route: "luggage"  },
+];
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 const resolveAsset = (src) => {
@@ -195,252 +81,116 @@ const resolveAsset = (src) => {
     return `${API}${src.startsWith("/") ? "" : "/"}${src}`;
 };
 
-// [CL1]: Inject Cloudinary version stamp using updatedAt to bust stale CDN cache.
-// Only modifies res.cloudinary.com URLs — local/other CDN URLs pass through.
-// Inserts /v<timestamp>/ into the URL path rather than a query string so it's
-// compatible with Cloudinary's signed URL scheme.
 const stampCloudinaryVersion = (src, updatedAt) => {
-    if (!src) return null;
-    if (!updatedAt) return src;
-    if (!src.includes("res.cloudinary.com")) return src;
+    if (!src || !updatedAt || !src.includes("res.cloudinary.com")) return src;
     const ts = Math.floor(new Date(updatedAt).getTime() / 1000);
     if (!ts) return src;
-    // If there's already a /v<number>/ in the URL, replace it
-    if (/\/v\d+\//.test(src)) {
-        return src.replace(/\/v\d+\//, `/v${ts}/`);
-    }
-    // Otherwise insert before the filename portion
+    if (/\/v\d+\//.test(src)) return src.replace(/\/v\d+\//, `/v${ts}/`);
     return src.replace(/(\/upload\/)/, `$1v${ts}/`);
 };
 
-// [CL2]: Append Cloudinary transformation params for auto format, quality, and
-// responsive width. Only applied to res.cloudinary.com URLs. On non-Cloudinary
-// sources the original URL is returned as-is.
 const CLOUDINARY_WIDTHS = [640, 960, 1280, 1920];
-
 const cloudinaryTransform = (src, width = 1280) => {
-    if (!src) return null;
-    if (!src.includes("res.cloudinary.com")) return src;
-    // Avoid double-transforming if already has transformation params
+    if (!src || !src.includes("res.cloudinary.com")) return src;
     if (src.includes("/f_auto") || src.includes("f_auto,")) return src;
-    // Insert transformation before the version or upload path segment
-    const transforms = `f_auto,q_auto,w_${width},dpr_auto`;
-    return src.replace(/(\/upload\/)/, `$1${transforms}/`);
+    return src.replace(/(\/upload\/)/, `$1f_auto,q_auto,w_${width},dpr_auto/`);
 };
-
-// [CL3]: Build srcset for Cloudinary images
 const buildCloudinarySrcset = (src) => {
     if (!src || !src.includes("res.cloudinary.com")) return undefined;
-    return CLOUDINARY_WIDTHS
-        .map(w => `${cloudinaryTransform(src, w)} ${w}w`)
-        .join(", ");
+    return CLOUDINARY_WIDTHS.map(w => `${cloudinaryTransform(src, w)} ${w}w`).join(", ");
 };
 
-// ─── STATIC ICONS (module-level — never recreated) ───────────────────────────
-const ICON_CHEVRON_LEFT = (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M15 18l-6-6 6-6"/>
-    </svg>
-);
-const ICON_CHEVRON_RIGHT = (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M9 18l6-6-6-6"/>
-    </svg>
-);
+/**
+ * Pick the correct image URL for the current viewport.
+ * Falls back: mobileImage → desktopImage → legacy image field.
+ */
+const resolveSlideImage = (slide, isMobile) => {
+    if (isMobile) {
+        return slide.mobileImage || slide.desktopImage || slide.image || null;
+    }
+    return slide.desktopImage || slide.image || null;
+};
+
+/**
+ * Normalise API response — ensure every slide has desktopImage / mobileImage.
+ * Handles legacy DB documents that only have `image`.
+ */
+const normaliseSlides = (raw) => {
+    if (!Array.isArray(raw) || raw.length === 0) return fallbackSlides;
+    return raw.map(s => ({
+        ...s,
+        desktopImage: s.desktopImage || s.image || "",
+        mobileImage:  s.mobileImage  || s.desktopImage || s.image || "",
+    }));
+};
+
+// ─── STATIC ICONS ─────────────────────────────────────────────────────────────
 const ICON_ARROW_RIGHT = (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-);
-const ICON_PLAY = (
-    <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor" aria-hidden="true">
-        <path d="M0 0L10 6L0 12V0Z"/>
-    </svg>
-);
-const ICON_MUTED = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-        <line x1="23" y1="9" x2="17" y2="15"/>
-        <line x1="17" y1="9" x2="23" y2="15"/>
-    </svg>
-);
-const ICON_UNMUTED = (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        <path d="M2.5 7H11.5M7.5 3L11.5 7L7.5 11"
+            stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
-// ─── VIDEO BACKGROUND ─────────────────────────────────────────────────────────
-const VideoBackground = memo(({ src, poster, updatedAt, isPaused, isMuted, onEnded, isMobile }) => {
-    const videoRef    = useRef(null);
-    const rafRef      = useRef(null);
-    const [errored, setErrored] = useState(false);
+// ─── POINTER DRAG HOOK [SW1] ──────────────────────────────────────────────────
+function usePointerDrag({ onNext, onPrev, sectionRef }) {
+    const drag = useRef({ active: false, startX: 0, startY: 0, startTime: 0, isH: null });
 
-    // [CL1]: version-stamp the poster to bust Cloudinary CDN cache
-    const resolvedSrc    = useMemo(() => resolveAsset(src),                                       [src]);
-    const resolvedPoster = useMemo(() => stampCloudinaryVersion(resolveAsset(poster), updatedAt), [poster, updatedAt]);
+    const onPointerDown = useCallback((e) => {
+        if (e.button !== 0 && e.pointerType === "mouse") return;
+        drag.current = { active: true, startX: e.clientX, startY: e.clientY, startTime: performance.now(), isH: null };
+        sectionRef.current?.setPointerCapture?.(e.pointerId);
+    }, [sectionRef]);
 
-    // All hooks MUST be declared before any conditional return (Rules of Hooks).
-    // When isMobile=true these effects are no-ops because videoRef.current is null
-    // (no <video> element is rendered in the mobile branch).
+    const onPointerMove = useCallback((e) => {
+        const d = drag.current;
+        if (!d.active) return;
+        const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
+        if (d.isH === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+            d.isH = Math.abs(dx) >= Math.abs(dy);
+        }
+        if (!d.isH) return;
+        e.preventDefault();
+    }, []);
 
-    // Video init & cleanup
-    useEffect(() => {
-        const v = videoRef.current;
-        if (!v) return; // no-op on mobile — no <video> mounted
+    const onPointerUp = useCallback((e) => {
+        const d = drag.current;
+        if (!d.active) return;
+        d.active = false;
+        if (!d.isH) return;
+        const dx  = e.clientX - d.startX;
+        const vel = Math.abs(dx) / Math.max(performance.now() - d.startTime, 1);
+        if (Math.abs(dx) > 40 || vel > 0.3) dx < 0 ? onNext() : onPrev();
+    }, [onNext, onPrev]);
 
-        rafRef.current = requestAnimationFrame(() => {
-            if (v.readyState === 0) v.load(); // [A]
-            const play = () => v.play().catch(() => {});
-            if (v.readyState >= 1) play();
-            else v.addEventListener("loadedmetadata", play, { once: true });
-        });
+    return { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp };
+}
 
-        return () => {
-            cancelAnimationFrame(rafRef.current);
-            if (v) {
-                v.pause();
-                v.src = ""; // [MEM2]: release decode buffer
-                v.load();
-            }
-        };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // Sync muted imperatively — React's `muted` prop is unreliable post-mount
-    useEffect(() => {
-        const v = videoRef.current;
-        if (v) v.muted = isMuted; // no-op on mobile
-    }, [isMuted]);
-
-    // Hover pause — driven by prop, no state here
-    useEffect(() => {
-        const v = videoRef.current;
-        if (!v) return; // no-op on mobile
-        if (isPaused) { v.pause(); }
-        else if (v.readyState >= 2) { v.play().catch(() => {}); }
-    }, [isPaused]);
-
-    // [N3]: Mobile renders a still poster only — zero video bytes fetched.
-    // Placed AFTER all hooks so hook call count is always identical.
-    if (isMobile) {
-        if (!resolvedPoster) return null;
-        return (
-            <img
-                src={resolvedPoster}
-                srcSet={buildCloudinarySrcset(resolvedPoster)}
-                sizes="100vw"
-                alt=""
-                className="carousel-bg-img"
-                aria-hidden="true"
-                loading="eager"
-                fetchPriority="auto"
-                decoding="async"
-                width="1920"
-                height="1080"
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-        );
-    }
-
-    // [C]: graceful poster fallback
-    if (errored) {
-        if (!resolvedPoster) return null;
-        return (
-            <img
-                src={resolvedPoster}
-                alt=""
-                className="carousel-bg-img"
-                aria-hidden="true"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-            />
-        );
-    }
-
-    if (!resolvedSrc) return null;
-
-    return (
-        <video
-            ref={videoRef}
-            className="carousel-bg-img carousel-bg-video"
-            poster={resolvedPoster || undefined}
-            muted={isMuted}
-            loop={false}     // [B]: onEnded drives auto-advance
-            playsInline
-            preload="none"   // [O2]: only active slide's video loads
-            aria-hidden="true"
-            onEnded={onEnded}
-            onError={() => setErrored(true)}
-        >
-            <source src={resolvedSrc} type="video/mp4"/>
-            <source src={resolvedSrc.replace(/\.mp4$/i, ".webm")} type="video/webm"/>
-        </video>
-    );
-});
-VideoBackground.displayName = "VideoBackground";
-
-// ─── MUTE BUTTON [U3] ────────────────────────────────────────────────────────
-const MuteButton = memo(({ isMuted, onToggle }) => (
-    <motion.button
-        className="carousel-mute-btn"
-        onClick={onToggle}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.5, ease: EASE }}
-        aria-label={isMuted ? "Unmute video" : "Mute video"}
-        title={isMuted ? "Unmute" : "Mute"}
-    >
-        {isMuted ? ICON_MUTED : ICON_UNMUTED}
-    </motion.button>
-));
-MuteButton.displayName = "MuteButton";
-
-// ─── SLIDE CONTENT ────────────────────────────────────────────────────────────
-// [N2]: Single navigate instance passed as prop — no internal useNavigate().
-const SlideContent = memo(({ slide, onNavigate }) => (
+// ─── SLIDE CONTENT [D5] ───────────────────────────────────────────────────────
+const SlideContent = memo(({ slide, onNavigateCta, onNavigateStore }) => (
     <div className="carousel-content">
-        <motion.span
-            className="carousel-eyebrow"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
-        >
+        <motion.span className="carousel-eyebrow"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }} transition={CONTENT_TR_EYEBROW}>
             MotoPark Collection
         </motion.span>
-        <motion.h2
-            className="carousel-title"
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25, ease: EASE }}
-        >
+        <motion.h2 className="carousel-title"
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }} transition={CONTENT_TR_TITLE}>
             {slide.title}
         </motion.h2>
-        <motion.p
-            className="carousel-subtitle"
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
-        >
+        <motion.p className="carousel-subtitle"
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }} transition={CONTENT_TR_SUB}>
             {slide.subtitle}
         </motion.p>
-        <motion.div
-            className="carousel-actions"
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
-        >
-            <button
-                className="carousel-cta"
-                onClick={() => onNavigate(`/category/${slide.route}`)}
-            >
+        <motion.div className="carousel-actions"
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }} transition={CONTENT_TR_ACTIONS}>
+            <button className="carousel-cta" onClick={onNavigateCta}>
                 {slide.cta || "Explore Collection"}{ICON_ARROW_RIGHT}
             </button>
-            <button
-                className="carousel-cta-ghost"
-                onClick={() => onNavigate("/store")}
-            >
+            <button className="carousel-cta-ghost" onClick={onNavigateStore}>
                 View All Gear
             </button>
         </motion.div>
@@ -448,64 +198,44 @@ const SlideContent = memo(({ slide, onNavigate }) => (
 ));
 SlideContent.displayName = "SlideContent";
 
-// ─── DOTS BAR ─────────────────────────────────────────────────────────────────
-// [RE3]: Only receives primitives — no full slides array — so memoization
-// actually prevents re-renders when the parent updates unrelated state.
-const DotsBar = memo(({
-    count, slideTitles, slideTypes, index, paused, isCurrentVideo, onGoTo, currentTitle,
-}) => (
-    <div className="carousel-bar">
-        <div className="carousel-dots" role="tablist" aria-label="Carousel slides">
-            {Array.from({ length: count }, (_, i) => {
-                const showFill = i === index && !isCurrentVideo;
-                return (
-                    <button
-                        key={i}
-                        role="tab"
-                        aria-selected={i === index}
-                        aria-label={`Go to slide ${i + 1}: ${slideTitles[i]}`}
-                        className={[
-                            "carousel-dot",
-                            i === index             ? "carousel-dot--active" : "",
-                            slideTypes[i] === "video" ? "carousel-dot--video"  : "",
-                        ].filter(Boolean).join(" ")}
-                        onClick={() => onGoTo(i, i > index ? 1 : -1)}
-                    >
-                        {showFill && (
-                            <span
-                                className="carousel-dot-fill"
-                                style={{ animationDuration: paused ? "0s" : `${AUTO_DURATION_MS}ms` }}
-                            />
-                        )}
-                        {i === index && isCurrentVideo && (
-                            <span className="carousel-dot-fill carousel-dot-fill--video-active"/>
-                        )}
-                        {slideTypes[i] === "video" && i !== index && (
-                            <span className="carousel-dot-video-icon" aria-hidden="true"/>
-                        )}
-                    </button>
-                );
-            })}
-        </div>
-        <p className="carousel-bar-title">{currentTitle}</p>
+// ─── PROGRESS BAR [D3] ────────────────────────────────────────────────────────
+const ProgressBar = memo(({ count, index, paused, onGoTo, currentIndex }) => (
+    <div className="carousel-progress" role="tablist" aria-label="Carousel slides">
+        {Array.from({ length: count }, (_, i) => {
+            const isActive = i === index;
+            return (
+                <button
+                    key={i}
+                    role="tab"
+                    aria-selected={isActive}
+                    tabIndex={isActive ? 0 : -1}
+                    aria-label={`Go to slide ${i + 1}`}
+                    className={[
+                        "carousel-progress__seg",
+                        isActive ? "carousel-progress__seg--active" : "",
+                    ].filter(Boolean).join(" ")}
+                    onClick={() => onGoTo(i, i > currentIndex ? 1 : -1)}
+                >
+                    {isActive && (
+                        <span
+                            className="carousel-progress__fill"
+                            style={{ animationPlayState: paused ? "paused" : "running" }}
+                        />
+                    )}
+                </button>
+            );
+        })}
     </div>
 ));
-DotsBar.displayName = "DotsBar";
+ProgressBar.displayName = "ProgressBar";
 
-// ─── SLIDE BACKGROUND IMAGE ───────────────────────────────────────────────────
-// [IM2]: Only renders an img tag for the active slide and its ±1 neighbours.
-// Slides further away get a transparent placeholder — no bytes fetched.
-const SlideImage = memo(({ src, updatedAt, isNear, isActive }) => {
-    // [CL1] + [CL2]: version-stamp + responsive transforms
-    const versioned = useMemo(
-        () => stampCloudinaryVersion(resolveAsset(src), updatedAt),
-        [src, updatedAt]
-    );
-    const transformed = useMemo(() => cloudinaryTransform(versioned, 1280), [versioned]);
-    const srcSet      = useMemo(() => buildCloudinarySrcset(versioned),     [versioned]);
+// ─── SLIDE IMAGE ──────────────────────────────────────────────────────────────
+const SlideImage = memo(({ src, updatedAt, isActive, isMobile }) => {
+    const versioned   = useMemo(() => stampCloudinaryVersion(resolveAsset(src), updatedAt), [src, updatedAt]);
+    const transformed = useMemo(() => cloudinaryTransform(versioned, isMobile ? 960 : 1280), [versioned, isMobile]);
+    const srcSet      = useMemo(() => buildCloudinarySrcset(versioned), [versioned]);
 
-    if (!isNear || !src || !transformed) return null;
-
+    if (!src || !transformed) return null;
     return (
         <img
             src={transformed}
@@ -516,193 +246,148 @@ const SlideImage = memo(({ src, updatedAt, isNear, isActive }) => {
             loading="eager"
             fetchPriority={isActive ? "high" : "low"}
             decoding="async"
-            width="1920"
-            height="1080"
+            width={isMobile ? 960 : 1920}
+            height={isMobile ? 540 : 1080}
             aria-hidden="true"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
+            onError={e => { e.currentTarget.style.display = "none"; }}
         />
     );
 });
 SlideImage.displayName = "SlideImage";
 
+// ─── SLIDE VARIANTS (crossfade + scale) [D4] ─────────────────────────────────
+const makeSlideVariants = (isMobile) => ({
+    enter: () => ({ opacity: 0, scale: 1.03, ...(isMobile ? {} : { filter: "blur(3px)" }) }),
+    center:    ({ opacity: 1, scale: 1,    ...(isMobile ? {} : { filter: "blur(0px)" }) }),
+    exit:  () => ({ opacity: 0, scale: 0.97, ...(isMobile ? {} : { filter: "blur(4px)" }) }),
+});
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const PremiumCarousel = () => {
-    const [slides, setSlides]   = useState(null);
-    const [index,  setIndex]    = useState(0);
+    const [slides, setSlides] = useState(null);
+    const [index,  setIndex]  = useState(0);
 
-    // [RE2]: paused drives dot fill animation; all other pause logic uses the ref
-    const [renderPaused, setRenderPaused] = useState(false);
-
-    const [isMuted,   setIsMuted]   = useState(true);
-
-    const pausedRef   = useRef(false);
-    const slidesRef   = useRef(null);
-    const indexRef    = useRef(0);
-    const timerRef    = useRef(null);
-    // [RE1]: direction in a ref — no re-render needed just to update animation direction
-    const directionRef = useRef(1);
+    const pausedRef      = useRef(false);
+    const slidesRef      = useRef(null);
+    const indexRef       = useRef(0);
+    const timerRef       = useRef(null);
+    const directionRef   = useRef(1);
+    const sectionRef     = useRef(null);
+    const liveRef        = useRef(null);
 
     slidesRef.current = slides;
     indexRef.current  = index;
 
-    const navigate = useNavigate(); // [N2]: single instance
+    const navigate = useNavigate();
 
-    // [F1]: SSR-safe lazy init; [SSR1]: matchMedia for better mobile detection
+    // SSR-safe mobile detection [SSR1]
     const [isMobileDevice, setIsMobileDevice] = useState(() => {
         if (typeof window === "undefined") return false;
         return window.matchMedia("(max-width: 767px)").matches;
     });
 
-    // [F2]: stable resize callback
     const handleResize = useCallback(() => {
         setIsMobileDevice(window.matchMedia("(max-width: 767px)").matches);
     }, []);
 
     useEffect(() => {
         const mq = window.matchMedia("(max-width: 767px)");
-        // Use matchMedia listener when available — fires only on breakpoint cross,
-        // not on every pixel resize. This prevents dozens of state updates during
-        // a window drag, which was causing excessive re-renders.
         if (mq.addEventListener) {
             mq.addEventListener("change", handleResize, { passive: true });
             return () => mq.removeEventListener("change", handleResize);
         }
-        // Fallback for older browsers
         window.addEventListener("resize", handleResize, { passive: true });
         return () => window.removeEventListener("resize", handleResize);
     }, [handleResize]);
 
-    // Parallax: disabled on mobile (useParallax exits on speed=0 — no listener)
+    // Parallax on desktop [RE1]
     const parallaxRef = useParallax({ speed: isMobileDevice ? 0 : 0.4 });
 
-    // [N1] + [RE4]: SLIDE_VARIANTS only recalculates on mobile boolean flip,
-    // not on every render. Using the boolean directly (not innerWidth) means
-    // this memo fires at most twice per session.
-    const SLIDE_VARIANTS = useMemo(() => ({
-        enter: (d) => ({
-            opacity: 0,
-            x: d > 0 ? 60 : -60,
-            scale: 1.04,
-            ...(isMobileDevice ? {} : { filter: "blur(4px)" }),
-        }),
-        center: {
-            opacity: 1,
-            x: 0,
-            scale: 1.0,
-            ...(isMobileDevice ? {} : { filter: "blur(0px)" }),
-        },
-        exit: (d) => ({
-            opacity: 0,
-            x: d > 0 ? -40 : 40,
-            scale: 0.98,
-            ...(isMobileDevice ? {} : { filter: "blur(6px)" }),
-        }),
-    }), [isMobileDevice]);
+    // Slide variants — rebuild only on breakpoint flip [RE4]
+    const SLIDE_VARIANTS = useMemo(() => makeSlideVariants(isMobileDevice), [isMobileDevice]);
 
-    // [O1] + [O3]: normalise slides
-    const normaliseSlides = useCallback((raw) => {
-        const ordered = enforceCarouselOrder(raw);
-        if (!IS_DATA_SAVER) return ordered;
-        return ordered.map((s) => s.type === "video" ? { ...s, type: "image" } : s);
-    }, []);
-
-    // [NET1] + [F3]: fetch with in-flight guard
+    // Fetch [NET1] — always fetch fresh on mount, reset guard on unmount
     useEffect(() => {
-        if (_fetching) return;
-        _fetching = true;
+        _fetching = false; // reset on every mount so remounts always re-fetch
         const ctrl = new AbortController();
 
-        cachedFetch(`${API}/carousel`, { freshOnly: true, signal: ctrl.signal })
+        fetch(`${API}/carousel?source=premium`, {
+            cache: "no-store",
+            signal: ctrl.signal,
+        })
+            .then(r => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            })
             .then(data => {
-                const apiSlides = Array.isArray(data) && data.length > 0 ? data : fallbackSlides;
-                setSlides(normaliseSlides(apiSlides));
+                const apiSlides = Array.isArray(data) && data.length > 0
+                    ? normaliseSlides(data)
+                    : fallbackSlides;
+                setSlides(apiSlides);
             })
             .catch(err => {
-                if (err.name !== "AbortError") setSlides(normaliseSlides(fallbackSlides));
-            })
-            .finally(() => { _fetching = false; });
+                if (err.name !== "AbortError") setSlides(fallbackSlides);
+            });
 
         return () => { ctrl.abort(); _fetching = false; };
-    }, [normaliseSlides]);
+    }, []);
 
-    // [IM1]: Preload first slide immediately (high priority), remaining slides
-    // deferred until browser is idle so the first image is never bandwidth-starved.
+    // Preload images [IM1]
     useEffect(() => {
         if (!slides) return;
-
-        // First slide: immediate, high priority
-        const first = slides[0];
-        if (first?.image) {
+        const preload = (slide, priority, mobile) => {
+            const src = resolveSlideImage(slide, mobile);
+            if (!src) return;
             const img = new Image();
-            img.fetchPriority = "high";
+            img.fetchPriority = priority;
             img.src = cloudinaryTransform(
-                stampCloudinaryVersion(resolveAsset(first.image), first.updatedAt),
-                1280
+                stampCloudinaryVersion(resolveAsset(src), slide.updatedAt),
+                mobile ? 960 : 1280
             );
-        }
-
-        // Remaining slides: idle-deferred
-        let id;
-        const preloadRest = () => {
-            slides.slice(1).forEach(s => {
-                if (!s?.image) return;
-                const img = new Image();
-                img.fetchPriority = "low";
-                img.src = cloudinaryTransform(
-                    stampCloudinaryVersion(resolveAsset(s.image), s.updatedAt),
-                    960 // smaller size for preload — full size loads on demand
-                );
-            });
         };
-
-        if ("requestIdleCallback" in window) {
-            id = requestIdleCallback(preloadRest, { timeout: 2000 });
-        } else {
-            id = setTimeout(preloadRest, 300);
-        }
-
+        preload(slides[0], "high", isMobileDevice);
+        let id;
+        const rest = () => slides.slice(1).forEach(s => preload(s, "low", isMobileDevice));
+        if ("requestIdleCallback" in window) id = requestIdleCallback(rest, { timeout: 2000 });
+        else id = setTimeout(rest, 300);
         return () => {
             if ("requestIdleCallback" in window) cancelIdleCallback(id);
             else clearTimeout(id);
         };
-    }, [slides]);
+    }, [slides, isMobileDevice]);
 
-    // ─── TIMER ────────────────────────────────────────────────────────────────
+    // Timer [VIS1, MEM1]
     const startTimer = useCallback(() => {
         clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             if (pausedRef.current) return;
             const s = slidesRef.current;
             if (!s) return;
-            const currentSlide = s[indexRef.current];
-            // [B] + [N3]: desktop waits for video onEnded; mobile treats video as image
-            if (currentSlide?.type === "video" && !isMobileDevice) return;
             directionRef.current = 1;
-            setIndex((p) => (p + 1) % s.length);
+            setIndex(p => (p + 1) % s.length);
         }, AUTO_DURATION_MS);
-    }, [isMobileDevice]);
+    }, []);
 
-    // [VIS1]: Pause when tab is hidden — resume when visible.
-    // [MEM1]: Properly cleaned up alongside the timer.
     useEffect(() => {
         if (!slides) return;
         startTimer();
-
-        const onVisibilityChange = () => {
+        const onVis = () => {
             if (document.hidden) {
                 clearInterval(timerRef.current);
+                document.documentElement.setAttribute("data-page-hidden", "true");
             } else {
+                document.documentElement.removeAttribute("data-page-hidden");
                 startTimer();
             }
         };
-        document.addEventListener("visibilitychange", onVisibilityChange);
-
+        document.addEventListener("visibilitychange", onVis);
         return () => {
             clearInterval(timerRef.current);
-            document.removeEventListener("visibilitychange", onVisibilityChange);
+            document.removeEventListener("visibilitychange", onVis);
         };
     }, [slides, startTimer]);
 
+    // Navigation
     const goTo = useCallback((i, dir = 1) => {
         directionRef.current = dir;
         setIndex(i);
@@ -719,66 +404,66 @@ const PremiumCarousel = () => {
         if (s) goTo(indexRef.current === 0 ? s.length - 1 : indexRef.current - 1, -1);
     }, [goTo]);
 
-    const handleVideoEnded = useCallback(() => {
-        if (!pausedRef.current) next();
-    }, [next]);
-
-    // [RE2]: Only update render-visible state; all pause logic uses the ref
+    // Hover pause [RE5]
     const handleMouseEnter = useCallback(() => {
         pausedRef.current = true;
-        setRenderPaused(true);
+        sectionRef.current?.setAttribute("data-paused", "true");
     }, []);
     const handleMouseLeave = useCallback(() => {
         pausedRef.current = false;
-        setRenderPaused(false);
+        sectionRef.current?.removeAttribute("data-paused");
     }, []);
 
-    // Extracted from inline JSX prop — hooks must never appear inside JSX or conditionals
-    const handleMuteToggle = useCallback(() => setIsMuted(m => !m), []);
+    const handleNavigateCta   = useCallback(() => { navigate(`/category/${slides?.[index]?.route}`); }, [navigate, slides, index]);
+    const handleNavigateStore = useCallback(() => { navigate("/store"); }, [navigate]);
 
-    // [SW1]: delta threshold + preventScrollOnSwipe prevents accidental slide
-    // changes on tiny drags and eliminates conflict with Android pull-to-refresh.
-    const handlers = useSwipeable({
-        onSwipedLeft:          next,
-        onSwipedRight:         prev,
-        delta:                 10,
-        preventScrollOnSwipe:  true,
-        trackMouse:            false,
-    });
+    // Pointer drag [SW1]
+    const dragHandlers = usePointerDrag({ onNext: next, onPrev: prev, sectionRef });
 
-    // [RE3]: Stable primitive arrays for DotsBar
-    const slideTitles = useMemo(() => slides?.map(s => s.title) ?? [], [slides]);
-    const slideTypes  = useMemo(() => slides?.map(s => s.type)  ?? [], [slides]);
+    // ARIA live [A11a]
+    useEffect(() => {
+        if (!slides || !liveRef.current) return;
+        liveRef.current.textContent = `Slide ${index + 1} of ${slides.length}: ${slides[index]?.title ?? ""}`;
+    }, [index, slides]);
 
+    // Keyboard nav [A11b]
+    const onKeyDown = useCallback((e) => {
+        if (e.key === "ArrowLeft")  { e.preventDefault(); prev(); }
+        if (e.key === "ArrowRight") { e.preventDefault(); next(); }
+        if (e.key === "Home")       { e.preventDefault(); goTo(0, 1); }
+        if (e.key === "End")        { e.preventDefault(); slides && goTo(slides.length - 1, -1); }
+    }, [prev, next, goTo, slides]);
+
+    // ─── LOADING ──────────────────────────────────────────────────────────────
     if (slides === null) {
-        return <div className="carousel-skeleton" aria-label="Loading carousel" />;
+        return (
+            <div className="carousel-skeleton" role="img"
+                aria-label="Loading carousel" aria-busy="true" />
+        );
     }
 
     const slide    = slides[index];
-    const isVideo  = slide.type === "video";
-    // Stable key: prefer server id/slug over array index
     const slideKey = slide.id ?? slide._id ?? slide.slug ?? index;
+    const imageSrc = resolveSlideImage(slide, isMobileDevice);
 
     return (
         <section
+            ref={sectionRef}
             className="carousel"
-            {...handlers}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             aria-label="Featured collections"
             aria-roledescription="carousel"
+            tabIndex={0}
+            onKeyDown={onKeyDown}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            {...dragHandlers}
         >
-            {/* [A11]: Screen reader live announcement on slide change */}
-            <span
-                className="carousel-sr-announce"
-                aria-live="polite"
-                aria-atomic="true"
-            >
-                {`Slide ${index + 1} of ${slides.length}: ${slide.title}`}
-            </span>
+            {/* ARIA live region [A11a] */}
+            <span ref={liveRef} className="carousel-sr-announce"
+                aria-live="polite" aria-atomic="true" />
 
-            {/* [AN1]: mode="popLayout" skips synchronous layout measurement */}
-            <AnimatePresence mode="popLayout" custom={directionRef.current}>
+            {/* ── SLIDES [D4] ── */}
+            <AnimatePresence mode="sync" custom={directionRef.current}>
                 <motion.div
                     key={slideKey}
                     className="carousel-slide carousel-slide--active"
@@ -787,88 +472,51 @@ const PremiumCarousel = () => {
                     initial="enter"
                     animate="center"
                     exit="exit"
-                    transition={SLIDE_TRANSITION} // [AN2]: stable object ref
+                    transition={SLIDE_TRANSITION}
                     role="group"
                     aria-roledescription="slide"
                     aria-label={`${index + 1} of ${slides.length}: ${slide.title}`}
                 >
-                    {/* ── BACKGROUND ── */}
-                    <div
-                        className="carousel-bg-wrap"
-                        ref={(!isVideo && !isMobileDevice) ? parallaxRef : undefined}
-                    >
-                        {isVideo ? (
-                            <VideoBackground
-                                key={slide.video}
-                                src={slide.video}
-                                poster={slide.image}
-                                updatedAt={slide.updatedAt}
-                                isPaused={renderPaused}
-                                isMuted={isMuted}
-                                onEnded={handleVideoEnded}
-                                isMobile={isMobileDevice}
-                            />
-                        ) : (
-                            <SlideImage
-                                src={slide.image}
-                                updatedAt={slide.updatedAt}
-                                isNear={true}
-                                isActive={true}
-                            />
-                        )}
+                    {/* Background */}
+                    <div className="carousel-bg-wrap"
+                        ref={!isMobileDevice ? parallaxRef : undefined}>
+                        <SlideImage
+                            src={imageSrc}
+                            updatedAt={slide.updatedAt}
+                            isActive={true}
+                            isMobile={isMobileDevice}
+                        />
                     </div>
 
-                    <div className="carousel-overlay" aria-hidden="true"/>
+                    <div className="carousel-overlay" aria-hidden="true" />
 
-                    {/* ── VIDEO CONTROLS — hidden on mobile [N3] ── */}
-                    {isVideo && !isMobileDevice && (
-                        <>
-                            <motion.div
-                                className="carousel-video-badge"
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
-                                aria-hidden="true"
-                            >
-                                {ICON_PLAY}<span>VIDEO</span>
-                            </motion.div>
-                            <MuteButton
-                                isMuted={isMuted}
-                                onToggle={handleMuteToggle}
-                            />
-                        </>
-                    )}
+                    {/* Slide content */}
+                    <SlideContent
+                        slide={slide}
+                        onNavigateCta={handleNavigateCta}
+                        onNavigateStore={handleNavigateStore}
+                    />
 
-                    {/* ── CONTENT ── */}
-                    <SlideContent slide={slide} onNavigate={navigate}/>
-
-                    {/* ── COUNTER ── */}
+                    {/* Counter */}
                     <div className="carousel-counter" aria-hidden="true">
-                        <span className="carousel-counter-cur">{String(index + 1).padStart(2, "0")}</span>
-                        <span className="carousel-counter-sep"/>
-                        <span className="carousel-counter-total">{String(slides.length).padStart(2, "0")}</span>
+                        <span className="carousel-counter-cur">
+                            {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="carousel-counter-sep" />
+                        <span className="carousel-counter-total">
+                            {String(slides.length).padStart(2, "0")}
+                        </span>
                     </div>
                 </motion.div>
             </AnimatePresence>
 
-            {/* ── ARROWS ── */}
-            <button className="carousel-arrow carousel-arrow--left" onClick={prev} aria-label="Previous slide">
-                {ICON_CHEVRON_LEFT}
-            </button>
-            <button className="carousel-arrow carousel-arrow--right" onClick={next} aria-label="Next slide">
-                {ICON_CHEVRON_RIGHT}
-            </button>
-
-            {/* ── DOTS BAR ── */}
-            <DotsBar
+            {/* ── PROGRESS BAR [D3] ── */}
+            <ProgressBar
                 count={slides.length}
-                slideTitles={slideTitles}
-                slideTypes={slideTypes}
                 index={index}
-                paused={renderPaused}
-                isCurrentVideo={isVideo}
+                paused={false}
                 onGoTo={goTo}
-                currentTitle={slide.title}
+                currentIndex={index}
             />
         </section>
     );

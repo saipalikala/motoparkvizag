@@ -1,36 +1,55 @@
 /**
  * src/components/Navbar/Navbar.jsx
  *
- * FIXES APPLIED:
+ * OWNERSHIP (post-refactor)
+ * ─────────────────────────────────────────────────────────────
+ * Navbar owns the ENTIRE navigation system:
+ *  - Centered logo
+ *  - Desktop nav links (split left/right around the logo)
+ *  - Search / user / wishlist / cart / orders icons
+ *  - Mobile hamburger
+ *  - Mobile slide-out menu (left side)
+ *  - Mobile floating bottom navigation
+ *
+ * PremiumCarousel must never duplicate any of this.
+ *
+ * DESKTOP LAYOUT (matches reference image):
+ *   [Hamburger] [Left nav links] [Centered logo] [Right nav links + CTA] [Icons]
+ *
+ * Renders as a floating glassmorphism pill (see Navbar.css .navbar),
+ * fixed near the top of the viewport, overlaid on top of the hero carousel.
+ *
+ * FIXES RETAINED:
  * ─────────────────────────────────────────────────────────────
  * [F1] Raw fetch → cachedFetch
- *      Before: fetch(`${API}/navbar`) — no cache, no deduplication.
- *      Every mount fires a new request. StrictMode = 2 requests.
- *      App.jsx remount on admin↔user nav = another request.
- *      After: cachedFetch shares one promise, serves from memory
- *      for 5 minutes, sessionStorage for back/forward navigation.
+ *      cachedFetch shares one promise, serves from memory for 5 minutes,
+ *      sessionStorage for back/forward navigation.
  *
  * [F2] AbortController + isMounted guard
- *      Before: no cleanup. On unmount, the promise would still
- *      resolve and call setNavbar on an unmounted component —
- *      causing React's "state update on unmounted component" warning.
- *      After: ctrl.abort() in cleanup, alive flag guards setState.
+ *      ctrl.abort() in cleanup, alive flag guards setState.
  *
  * [F3] AbortError filtering
- *      Before: console.error caught everything including aborts.
- *      AbortErrors are expected and should be silent.
- *      After: only non-abort errors are logged.
+ *      Only non-abort errors are logged.
  */
 
 import { useEffect, useState } from "react";
 import NavLinks from "./NavLinks";
 import NavIcons from "./NavIcons";
 import MobileMenu from "./MobileMenu";
+import MobileBottomNav from "./MobileBottomNav";
 import SearchOverlay from "../SearchOverlay/SearchOverlay";
 import "./Navbar.css";
 
 import { API } from "@/config/api";
 import { cachedFetch } from "@/lib/apiCache"; // [F1]
+
+const MenuIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
+  </svg>
+);
 
 const Navbar = () => {
   const [navbar,     setNavbar]     = useState(null);
@@ -75,7 +94,20 @@ const Navbar = () => {
       <header className={`navbar ${scrolled ? "navbar--scrolled" : ""}`}>
         <div className="nav-container">
 
-          {/* LOGO */}
+          {/* HAMBURGER — opens the slide-out menu (left side) */}
+          <button
+            className="icon-btn nav-menu-btn"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={menuOpen}
+          >
+            <MenuIcon />
+          </button>
+
+          {/* LEFT NAV LINKS (desktop) */}
+          <NavLinks links={navbar.links} side="left" />
+
+          {/* CENTERED LOGO */}
           <a href="/" className="nav-logo-wrap">
             <img
               src={navbar.logo?.startsWith("http") ? navbar.logo : `${API}${navbar.logo}`}
@@ -88,16 +120,13 @@ const Navbar = () => {
             </div>
           </a>
 
-          {/* DESKTOP LINKS */}
-          <NavLinks links={navbar.links} />
+          {/* RIGHT NAV LINKS (desktop, includes CTA pill) */}
+          <NavLinks links={navbar.links} side="right" />
 
           <div className="nav-divider" aria-hidden="true" />
 
-          {/* ICONS */}
-          <NavIcons
-            openMenu={()   => setMenuOpen(true)}
-            openSearch={() => setSearchOpen(true)}
-          />
+          {/* ICONS — search / user / wishlist / cart / orders */}
+          <NavIcons openSearch={() => setSearchOpen(true)} />
 
         </div>
 
@@ -105,12 +134,15 @@ const Navbar = () => {
         <div className="nav-accent-line" aria-hidden="true" />
       </header>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE SLIDE-OUT MENU (left side) */}
       <MobileMenu
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         links={navbar?.links || []}
       />
+
+      {/* MOBILE FLOATING BOTTOM NAV — always visible on mobile */}
+      <MobileBottomNav />
 
       {/* SEARCH */}
       <SearchOverlay open={searchOpen} setOpen={setSearchOpen} />

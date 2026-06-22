@@ -4,8 +4,10 @@ import { useProducts } from "@/context/ProductContext";
 import "./Home.css";
 
 import PremiumCarousel from "@/components/PremiumCarousel/PremiumCarousel";
-
-const BentoGrid          = lazy(() => import("@/components/BentoGrid/BentoGrid"));
+import VerticalCarousel from "@/components/PremiumCarousel2/VerticalCarousel";
+const ProductSpotlight = lazy(() =>
+  import("@/components/ProductSpotlight/ProductSpotlight")
+);
 const TrendingProducts   = lazy(() => import("@/components/TrendingProducts/TrendingProducts"));
 const HorizontalShowcase = lazy(() => import("@/components/HorizontalShowcase/HorizontalShowcase"));
 const NewArrivalsSlider  = lazy(() => import("@/components/NewArrivalsSlider/NewArrivalsSlider"));
@@ -22,7 +24,7 @@ const CardRowSkeleton = () => (
   </div>
 );
 
-const BentoSkeleton = () => (
+const ProductSpotlightSkeleton = () => (
   <div className="skeleton-section" aria-hidden="true">
     <div className="skeleton skeleton--title" />
     <div className="skeleton-grid">
@@ -73,7 +75,14 @@ function Home() {
         <PremiumCarousel />
       </section>
 
-      <Divider />
+
+      {/* ── Video Showcase ── */}
+<section className="home-section home-section--full home-section--flush-top">
+  <Suspense fallback={<VideoSkeleton />}>
+    <VideoShowcase />
+  </Suspense>
+</section>
+
       <Divider />
 
       {/* ── New Arrivals ── */}
@@ -91,12 +100,12 @@ function Home() {
       <Divider />
 
       {/* ── Highest Selling / Featured ── */}
-      <section className="home-section">
+      <section className="home-section home-section--full home-section--spotlight">
         {loading
-          ? <BentoSkeleton />
+          ? <ProductSpotlightSkeleton />
           : (
-            <Suspense fallback={<BentoSkeleton />}>
-              <BentoGrid
+            <Suspense fallback={<ProductSpotlightSkeleton />}>
+              <ProductSpotlight
                 title="Highest Selling"
                 type="featured"
                 products={featured}
@@ -104,6 +113,13 @@ function Home() {
             </Suspense>
           )
         }
+      </section>
+
+      <Divider />
+
+      {/* ── Vertical Carousel ── */}
+      <section className="home-section home-section--full">
+        <VerticalCarousel />
       </section>
 
       {/* ── Horizontal Showcase ── */}
@@ -114,9 +130,6 @@ function Home() {
           </Suspense>
         </section>
       )}
-
-      <Divider />
-      <Divider />
 
       {/* ── Trending ── */}
       <section className="home-section">
@@ -130,10 +143,12 @@ function Home() {
         }
       </section>
 
-      {/* ── Video Showcase ── */}
-      <section className="home-section home-section--full">
-        <Suspense fallback={<VideoSkeleton />}>
-          <VideoShowcase />
+      <Divider />
+
+      {/* ── Brand Showcase ── */}
+      <section className="home-section">
+        <Suspense fallback={null}>
+          <BrandShowcase />
         </Suspense>
       </section>
 
@@ -143,15 +158,6 @@ function Home() {
       <section className="home-section">
         <Suspense fallback={null}>
           <WhyMotoPark />
-        </Suspense>
-      </section>
-
-      <Divider />
-
-      {/* ── Brand Showcase ── */}
-      <section className="home-section">
-        <Suspense fallback={null}>
-          <BrandShowcase />
         </Suspense>
       </section>
 

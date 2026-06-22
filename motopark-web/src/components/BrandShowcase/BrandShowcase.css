@@ -3,28 +3,27 @@
    Dark premium theme
    ================================ */
 .brands-section::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        circle at 30% 50%,
-        rgba(255, 77, 45, 0.08),
-        transparent 60%
-    );
-    pointer-events: none;
+    display: none;
 }
 .brands-section {
     padding: 80px 0;
-
-    background: linear-gradient(
-        135deg,
-        #0f1c3f 0%,
-        #162a5c 100%
-    );
-
-    border-radius: 28px;
     position: relative;
     overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(13, 36, 78, 0.45) 0%,
+            rgba(7, 18, 38, 0.95) 60%,
+            #050b16 100%
+        );
+
+    border-radius: 36px;
+    border: 1px solid rgba(255,255,255,0.06);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 24px 60px rgba(0,0,0,0.35);
 }
 
 .brands-container {
@@ -50,10 +49,10 @@
 
 .brands-title {
     font-family: 'Sakana', -apple-system, sans-serif;
-    font-size: clamp(34px, 4vw, 48px);
+    font-size: clamp(30px, 3.5vw, 42px);
     font-weight: 400;
-    color: #e6e9f0;
-    letter-spacing: -0.025em;
+    color: #ffffff;
+    letter-spacing: -0.03em;
     line-height: 1.0;
     margin-bottom: 10px;
 }
@@ -82,14 +81,21 @@
 
 .brands-fade--left {
     left: 0;
-    background: linear-gradient(to right, #0f1c3f, transparent);
+    background: linear-gradient(
+        to right,
+        #071226 0%,
+        transparent 100%
+    );
 }
 
 .brands-fade--right {
     right: 0;
-    background: linear-gradient(to left, #0f1c3f, transparent);
+    background: linear-gradient(
+        to left,
+        #071226 0%,
+        transparent 100%
+    );
 }
-
 /* TRACK */
 .brands-track {
     display: flex;
@@ -111,36 +117,40 @@
 
 /* LOGO */
 .brands-logo {
-    min-width: 130px;
-    height: 56px;
+    min-width: 140px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(10px);
-    border-radius: var(--radius-md);
-    padding: 10px 20px;
-    transition: background var(--dur-mid) ease, border-color var(--dur-mid) ease, transform var(--dur-mid) ease;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    padding: 12px 24px;
+    transition: background 240ms ease, border-color 240ms ease, box-shadow 240ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .brands-logo:hover {
-   border-color: #ff4d2d;
-    box-shadow: 0 0 20px rgba(255, 77, 45, 0.25);
-    transform: translateY(-3px);
+    background: rgba(255, 107, 61, 0.06);
+    border-color: rgba(255, 107, 61, 0.35);
+    box-shadow: 0 0 24px rgba(255, 107, 61, 0.18), 0 4px 16px rgba(0,0,0,0.3);
+    transform: translateY(-4px) scale(1.02);
 }
-
 .brands-logo img {
-    max-height: 32px;
-    max-width: 100px;
+    max-height: 40px;
+    max-width: 120px;
+    width: auto;
+    height: auto;
     object-fit: contain;
+
     filter: none;
-    opacity: 0.9;
-    transition: opacity var(--dur-mid) ease;
+    opacity: 1;
+
+    transition: all 240ms ease;
 }
 
 .brands-logo:hover img {
-    opacity: 0.85;
+    opacity: 1;
+    transform: scale(1.05);
 }
 
 /* RESPONSIVE */

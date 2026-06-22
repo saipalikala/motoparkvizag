@@ -1,13 +1,18 @@
 /* ================================================
    Home.css — Light Premium Theme
    ================================================ */
-
+.home-section.home-section--flush-top {
+    padding-top: 0;
+}
 .home-page {
     width: 100%;
     min-height: 100vh;
     position: relative;
     overflow-x: clip;
-    background: linear-gradient(180deg, #fafbfc 0%, #eef2f7 100%);
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(255, 107, 61, 0.06) 0%, transparent 38%),
+        radial-gradient(ellipse at 88% 0%, rgba(59, 90, 180, 0.05) 0%, transparent 42%),
+        #05070c;
     z-index: 0;
 }
 
@@ -16,14 +21,10 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-
-    background: radial-gradient(
-        circle at 50% 0%,
-        rgba(255, 77, 45, 0.04),
-        transparent 60%
-    );
-
-
+    background:
+        radial-gradient(ellipse at 20% 18%, rgba(255, 107, 61, 0.045) 0%, transparent 44%),
+        radial-gradient(ellipse at 80% 12%, rgba(59, 100, 220, 0.04) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 80%, rgba(5, 10, 25, 0.6) 0%, transparent 70%);
     z-index: -1;
 }
 
@@ -33,11 +34,12 @@
     inset: 0;
     pointer-events: none;
 
-    background-image:
-        linear-gradient(rgba(0,0,0,0.01) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.01) 1px, transparent 1px);
+   background-image:
+    linear-gradient(rgba(11,29,58,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11,29,58,0.015) 1px, transparent 1px);
 
-    background-size: 60px 60px;
+    background-size: 80px 80px;
+
     z-index: -1;
 }
 /* ── Hero ── */
@@ -81,9 +83,9 @@
 .skeleton {
     background: linear-gradient(
         90deg,
-        #eef0f4 25%,
-        #e4e7ec 50%,
-        #eef0f4 75%
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.04) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.4s infinite;
@@ -100,12 +102,30 @@
 .skeleton--hero-card    { height: 440px; border-radius: var(--radius-lg); }
 .skeleton-small-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .skeleton--small-card   { height: 210px; border-radius: var(--radius-lg); }
-
 @media (max-width: 768px) {
-    .home-section { padding: 48px 20px; }
-    .skeleton-grid { grid-template-columns: 1fr; }
-    .skeleton--card { flex: 0 0 160px; height: 230px; }
+    .home-section {
+        padding: 48px 20px;
+    }
+
+    .home-section--full {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .skeleton--card {
+        flex: 0 0 160px;
+        height: 230px;
+    }
+
     .home-page::after {
         display: none;
     }
+}
+.home-section--spotlight {
+    padding-top: 0;
+    padding-bottom: 0;
 }
