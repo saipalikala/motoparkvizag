@@ -116,7 +116,7 @@ const Navbar = () => {
             />
             <div className="nav-logo-text-wrap">
               <span className="nav-logo-name">Moto Park</span>
-              <span className="nav-logo-sub">Est. 2020</span>
+              <span className="nav-logo-sub">— EST. 2020 —</span>
             </div>
           </a>
 
@@ -139,6 +139,7 @@ const Navbar = () => {
         menuOpen={menuOpen}
         setMenuOpen={setMenuOpen}
         links={navbar?.links || []}
+        openSearch={() => setSearchOpen(true)}
       />
 
       {/* MOBILE FLOATING BOTTOM NAV — always visible on mobile */}

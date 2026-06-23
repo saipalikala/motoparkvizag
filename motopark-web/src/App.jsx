@@ -115,6 +115,8 @@ const MAINTENANCE = import.meta.env.VITE_MAINTENANCE_MODE === "true";
 const location = useLocation();
 if (MAINTENANCE) return <MaintenancePage />;
   const isAdmin  = location.pathname.startsWith("/admin");
+  const isAuthPage = ["/login", "/register"].includes(location.pathname);
+  const hideShell  = isAdmin || isAuthPage;
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -137,12 +139,13 @@ if (MAINTENANCE) return <MaintenancePage />;
         when cachedFetch would serve from memory instantly.
         Keeping the tree alive = 0 remounts, 0 extra fetches, 0 reconciliation cost.
       */}
-      <div style={{ display: isAdmin ? "none" : "contents" }}>
-        <Suspense fallback={null}>
-          <OfferBar />
-          <Navbar />
-        </Suspense>
-      </div>
+<div style={{ display: hideShell ? "none" : "contents" }}>
+  <Suspense fallback={null}>
+    {/* OfferBar — home page only on all screen sizes */}
+    {location.pathname === "/" && <OfferBar />}
+    <Navbar />
+  </Suspense>
+</div>
 
       {/* Content: each page route in its own Suspense boundary */}
       <Suspense fallback={<PageLoader />}>
@@ -192,7 +195,7 @@ if (MAINTENANCE) return <MaintenancePage />;
       </Suspense>
 
       {/* [F2]: Footer also kept mounted, hidden on admin */}
-      <div style={{ display: isAdmin ? "none" : "contents" }}>
+      <div style={{ display: hideShell ? "none" : "contents" }}>
         <Suspense fallback={null}>
           <Footer />
         </Suspense>

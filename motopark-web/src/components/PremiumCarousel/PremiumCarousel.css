@@ -98,9 +98,17 @@
 /* ─── BG WRAP ─────────────────────────────────────────────────────────────── */
 .carousel-bg-wrap {
     position: absolute;
-    inset: -10%;
-    width: 120%;
-    height: 120%;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+/* Desktop only: expand wrap to allow parallax headroom without gaps */
+@media (min-width: 769px) {
+    .carousel-bg-wrap {
+        inset: -10%;
+        width: 120%;
+        height: 120%;
+    }
 }
 
 /* ─── BACKGROUND IMAGE [C6] ──────────────────────────────────────────────── */
@@ -108,9 +116,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
+    object-position: center top; /* favour top of image on crop */
     z-index: 0;
-    aspect-ratio: 16 / 9;
+    /* aspect-ratio removed — container is always full-bleed; letting
+       object-fit:cover handle all ratios prevents portrait gaps [C6] */
     transform: translateZ(0);
     animation: none;
 }
@@ -392,6 +401,11 @@
 /* Faster image fade on mobile — no blur overhead */
     .carousel-slide--active .carousel-bg-img {
         animation: vcFadeIn 0.4s ease forwards;
+    }
+
+    /* Centre-crop on mobile portrait — product is usually centred */
+    .carousel-bg-img {
+        object-position: center center;
     }
 
     /* [C4]: Remove backdrop-filter on mobile — expensive GPU op */

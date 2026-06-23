@@ -35,27 +35,22 @@ const ArrowRightIcon = () => (
         <polyline points="12 5 19 12 12 19" />
     </svg>
 );
-
+const BackIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12" />
+        <polyline points="12 19 5 12 12 5" />
+    </svg>
+);
 /* ─── LOGO (matches reference circular badge) ─── */
 const MotoParkLogo = () => (
     <div className="mp-logo-wrap">
         <div className="mp-logo-circle">
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-                {/* sunset gradient layers */}
-                <circle cx="28" cy="28" r="28" fill="#0b1d3a" />
-                <ellipse cx="28" cy="34" rx="20" ry="12" fill="#1a2e4a" />
-                {/* sun */}
-                <circle cx="28" cy="26" r="9" fill="#ff6b3d" />
-                <path d="M10 34 Q28 18 46 34" fill="#ff8c42" opacity="0.6" />
-                {/* trees silhouette */}
-                <path d="M8 42 L12 30 L16 42Z" fill="#0b1d3a" />
-                <path d="M40 42 L44 30 L48 42Z" fill="#0b1d3a" />
-                <path d="M14 42 L18 33 L22 42Z" fill="#0b1d3a" />
-                <path d="M34 42 L38 33 L42 42Z" fill="#0b1d3a" />
-                {/* rider silhouette */}
-                <ellipse cx="28" cy="23" rx="2.5" ry="3" fill="#0b1d3a" />
-                <path d="M24 28 Q28 24 32 28" stroke="#0b1d3a" strokeWidth="2" fill="none" strokeLinecap="round" />
-            </svg>
+            <img
+                src="/assets/logo/motoparklogo.jpg"
+                alt="Moto Park"
+                className="mp-logo-img"
+            />
         </div>
         <p className="mp-logo-name">MOTO PARK</p>
         <p className="mp-logo-estd">— ESTD 2020 —</p>
@@ -128,11 +123,30 @@ const AuthPage = () => {
         }
     };
 
-    return (
-        <div className="auth-page">
-            <div className="auth-bg" aria-hidden="true" />
+return (
+    <div className="auth-page">
+        <div className="auth-bg" aria-hidden="true" />
 
-            <div className="auth-card">
+        {/* BACK BUTTON — visible on both desktop and mobile */}
+        <button
+            type="button"
+            className="auth-back-btn"
+            onClick={() => navigate("/")}
+            aria-label="Back to home"
+        >
+            <BackIcon />
+        </button>
+
+        {/* MOBILE-ONLY TOP BANNER */}
+        <div className="auth-mobile-banner">
+            <img
+                src="/assets/backgrounds/UserLoginMobile.png"
+                alt=""
+                className="auth-mobile-banner-img"
+            />
+        </div>
+
+        <div className="auth-card">
                 {/* LOGO */}
                 <MotoParkLogo />
 
@@ -207,11 +221,7 @@ const AuthPage = () => {
                     <span>Continue with Mobile</span>
                 </button>
 
-                {/* FOOTER */}
-                <p className="auth-footer">
-                    By continuing, you agree to our{" "}
-                    <a href="#" className="auth-link">Terms &amp; Privacy Policy</a>
-                </p>
+
             </div>
         </div>
     );

@@ -73,10 +73,17 @@
 html {
   scroll-behavior: smooth;
   background: var(--bg-primary);
-  overflow-x: hidden;  /* ← ADD */
-  max-width: 100%;     /* ← ADD */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
+/* When OfferBar is visible on mobile, push the navbar down by its height */
+@media (max-width: 768px) {
+  .offer-bar--show ~ * .navbar,
+  body:has(.offer-bar--show) .navbar {
+    top: calc(34px + 12px); /* offerbar height + original navbar top */
+  }
+}
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;

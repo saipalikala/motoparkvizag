@@ -97,16 +97,16 @@ const OfferBar = () => {
     return () => clearInterval(timerRef.current);
   }, [offers, startTimer]);
 
-  /* Scroll hide */
-  useEffect(() => {
-    const onScroll = () => {
-      const cur = window.scrollY;
-      setVisible(!(cur > lastScroll.current && cur > 60));
-      lastScroll.current = cur;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+/* Scroll hide */
+useEffect(() => {
+  const onScroll = () => {
+    const cur = window.scrollY;
+    setVisible(!(cur > lastScroll.current && cur > 60));
+    lastScroll.current = cur;
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
 
   // [F4]: always reset timer correctly after manual nav
   const changeOffer = useCallback((dir) => {
@@ -119,7 +119,8 @@ const OfferBar = () => {
     if (offersRef.current.length > 1) startTimer();
   }, [startTimer]);
 
-  if (!offers.length || !visible) return null;
+if (!offers.length || !visible) return null;
+// OfferBar renders only — page-level restriction is handled in App.jsx
 
   const current   = offers[index];
   const colonIdx  = current.text?.indexOf(":");

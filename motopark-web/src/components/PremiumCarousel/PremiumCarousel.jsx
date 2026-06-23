@@ -134,13 +134,15 @@ const ICON_ARROW_RIGHT = (
 
 // ─── POINTER DRAG HOOK [SW1] ──────────────────────────────────────────────────
 function usePointerDrag({ onNext, onPrev, sectionRef }) {
-    const drag = useRef({ active: false, startX: 0, startY: 0, startTime: 0, isH: null });
+    const drag = useRef({ active: false, startX: 0, startY: 0, startTime: 0, isH: null, captured: false });
 
     const onPointerDown = useCallback((e) => {
         if (e.button !== 0 && e.pointerType === "mouse") return;
-        drag.current = { active: true, startX: e.clientX, startY: e.clientY, startTime: performance.now(), isH: null };
-        sectionRef.current?.setPointerCapture?.(e.pointerId);
-    }, [sectionRef]);
+        // Do NOT capture pointer here — capturing on every pointerdown swallows
+        // all subsequent click events on child buttons. Capture only once we
+        // confirm a horizontal drag in onPointerMove.
+        drag.current = { active: true, startX: e.clientX, startY: e.clientY, startTime: performance.now(), isH: null, captured: false, pointerId: e.pointerId };
+    }, []);
 
     const onPointerMove = useCallback((e) => {
         const d = drag.current;
@@ -148,15 +150,21 @@ function usePointerDrag({ onNext, onPrev, sectionRef }) {
         const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
         if (d.isH === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
             d.isH = Math.abs(dx) >= Math.abs(dy);
+            // Only capture pointer once we know it's a horizontal drag
+            if (d.isH && !d.captured) {
+                sectionRef.current?.setPointerCapture?.(d.pointerId);
+                d.captured = true;
+            }
         }
         if (!d.isH) return;
         e.preventDefault();
-    }, []);
+    }, [sectionRef]);
 
     const onPointerUp = useCallback((e) => {
         const d = drag.current;
         if (!d.active) return;
         d.active = false;
+        // isH === null means clean tap — no drag detected, let click fire normally
         if (!d.isH) return;
         const dx  = e.clientX - d.startX;
         const vel = Math.abs(dx) / Math.max(performance.now() - d.startTime, 1);

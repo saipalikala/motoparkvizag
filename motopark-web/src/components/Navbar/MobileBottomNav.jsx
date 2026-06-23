@@ -2,12 +2,7 @@ import { NavLink } from "react-router-dom";
 
 /**
  * src/components/Navbar/MobileBottomNav.jsx
- *
- * Persistent floating glass-pill bottom navigation, shown on mobile only
- * (CSS-driven via .mobile-bottom-nav, max-width: 768px).
- *
- * Owned by Navbar — always visible regardless of slide-out menu state.
- * Matches the mobile reference image: Home / Helmets / Jackets / Gloves / Profile.
+ * Option B — Browse focused: Home · Helmets · Jackets · Gloves · Cart
  */
 
 const ICON_HOME = (
@@ -31,10 +26,10 @@ const ICON_GLOVE = (
     <path d="M18 11V8a2 2 0 00-4 0m4 3a2 2 0 014 0v3M18 11a2 2 0 00-4 0v1m4-1v1m0 0v4a5 5 0 01-10 0v-7a2 2 0 014 0" />
   </svg>
 );
-const ICON_PROFILE = (
+const ICON_CART = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
+    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>
 );
 
@@ -43,7 +38,7 @@ const BOTTOM_NAV_ITEMS = [
   { label: "Helmets", icon: ICON_HELMET,  to: "/category/helmets" },
   { label: "Jackets", icon: ICON_JACKET,  to: "/category/jackets" },
   { label: "Gloves",  icon: ICON_GLOVE,   to: "/category/gloves" },
-  { label: "Profile", icon: ICON_PROFILE, to: "/account" },
+  { label: "Cart",    icon: ICON_CART,    to: "/cart" },
 ];
 
 const MobileBottomNav = () => (
