@@ -1,0 +1,89 @@
+/* AccountPage. Tokens only. */
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--block-gap);
+}
+.title { font-size: var(--text-h1); }
+.email { font-size: var(--text-body-sm); color: var(--text-secondary); margin-top: var(--space-1); }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+}
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  padding: var(--space-6);
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.cardTitle { font-size: var(--text-h5); }
+
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+.field span { font-size: var(--text-body-sm); font-weight: 600; }
+.field input,
+.addrForm input,
+.addrForm textarea,
+.addrForm select {
+  height: var(--input-height);
+  padding-inline: var(--space-3);
+  background: var(--bg-page);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
+}
+.addrForm textarea { height: auto; padding-block: var(--space-2); resize: vertical; }
+.field input:disabled { color: var(--text-secondary); background: var(--bg-surface-warm); }
+
+.addBtn, .shopLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.muted { color: var(--text-secondary); font-size: var(--text-body-sm); }
+
+.addrList { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.addrItem {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+.addrName { font-weight: 600; font-size: var(--text-body-sm); }
+.addrText { font-size: var(--text-body-sm); color: var(--text-secondary); margin-top: 2px; }
+.addrDel { background: none; border: none; cursor: pointer; color: var(--text-secondary); flex-shrink: 0; }
+.addrDel:hover { color: var(--danger); }
+
+.addrForm { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.addrActions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); }
+.cancel { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-weight: 600; }
+.err { font-size: var(--text-body-sm); color: var(--danger); }
+
+.ordersCard { grid-column: 1 / -1; }
+
+@media (min-width: 800px) {
+  .grid { grid-template-columns: 1fr 1fr; align-items: start; }
+}

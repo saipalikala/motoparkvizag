@@ -1,0 +1,85 @@
+/* Trust band — warm cream surface, 4 pillars + showroom strip. Tokens only. */
+
+.band {
+  background: var(--bg-surface-warm);
+  border-block: 1px solid var(--border-default);
+  padding-block: var(--section-gap);
+}
+
+.pillars {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+}
+
+.pillar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.iconWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  color: var(--accent);
+  border: 1px solid var(--border-default);
+}
+
+.pTitle {
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.pCopy {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.showroom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--block-gap);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-default);
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+.showroom svg {
+  color: var(--accent);
+}
+.showroomLink {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.showroomLink:hover {
+  border-bottom-color: var(--text-primary);
+}
+
+/* Tablet: 2-up */
+@media (min-width: 600px) {
+  .pillars {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+}
+/* Desktop: 4-up */
+@media (min-width: 900px) {
+  .pillars {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

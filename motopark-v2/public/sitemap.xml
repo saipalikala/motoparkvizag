@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Static sitemap of the main indexable pages. Product, brand and dynamic category
+  URLs should be added by a generated sitemap (from /api/products + /api/categories)
+  as a pre-launch follow-up.
+-->
+<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">
+  <url><loc>https://motoparkvizag.in/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://motoparkvizag.in/store</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://motoparkvizag.in/collections</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://motoparkvizag.in/bikes</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <url><loc>https://motoparkvizag.in/c/helmets</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://motoparkvizag.in/c/jackets</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://motoparkvizag.in/c/gloves</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://motoparkvizag.in/c/luggage</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://motoparkvizag.in/c/riding-boots</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://motoparkvizag.in/c/accessories</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+
+  <url><loc>https://motoparkvizag.in/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://motoparkvizag.in/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://motoparkvizag.in/faq</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://motoparkvizag.in/shipping-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://motoparkvizag.in/returns-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://motoparkvizag.in/privacy-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://motoparkvizag.in/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>

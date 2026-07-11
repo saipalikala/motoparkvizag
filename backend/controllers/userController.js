@@ -3,9 +3,11 @@
    ================================================ */
 import jwt from "jsonwebtoken";
 import { Resend } from "resend";
+import { OAuth2Client } from "google-auth-library";
 import User from "../models/userModel.js";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /* ── HELPERS ── */
 const generateToken = (id) =>
@@ -210,6 +212,63 @@ export const loginEmail = async (req, res) => {
 };
 
 /* ════════════════════════════════
+   GOOGLE SIGN-IN
+   POST /api/users/auth/google
+   Body: { credential }  (the ID token from Google Identity Services)
+════════════════════════════════ */
+export const googleAuth = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) {
+            return res.status(400).json({ message: "Missing Google credential" });
+        }
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            return res.status(500).json({ message: "Google sign-in is not configured" });
+        }
+
+        /* Verify the ID token server-side against Google (signature + audience) */
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+
+        if (!payload?.email || !payload.email_verified) {
+            return res.status(401).json({ message: "Google account email not verified" });
+        }
+
+        const email = payload.email.toLowerCase();
+
+        /* Find-or-create by email (same as OTP flow) — Google verified the email */
+        let user = await User.findOne({ email });
+        if (!user) {
+            user = await User.create({
+                name: payload.name || email.split("@")[0],
+                email,
+                isVerified: true,
+            });
+        } else if (!user.isVerified) {
+            user.isVerified = true;
+            await user.save();
+        }
+
+        res.json({
+            token: generateToken(user._id),
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                isVerified: user.isVerified,
+            },
+        });
+    } catch (err) {
+        console.error("googleAuth error:", err);
+        res.status(401).json({ message: "Google sign-in failed. Please try again." });
+    }
+};
+
+/* ════════════════════════════════
    GET PROFILE
    GET /api/users/profile
 ════════════════════════════════ */
@@ -234,13 +293,17 @@ export const updateProfile = async (req, res) => {
         if (!user) return res.status(404).json({ message: "User not found" });
 
         if (name) user.name = name;
-        if (phone) user.phone = phone;
+        if (phone !== undefined) user.phone = phone || undefined; // allow clearing; '' → unset
         await user.save();
 
         res.json({
             user: { _id: user._id, name: user.name, email: user.email, phone: user.phone },
         });
     } catch (err) {
+        // Duplicate phone (unique index) → friendly message instead of a raw 500
+        if (err?.code === 11000 && err?.keyPattern?.phone) {
+            return res.status(409).json({ message: "That phone number is already linked to another account." });
+        }
         res.status(500).json({ message: err.message });
     }
 };

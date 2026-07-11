@@ -1,0 +1,47 @@
+/* ProductGrid — 2/3/4-up responsive grid + matching skeletons. Tokens only. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.skelCard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+.skelMedia {
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+}
+.skelBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-4);
+}
+.skelLine {
+  height: 14px;
+  width: 85%;
+  border-radius: var(--radius-sm);
+}
+.skelLineSm {
+  height: 10px;
+  width: 50%;
+  border-radius: var(--radius-sm);
+}
+
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+  }
+}
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

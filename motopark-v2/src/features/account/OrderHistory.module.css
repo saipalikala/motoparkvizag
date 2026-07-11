@@ -1,0 +1,96 @@
+/* OrderHistory. Tokens only. */
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.skel {
+  height: 96px;
+  border-radius: var(--card-radius);
+}
+
+.order {
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  padding: var(--space-4);
+  background: var(--bg-surface);
+}
+.orderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.orderId {
+  display: block;
+  font-weight: 700;
+  font-size: var(--text-body-sm);
+}
+.orderDate {
+  display: block;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.orderItems {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+.orderBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+.orderCount {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.orderTotal {
+  font-weight: 700;
+}
+
+/* Status badges */
+.badge {
+  flex-shrink: 0;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+}
+.pending { color: var(--warning); background: var(--warning-soft); }
+.confirmed { color: var(--info); background: var(--info-soft); }
+.shipped { color: var(--info); background: var(--info-soft); }
+.delivered { color: var(--success); background: var(--success-soft); }
+.cancelled { color: var(--danger); background: var(--danger-soft); }
+
+/* Empty / error */
+.empty {
+  color: var(--text-secondary);
+  padding: var(--space-6) 0;
+}
+.emptyBox {
+  display: grid;
+  place-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--card-radius);
+}
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
+  color: var(--mp-navy-400);
+}
+.emptyTitle {
+  font-weight: 600;
+}

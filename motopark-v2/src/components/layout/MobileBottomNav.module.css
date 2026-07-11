@@ -1,0 +1,56 @@
+.bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-default);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .bar { background: var(--bg-page); }
+}
+
+@media (min-width: 1024px) {
+  .bar { display: none; }
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--dur-instant) var(--ease-out);
+}
+
+/* Active = ink + indicator bar. Orange Law self-correction: wayfinding
+   is not action — the accent stays reserved for CTAs/sale. */
+.tab { position: relative; }
+
+.active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--text-primary);
+}

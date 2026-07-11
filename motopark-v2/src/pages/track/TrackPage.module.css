@@ -1,0 +1,28 @@
+/* TrackPage. Tokens only. */
+
+.head { margin-bottom: var(--block-gap); }
+.title { font-size: var(--text-h1); margin-bottom: var(--space-2); }
+.sub { font-size: var(--text-body-sm); color: var(--text-secondary); }
+
+.prompt {
+  display: grid;
+  place-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding: var(--space-16) var(--space-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--card-radius);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
+  color: var(--mp-navy-400);
+}
+.promptTitle { font-size: var(--text-h4); font-weight: 600; }
+.promptText { font-size: var(--text-body-sm); color: var(--text-secondary); max-width: 44ch; }
+.guest { font-size: var(--text-body-sm); color: var(--text-secondary); margin-top: var(--space-2); }
+.guest a { color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 2px; }

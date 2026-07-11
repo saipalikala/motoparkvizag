@@ -1,0 +1,108 @@
+/* Category grid — on-brand icon tiles. Tokens only. */
+
+.wrap {
+  /* section padding comes from .section; nothing extra */
+}
+
+.head {
+  margin-bottom: var(--block-gap);
+}
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+.title {
+  font-size: var(--text-h2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  min-height: 128px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  text-decoration: none;
+  color: var(--text-primary);
+  text-align: center;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
+  color: var(--mp-navy-600);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.tile:hover .iconWrap {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tileName {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+
+/* "All gear" tile: warm accent treatment to close the grid */
+.allTile {
+  background: var(--bg-inverse-deep);
+  border-color: var(--bg-inverse-deep);
+  color: var(--text-inverse);
+}
+.allTile .iconWrap {
+  background: rgb(251 243 231 / 0.12);
+  color: var(--mp-cream-100);
+}
+.allTile:hover .iconWrap {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.skel {
+  min-height: 128px;
+  border-radius: var(--card-radius);
+}
+
+/* Tablet: 3-up */
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+  }
+}
+/* Desktop: 4-up */
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

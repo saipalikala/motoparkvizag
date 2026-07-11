@@ -1,0 +1,69 @@
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding-inline: var(--space-12); /* keep text clear of dismiss button */
+  background: var(--bg-inverse-deep); /* navy-800: deeper than section inverse */
+  color: var(--text-inverse);
+}
+
+/* Sunset edge — MotoPark's signature line, lawful because it lives ONLY on
+   deal surfaces (the offer bar IS a discount indicator, Commerce Law 2). */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--mp-orange-700),
+    var(--mp-orange-400) 45%,
+    var(--mp-orange-300) 70%,
+    var(--mp-cream-200)
+  );
+}
+
+.message {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  padding-block: var(--space-2);
+}
+
+.message:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bolt {
+  color: var(--mp-orange-300); /* orange on navy: AA for graphic accents */
+  flex-shrink: 0;
+}
+
+.dismiss {
+  position: absolute;
+  right: var(--space-1);
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: var(--mp-navy-300);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-instant) var(--ease-out);
+}
+
+.dismiss:hover {
+  color: var(--text-inverse);
+}

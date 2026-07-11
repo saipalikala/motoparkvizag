@@ -28,6 +28,7 @@ const CarouselIcon = memo(() => <Ico extra={<><rect x="3" y="3" width="18" heigh
 const NavbarIcon  = memo(() => <Ico extra={<><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>} />);
 const MediaIcon   = memo(() => <Ico extra={<><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>} />);
 const VideoIcon   = memo(() => <Ico d="M15 10l4.553-2.07A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.89L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" />);
+const AiIcon      = memo(() => <Ico d="M4 8h16v12H4z" d2="M12 8V4H8M2 14h2M20 14h2" extra={<><circle cx="9" cy="14" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="1" fill="currentColor" stroke="none"/></>} />);
 const LogoutIcon  = memo(() => <Ico d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />);
 
 DashIcon.displayName = "DashIcon";
@@ -43,6 +44,7 @@ NavbarIcon.displayName = "NavbarIcon";
 MediaIcon.displayName = "MediaIcon";
 LogoutIcon.displayName = "LogoutIcon";
 VideoIcon.displayName  = "VideoIcon";
+AiIcon.displayName     = "AiIcon";
 
 /* ================================================================
    NAV CONFIG — module-level: never re-created on renders
@@ -73,6 +75,12 @@ const NAV_SECTIONS = [
             { name: "Offers",       Icon: OffersIcon,   path: "/admin/offers"       },
             { name: "Media",        Icon: MediaIcon,    path: "/admin/media"        },
             { name: "Video Showcase", Icon: VideoIcon,  path: "/admin/video-showcase" },
+        ],
+    },
+    {
+        label: "AI",
+        links: [
+            { name: "AI Usage", Icon: AiIcon, path: "/admin/ai-usage", badge: "New" },
         ],
     },
 ];

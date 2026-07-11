@@ -1,0 +1,91 @@
+/* Story band — navy cinematic moment (the 40%). Cream on navy-800 (~10:1 AA). */
+
+.band {
+  background: var(--bg-inverse-deep);
+  color: var(--text-inverse);
+  padding-block: var(--section-gap);
+}
+
+.inner {
+  display: grid;
+  gap: var(--block-gap);
+}
+
+.head {
+  max-width: 46rem;
+}
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-orange-300);
+  margin-bottom: var(--space-3);
+}
+.title {
+  font-size: var(--text-h1);
+  color: var(--text-inverse);
+  text-wrap: balance;
+  margin-bottom: var(--space-4);
+}
+.lede {
+  font-size: var(--text-body-lg);
+  color: var(--mp-cream-200);
+  max-width: 40ch;
+}
+
+.rides {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+.ride {
+  padding-top: var(--space-5);
+  border-top: 1px solid rgb(251 243 231 / 0.18);
+}
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: rgb(251 243 231 / 0.1);
+  color: var(--mp-cream-100);
+  margin-bottom: var(--space-3);
+}
+.rideTitle {
+  font-size: var(--text-h4);
+  color: var(--text-inverse);
+  margin-bottom: var(--space-2);
+}
+.rideCopy {
+  font-size: var(--text-body-sm);
+  color: var(--mp-cream-200);
+  line-height: 1.5;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start;
+  font-weight: 600;
+  color: var(--text-inverse);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgb(251 243 231 / 0.4);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.cta:hover {
+  border-bottom-color: var(--text-inverse);
+}
+
+/* Desktop: 3-up vignettes */
+@media (min-width: 768px) {
+  .rides {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
+  }
+}

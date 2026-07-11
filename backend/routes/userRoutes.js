@@ -1,7 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import {
-  register, loginEmail, sendOtp, verifyOtp,
+  register, loginEmail, sendOtp, verifyOtp, googleAuth,
   getProfile, updateProfile, saveAddress, deleteAddress,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/userAuth.js";
@@ -21,6 +21,7 @@ router.post("/register",     authLimiter, register);
 router.post("/login/email",  authLimiter, loginEmail);
 router.post("/otp/send",     authLimiter, sendOtp);
 router.post("/otp/verify",   authLimiter, verifyOtp);
+router.post("/auth/google",  authLimiter, googleAuth);
 
 /* Protected — no rate limit, normal user traffic */
 router.get("/profile",                    protect, getProfile);

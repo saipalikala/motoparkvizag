@@ -1,0 +1,39 @@
+/* SectionHeader — shared eyebrow + title + optional action. Tokens only. */
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--block-gap);
+}
+
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.title {
+  font-size: var(--text-h2);
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.action:hover {
+  border-bottom-color: var(--text-primary);
+}

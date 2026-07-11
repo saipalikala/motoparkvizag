@@ -27,6 +27,7 @@ import paymentRoutes       from "./routes/paymentRoutes.js";
 import homeDataRoutes      from "./routes/homeDataRoutes.js";
 import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
+import aiRoutes            from "./routes/aiRoutes.js";
 import connectDB           from "./config/db.js";
 
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -85,13 +86,27 @@ app.get("/api/health", (req, res) =>
 );
 
 
+const STATIC_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:5174", // motopark-v2 dev (Vite fallback when 5173 is taken)
+  "https://motoparkvizag.in",
+  "https://www.motoparkvizag.in",
+];
+// Vite's autoPort picks a random port when 5173/5174 are busy; allow any
+// localhost/127.0.0.1 port in dev so the V2 build never gets CORS-blocked.
+// Production stays locked to STATIC_ORIGINS.
+const DEV_LOCALHOST = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://motoparkvizag.in",
-      "https://www.motoparkvizag.in",
-    ],
+    origin(origin, cb) {
+      if (!origin) return cb(null, true); // same-origin / curl / server-to-server
+      if (STATIC_ORIGINS.includes(origin)) return cb(null, true);
+      if (process.env.NODE_ENV !== "production" && DEV_LOCALHOST.test(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials   : true,
     methods        : ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders : ["Content-Type", "Authorization", "x-admin"],
@@ -206,6 +221,7 @@ app.use("/api/users/otp",  otpLimiter);
 app.use("/api/users",      userRoutes);
 app.use("/api/cart",       cartRoutes);
 app.use("/api/wishlist",   wishlistRouter);
+app.use("/api/ai",         aiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });

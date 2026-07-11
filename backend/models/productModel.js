@@ -94,6 +94,20 @@ const productSchema = new mongoose.Schema(
     type: Boolean,
     default: false,
 },
+
+        /* =========================
+           AI SEMANTIC SEARCH
+           Vector embedding of name+brand+category+specs+description.
+           Populated by ai/search/backfill.js; queried via Atlas
+           $vectorSearch (index: product_vector_index).
+           `select: false` keeps this large array out of normal
+           catalog reads unless explicitly requested.
+        ========================= */
+        embedding: {
+            type: [Number],
+            default: undefined,
+            select: false,
+        },
     },
     {
         timestamps: true, // adds createdAt + updatedAt automatically

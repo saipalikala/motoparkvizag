@@ -1,0 +1,202 @@
+/* ════════════════════════════════════════════════════════════
+   MotoPark V2 — Design Tokens (docs/09-design-system.md §2–§8)
+   Three layers: primitive → semantic → component.
+   RULE: components NEVER use raw hex — semantic/component vars only.
+   ════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── PRIMITIVES ─────────────────────────────────────────── */
+  /* Sunset Orange (brand action) */
+  --mp-orange-50: #fef2ec;
+  --mp-orange-100: #fce0d2;
+  --mp-orange-200: #f8bfa6;
+  --mp-orange-300: #f39c6b;
+  --mp-orange-400: #ee7845;
+  --mp-orange-500: #e8532e;
+  --mp-orange-600: #d2431f;
+  --mp-orange-700: #b03518;
+  --mp-orange-800: #8c2a14;
+  --mp-orange-900: #6b2010;
+
+  /* Navy Ink (trust / protection) */
+  --mp-navy-50: #f4f6f9;
+  --mp-navy-100: #e4e9f0;
+  --mp-navy-200: #c5cedc;
+  --mp-navy-300: #9aa8bd;
+  --mp-navy-400: #5c6e82;
+  --mp-navy-500: #3a4a61;
+  --mp-navy-600: #2c3a50;
+  --mp-navy-700: #243046;
+  --mp-navy-800: #1b2536;
+  --mp-navy-900: #141c29;
+
+  /* Warm neutrals (cream family) */
+  --mp-cream-50: #fdfbf7;
+  --mp-cream-100: #fbf3e7;
+  --mp-cream-200: #f3e8d8;
+  --mp-cream-300: #e7d8c3;
+  --mp-neutral-0: #ffffff;
+  --mp-neutral-200: #ede9e3;
+  --mp-neutral-400: #b9b2a7;
+
+  /* Semantic hues (warm-tuned) */
+  --mp-green-500: #1f7a4d;
+  --mp-green-100: #e3f2ea;
+  --mp-amber-500: #b45d0e;
+  --mp-amber-100: #fbeedc;
+  --mp-red-500: #c03530;
+  --mp-red-100: #fae4e3;
+  --mp-blue-500: #2b5f8f;
+  --mp-blue-100: #e3edf5;
+
+  /* ── SEMANTIC (light theme — launch default) ────────────── */
+  --bg-page: var(--mp-cream-50);
+  --bg-surface: var(--mp-neutral-0);
+  --bg-surface-warm: var(--mp-cream-100);
+  --bg-inverse: var(--mp-navy-700);
+  --bg-inverse-deep: var(--mp-navy-800);
+
+  --text-primary: var(--mp-navy-700);
+  --text-secondary: var(--mp-navy-400);
+  --text-inverse: var(--mp-cream-50);
+  --text-on-accent: #ffffff;
+
+  --accent: var(--mp-orange-500);
+  --accent-hover: var(--mp-orange-600);
+  --accent-pressed: var(--mp-orange-700);
+  --accent-soft: var(--mp-orange-50);
+
+  --border-default: var(--mp-neutral-200);
+  --border-strong: var(--mp-navy-200);
+  --focus-ring: var(--mp-blue-500); /* focus ≠ action: never orange */
+
+  --success: var(--mp-green-500);
+  --success-soft: var(--mp-green-100);
+  --warning: var(--mp-amber-500);
+  --warning-soft: var(--mp-amber-100);
+  --danger: var(--mp-red-500);
+  --danger-soft: var(--mp-red-100);
+  --info: var(--mp-blue-500);
+  --info-soft: var(--mp-blue-100);
+
+  /* Commerce Law 2: normal price = ink; ONLY sale/discount = orange */
+  --price: var(--mp-navy-700);
+  --price-sale: var(--mp-orange-700);
+  --price-mrp: var(--mp-navy-400);
+
+  --overlay: rgb(20 28 41 / 0.55);
+
+  /* ── SPACING (4px base) ─────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* Section rhythm: 96 desktop / 64 tablet / 48 mobile */
+  --section-gap: clamp(var(--space-12), 8vw, var(--space-24));
+  --block-gap: clamp(var(--space-6), 4vw, var(--space-10));
+
+  /* ── LAYOUT ─────────────────────────────────────────────── */
+  --container-max: 1280px;
+  --container-gutter: clamp(16px, 4vw, 40px);
+  --reading-max: 68ch;
+  --checkout-max: 560px;
+
+  /* ── RADIUS ─────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* ── SHADOWS (navy-tinted, never black) ─────────────────── */
+  --shadow-xs: 0 1px 2px rgb(36 48 70 / 0.06);
+  --shadow-sm: 0 2px 8px rgb(36 48 70 / 0.08);
+  --shadow-md: 0 6px 20px rgb(36 48 70 / 0.12);
+  --shadow-lg: 0 16px 40px rgb(36 48 70 / 0.18);
+
+  /* ── MOTION (approved doctrine, docs/10) ────────────────── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* the MotoPark glide */
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-instant: 120ms;
+  --dur-fast: 200ms;
+  --dur-base: 300ms;
+  --dur-slow: 400ms;
+  --dur-cinematic: 600ms; /* hero choreography only, once per session */
+
+  /* ── TYPOGRAPHY ─────────────────────────────────────────── */
+  --font-body: 'Geist Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sakana', 'Geist Variable', system-ui, sans-serif; /* display-only, ≥26px */
+
+  /* Fluid type scale (mobile → desktop, DS §3.2) */
+  --text-display: clamp(2.5rem, 1.6rem + 4vw, 4.5rem); /* 40→72 */
+  --text-h1: clamp(2rem, 1.55rem + 2vw, 3rem); /* 32→48 */
+  --text-h2: clamp(1.625rem, 1.35rem + 1.25vw, 2.25rem); /* 26→36 */
+  --text-h3: clamp(1.375rem, 1.2rem + 0.75vw, 1.75rem); /* 22→28 */
+  --text-h4: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem); /* 18→22 */
+  --text-h5: clamp(1rem, 0.96rem + 0.25vw, 1.125rem); /* 16→18 */
+  --text-h6: clamp(0.875rem, 0.85rem + 0.2vw, 1rem); /* 14→16, caps */
+  --text-body-lg: clamp(1.0625rem, 1.04rem + 0.15vw, 1.125rem);
+  --text-body: 1rem; /* 16px floor — Commerce Law 7 */
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-price-lg: clamp(1.5rem, 1.35rem + 0.6vw, 1.75rem); /* 24→28 */
+  --text-price: clamp(1.125rem, 1.08rem + 0.3vw, 1.25rem); /* 18→20 */
+
+  /* ── COMPONENT TOKENS ───────────────────────────────────── */
+  --btn-primary-bg: var(--mp-orange-600); /* AA at 16px text */
+  --btn-primary-bg-hover: var(--mp-orange-700);
+  --btn-primary-fg: var(--text-on-accent);
+  --btn-height: 44px; /* touch target floor */
+  --btn-radius: var(--radius-md);
+
+  --card-bg: var(--bg-surface);
+  --card-border: var(--border-default);
+  --card-radius: var(--radius-lg);
+
+  --input-height: 48px;
+  --input-border: var(--border-default);
+  --input-border-focus: var(--focus-ring);
+  --input-radius: var(--radius-md);
+
+  --nav-bg: rgb(253 251 247 / 0.92); /* cream glass — the ONE sanctioned glass */
+  --nav-height: 64px;
+  --nav-height-mobile: 56px;
+
+  --badge-sale-bg: var(--mp-orange-700);
+  --badge-sale-fg: #ffffff;
+
+  --skeleton-base: var(--mp-neutral-200);
+  --skeleton-shine: var(--mp-cream-50);
+}
+
+/* ── DARK THEME (token-complete, NOT enabled at launch) ─────
+   Future rollout = add [data-theme='dark'] on <html>. Storefront
+   launches light-only per approved refinement (DS §2.3).        */
+[data-theme='dark'] {
+  --bg-page: var(--mp-navy-900);
+  --bg-surface: var(--mp-navy-800);
+  --bg-surface-warm: var(--mp-navy-700);
+  --bg-inverse: var(--mp-cream-100);
+  --bg-inverse-deep: var(--mp-cream-50);
+  --text-primary: var(--mp-cream-50);
+  --text-secondary: var(--mp-navy-300);
+  --text-inverse: var(--mp-navy-700);
+  --border-default: var(--mp-navy-600);
+  --border-strong: var(--mp-navy-500);
+  --price: var(--mp-cream-50);
+  --price-mrp: var(--mp-navy-300);
+  --card-bg: var(--mp-navy-800);
+  --nav-bg: rgb(27 37 54 / 0.92);
+  --skeleton-base: var(--mp-navy-600);
+  --skeleton-shine: var(--mp-navy-500);
+}

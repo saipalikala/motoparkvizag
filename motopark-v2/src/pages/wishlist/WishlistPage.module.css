@@ -1,0 +1,50 @@
+/* WishlistPage. Tokens only. */
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--block-gap);
+}
+.title {
+  font-size: var(--text-h1);
+}
+.clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.clear:hover {
+  color: var(--danger);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-16) var(--space-4);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
+  color: var(--mp-navy-400);
+}
+.emptyTitle {
+  font-size: var(--text-h4);
+  font-weight: 600;
+}
+.emptyText {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  max-width: 40ch;
+}

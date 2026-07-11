@@ -1,0 +1,223 @@
+/* StorePage (PLP) — sidebar filters + results. Tokens only. */
+
+.head {
+  margin-bottom: var(--block-gap);
+}
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+.title {
+  font-size: var(--text-h1);
+  margin-bottom: var(--space-2);
+}
+.count {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+/* ── Toolbar (mobile filter toggle + sort) ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--block-gap);
+}
+.filterToggle {
+  position: relative;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+.sort {
+  margin-left: auto;
+}
+.sort select {
+  height: 40px;
+  padding-inline: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ── Filters panel ── */
+.filters {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  padding: var(--space-5);
+  height: fit-content;
+}
+.filtersHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-default);
+}
+.filtersTitle {
+  font-size: var(--text-h5);
+}
+.clear {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--accent);
+}
+.closeFilters {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.group {
+  margin-bottom: var(--space-5);
+}
+.group:last-child {
+  margin-bottom: 0;
+}
+.groupTitle {
+  font-size: var(--text-h6);
+  margin-bottom: var(--space-3);
+}
+
+.brandList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.priceForm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.priceInput {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  padding-inline: var(--space-2);
+  background: var(--bg-page);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
+}
+.dash {
+  color: var(--text-secondary);
+}
+.priceHint {
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+/* ── Empty state ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--card-radius);
+}
+
+/* ── Pager ── */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-10);
+}
+.pageInfo {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* Drawer backdrop (mobile only; hidden on desktop where filters are inline) */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: var(--overlay);
+}
+
+/* ── Mobile: filters become an overlay panel ── */
+@media (max-width: 899px) {
+  .filters {
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 60;
+    width: min(88vw, 340px);
+    border-radius: 0;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-lg);
+  }
+  .filtersOpen {
+    transform: translateX(0);
+  }
+  .closeFilters {
+    display: inline-flex;
+  }
+}
+
+/* ── Desktop: persistent sidebar ── */
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 260px 1fr;
+    gap: var(--space-8);
+    align-items: start;
+  }
+  .filterToggle {
+    display: none;
+  }
+  .toolbar {
+    justify-content: flex-end;
+  }
+  .backdrop {
+    display: none;
+  }
+}

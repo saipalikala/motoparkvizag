@@ -1,0 +1,82 @@
+/* Shop-by-bike — single card module. Tokens only. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--block-gap);
+  padding: clamp(var(--space-6), 4vw, var(--space-10));
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+}
+
+.copy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.iconWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: var(--space-1);
+}
+.title {
+  font-size: var(--text-h3);
+  margin-bottom: var(--space-2);
+}
+.sub {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  max-width: 46ch;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.select {
+  flex: 1 1 240px;
+  height: var(--input-height);
+  padding-inline: var(--space-4);
+  background: var(--bg-page);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.select:hover {
+  border-color: var(--border-strong);
+}
+
+/* Desktop: copy left, form right on one row */
+@media (min-width: 768px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+  }
+  .form {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+  .select {
+    flex-basis: 260px;
+  }
+}

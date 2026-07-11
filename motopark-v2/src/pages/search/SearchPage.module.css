@@ -1,0 +1,40 @@
+/* SearchPage empty prompt. Tokens only. */
+
+.prompt {
+  display: grid;
+  place-items: center;
+  gap: var(--space-3);
+  text-align: center;
+  padding-block: var(--space-24);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
+  color: var(--mp-navy-400);
+}
+.promptTitle {
+  font-size: var(--text-h3);
+}
+.promptText {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  max-width: 40ch;
+}
+
+/* "AI-ranked" caption under the results header. */
+.aiNote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  margin-top: calc(var(--space-3) * -1);
+  margin-bottom: var(--space-5);
+}
+.aiNote svg {
+  color: var(--accent);
+}

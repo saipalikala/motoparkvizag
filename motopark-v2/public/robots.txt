@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Transactional / account pages — no SEO value, keep out of the index
+Disallow: /cart
+Disallow: /checkout
+Disallow: /wishlist
+Disallow: /login
+Disallow: /account
+Disallow: /track
+Disallow: /search
+
+Sitemap: https://motoparkvizag.in/sitemap.xml

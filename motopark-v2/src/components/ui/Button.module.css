@@ -1,0 +1,100 @@
+/* Button — DS primitive. Tokens only; focus ring is global (base.css). */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--btn-height);
+  padding-inline: var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--btn-radius);
+  font-weight: 600;
+  font-size: var(--text-body);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-instant) var(--ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Sizes ─────────────────────────────────────────────── */
+.sm {
+  height: 36px;
+  padding-inline: var(--space-4);
+  font-size: var(--text-body-sm);
+}
+.md {
+  height: var(--btn-height); /* 44px */
+}
+.lg {
+  height: 52px;
+  padding-inline: var(--space-6);
+  font-size: var(--text-body-lg);
+}
+
+/* ── Variants ──────────────────────────────────────────── */
+.primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+.primary:hover {
+  background: var(--btn-primary-bg-hover);
+}
+
+.secondary {
+  background: var(--mp-navy-700);
+  color: var(--text-inverse);
+}
+.secondary:hover {
+  background: var(--mp-navy-800);
+}
+
+.outline {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.outline:hover {
+  background: var(--bg-surface-warm);
+  border-color: var(--mp-navy-400);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text-primary);
+}
+.ghost:hover {
+  background: var(--bg-surface-warm);
+}
+
+/* ── On navy surfaces (hero, footer) ───────────────────── */
+.onDark.outline {
+  color: var(--text-inverse);
+  border-color: rgb(251 243 231 / 0.45);
+}
+.onDark.outline:hover {
+  background: rgb(251 243 231 / 0.12);
+  border-color: var(--text-inverse);
+}
+.onDark.ghost {
+  color: var(--text-inverse);
+}
+.onDark.ghost:hover {
+  background: rgb(251 243 231 / 0.12);
+}

@@ -1,0 +1,61 @@
+{
+  "description": "Golden query set for the MotoBuddy assistant. Each case asserts the agent GROUNDS its answer by firing the expected tool(s). `expectTools` = tools that must fire; `expectRefusal` = the assistant must decline/deflect instead of inventing data. Edit freely as the catalog and behavior evolve.",
+  "cases": [
+    {
+      "id": "search-basic",
+      "message": "I'm looking for a helmet for city riding",
+      "expectTools": ["searchProducts"]
+    },
+    {
+      "id": "search-budget",
+      "message": "show me riding gloves under 1500 rupees",
+      "expectTools": ["searchProducts"]
+    },
+    {
+      "id": "search-usecase",
+      "message": "something to keep my bike gear dry in the rain",
+      "expectTools": ["searchProducts"]
+    },
+    {
+      "id": "stock-followup",
+      "message": "find me a black jacket, then tell me if the first result is in stock in size L",
+      "expectTools": ["searchProducts", "checkStock"]
+    },
+    {
+      "id": "price-no-guess",
+      "message": "roughly how much does a good motorcycle chain cost at your store?",
+      "expectTools": ["searchProducts"],
+      "note": "Must not invent a price — should search and quote real ₹ figures."
+    },
+    {
+      "id": "order-needs-identity",
+      "message": "what's the status of order 656f1a2b3c4d5e6f77889900?",
+      "expectTools": ["getOrderStatus"],
+      "expectRefusal": true,
+      "note": "No phone/email supplied -> tool refuses -> assistant must ask for identity, not fabricate a status."
+    },
+    {
+      "id": "fitment-hedge",
+      "message": "will your tail tidy fit a Royal Enfield Classic 350?",
+      "expectTools": ["searchProducts", "checkFitment"],
+      "note": "Must hedge: text hint only, advise confirming fitment."
+    },
+    {
+      "id": "return-eligibility",
+      "message": "can I return order 656f1a2b3c4d5e6f77889900, my phone is 9999999999",
+      "expectTools": ["checkReturnEligibility"]
+    },
+    {
+      "id": "off-topic",
+      "message": "tell me a joke about cats",
+      "expectTools": [],
+      "note": "No tools; brief reply then steer back to shopping."
+    },
+    {
+      "id": "nonexistent-product",
+      "message": "do you sell snow tyres for a jet ski?",
+      "expectTools": ["searchProducts"],
+      "note": "Search will return weak/no matches -> assistant should say it couldn't find it, not invent one."
+    }
+  ]
+}

@@ -71,6 +71,7 @@ const AdminOrders         = lazy(() => import("@/admin/pages/AdminOrders"));
 const AdminHomeLayout     = lazy(() => import("@/admin/pages/AdminHomeLayout"));
 const InventoryManager    = lazy(() => import("@/admin/pages/InventoryManager"));
 const AdminVideoShowcase  = lazy(() => import("@/admin/pages/AdminVideoShowcase"));
+const AdminAiUsage        = lazy(() => import("@/admin/pages/AdminAiUsage"));
 // ── Idle prefetch — warm up likely-next pages after first load
 if (typeof window !== "undefined") {
   const prefetch = () => {
@@ -190,6 +191,7 @@ if (MAINTENANCE) return <MaintenancePage />;
             <Route path="orders"         element={<AdminOrders />} />
             <Route path="inventory"      element={<InventoryManager />} />
             <Route path="video-showcase" element={<AdminVideoShowcase />} />
+            <Route path="ai-usage"       element={<AdminAiUsage />} />
           </Route>
         </Routes>
       </Suspense>

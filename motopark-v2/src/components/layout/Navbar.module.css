@@ -1,0 +1,473 @@
+/* MotoPark two-tier header. Cream glass (single sanctioned glass use).
+   Tier 1: brand · search field · utilities. Tier 2: category rail + trust. */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .header { background: var(--bg-page); }
+}
+
+.scrolled {
+  border-bottom-color: var(--border-default);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ── Tier 1 ─────────────────────────────────────────────── */
+.tier1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--nav-height-mobile);
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+@media (min-width: 1024px) {
+  .tier1 {
+    height: 72px;
+    padding-inline: var(--container-gutter);
+    gap: var(--space-8);
+  }
+}
+
+/* ── Logo lockup ────────────────────────────────────────── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .logo { margin-right: 0; }
+}
+
+.logo img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+@media (min-width: 1024px) {
+  .logo img { width: 44px; height: 44px; }
+}
+
+.wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.wordmarkName {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+.wordmarkName em,
+.drawerTitle em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--mp-navy-500);
+}
+
+.est {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ── Desktop search field (first-class) ─────────────────── */
+.searchBar {
+  flex: 1;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 44px;
+  padding-inline: var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.searchBar:hover { border-color: var(--border-strong); }
+.searchBar:focus-within { border-color: var(--input-border-focus); }
+
+.searchBar input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-size: var(--text-body-sm);
+}
+
+.searchBar input:focus { outline: none; }
+
+.searchIcon { color: var(--text-secondary); flex-shrink: 0; }
+
+/* ── Utilities ──────────────────────────────────────────── */
+.utils {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-instant) var(--ease-out);
+}
+
+.iconBtn:hover { background: var(--mp-cream-200); }
+
+.cartBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-on-accent);
+  background: var(--accent);
+  border-radius: var(--radius-full);
+}
+
+/* ── Tier 2: category rail ──────────────────────────────── */
+.rail {
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-gutter);
+  border-top: 1px solid var(--border-default);
+}
+
+.railNav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.railItem { position: relative; }
+
+.railBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 var(--space-3);
+  height: 44px;
+  background: none;
+  border: none;
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Ink underline — transform-only hover (doctrine) */
+.railBtn::after {
+  content: '';
+  position: absolute;
+  inset-inline: var(--space-3);
+  bottom: 0;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.railBtn:hover::after,
+.railBtn[aria-expanded='true']::after {
+  transform: scaleX(1);
+}
+
+/* Trust micro-signature (Commerce Law 3 in the chrome) */
+.trustSig {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.trustSig svg { color: var(--success); }
+
+/* ── Mega panel (full-width under rail) ─────────────────── */
+.mega {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  background: var(--bg-surface);
+  border-block: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
+  animation: megaIn var(--dur-fast) var(--ease-out);
+}
+
+@keyframes megaIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.megaInner {
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding: var(--space-6) var(--container-gutter) var(--space-8);
+}
+
+.megaEyebrow {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.megaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.megaLink {
+  display: block;
+  padding: var(--space-2) 0;
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-instant) var(--ease-out);
+}
+
+.megaLink:hover { color: var(--accent-hover); }
+
+.megaAll {
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.megaAll:hover { color: var(--text-primary); }
+
+/* ── Responsive helpers ─────────────────────────────────── */
+.mobileOnly { display: grid; }
+.desktopOnly { display: none; }
+
+@media (min-width: 1024px) {
+  .mobileOnly { display: none; }
+  .desktopOnly { display: flex; }
+  .rail.desktopOnly { display: flex; }
+}
+
+/* ── Mobile persistent search ───────────────────────────── */
+.mobileSearch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 var(--space-4) var(--space-3);
+  padding-inline: var(--space-3);
+  height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+.mobileSearch:focus-within { border-color: var(--input-border-focus); }
+
+.mobileSearch input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: var(--text-body);
+  min-width: 0;
+}
+
+.mobileSearch input:focus { outline: none; }
+
+@media (min-width: 1024px) {
+  .mobileSearch.mobileOnly { display: none; }
+}
+
+/* ── Mobile drawer ──────────────────────────────────────── */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--overlay);
+  animation: fadeIn var(--dur-fast) var(--ease-out);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.drawer {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: min(320px, 86vw);
+  background: var(--bg-page);
+  overflow-y: auto;
+  padding: var(--space-4);
+  animation: slideIn var(--dur-base) var(--ease-out);
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-24px); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.drawerBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.drawerBrand img { width: 32px; height: 32px; object-fit: contain; }
+
+.drawerTitle {
+  font-weight: 800;
+  font-size: var(--text-h5);
+  letter-spacing: 0.045em;
+}
+
+.accordion { border-bottom: 1px solid var(--border-default); }
+
+.accordionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-1);
+  background: none;
+  border: none;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.accordionBtn svg { transition: rotate var(--dur-fast) var(--ease-out); }
+.chevronOpen { rotate: 180deg; }
+
+.accordionList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--space-3);
+}
+
+.accordionLink,
+.accordionAll {
+  display: block;
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.accordionLink:hover { background: var(--bg-surface-warm); }
+
+.accordionAll {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.drawerLinks {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-4);
+  gap: var(--space-1);
+}
+
+.drawerLinks a {
+  padding: var(--space-3) var(--space-1);
+  min-height: 44px;
+  font-size: var(--text-body);
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+
+.drawerLinks a:hover { background: var(--bg-surface-warm); }
+
+.drawerFoot {
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-default);
+}
+
+.drawerTagline {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1);
+}
+
+.drawerMeta {
+  font-size: var(--text-caption);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  margin: 0;
+}
