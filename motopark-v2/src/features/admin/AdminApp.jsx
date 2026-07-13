@@ -1,0 +1,61 @@
+import { lazy, Suspense } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminAuthProvider } from './AdminAuthContext.jsx';
+import AdminRoute from './AdminRoute.jsx';
+
+/**
+ * AdminApp — the entire /admin realm. Mounted by App.jsx only for /admin paths,
+ * wrapped in its OWN AdminAuthProvider (never the storefront's AuthProvider) and
+ * carrying none of the storefront chrome.
+ *
+ * Routes are lazy so the admin bundle never ships to storefront visitors.
+ * Structure: public /admin/login, everything else behind the AdminRoute guard
+ * inside AdminLayout.
+ */
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage.jsx'));
+const AdminLayout = lazy(() => import('./components/AdminLayout.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const SectionPlaceholder = lazy(() => import('./pages/SectionPlaceholder.jsx'));
+
+function AdminLoader() {
+  return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading admin" />;
+}
+
+/** Roadmap sections not yet built (docs/HANDOFF §6) — routable placeholders. */
+const PLACEHOLDER_SECTIONS = [
+  { path: 'products', title: 'Products', subtitle: 'Catalog management — create, edit, and organize products.' },
+  { path: 'categories', title: 'Categories', subtitle: 'Manage the storefront category taxonomy.' },
+  { path: 'brands', title: 'Brands', subtitle: 'Manage product brands.' },
+  { path: 'orders', title: 'Orders', subtitle: 'Process, fulfill, and track customer orders.' },
+  { path: 'customers', title: 'Customers', subtitle: 'Browse registered customers and their order history.' },
+  { path: 'analytics', title: 'Analytics', subtitle: 'Sales, revenue, and store performance insights.' },
+  { path: 'settings', title: 'Settings', subtitle: 'Store configuration and admin preferences.' },
+];
+
+export default function AdminApp() {
+  return (
+    <AdminAuthProvider>
+      <Suspense fallback={<AdminLoader />}>
+        <Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              {PLACEHOLDER_SECTIONS.map(({ path, title, subtitle }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={<SectionPlaceholder title={title} subtitle={subtitle} />}
+                />
+              ))}
+            </Route>
+          </Route>
+
+          {/* Unknown /admin/* → dashboard (guard redirects to login if needed). */}
+          <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </Suspense>
+    </AdminAuthProvider>
+  );
+}

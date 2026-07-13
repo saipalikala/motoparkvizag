@@ -1,0 +1,70 @@
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 116px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.label {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+/* Accent chips — soft-tinted, never competing with price orange semantics. */
+.navy {
+  background: var(--mp-navy-100);
+  color: var(--mp-navy-600);
+}
+.orange {
+  background: var(--accent-soft);
+  color: var(--accent-pressed);
+}
+.green {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.blue {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.value {
+  font-size: var(--text-h2);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.valueSkeleton {
+  height: 32px;
+  width: 60%;
+  border-radius: var(--radius-sm);
+}
+
+.hint {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}

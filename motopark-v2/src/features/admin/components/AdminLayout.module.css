@@ -1,0 +1,229 @@
+/* AdminLayout — fixed sidebar + topbar + scrolling content. Tokens only. */
+
+.shell {
+  min-height: 100dvh;
+  background: var(--bg-page);
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--admin-sidebar-w, 248px);
+  display: flex;
+  flex-direction: column;
+  background: var(--mp-navy-800);
+  color: var(--mp-navy-100);
+  border-right: 1px solid var(--mp-navy-700);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 64px;
+  padding-inline: var(--space-5);
+  border-bottom: 1px solid var(--mp-navy-700);
+  flex-shrink: 0;
+}
+
+.brandBadge {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+}
+
+.brandText {
+  font-weight: 700;
+  font-size: var(--text-h5);
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.drawerClose {
+  display: none;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--mp-navy-200);
+  cursor: pointer;
+  padding: var(--space-1);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-4) var(--space-3);
+  overflow-y: auto;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--mp-navy-200);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.navLink:hover {
+  background: var(--mp-navy-700);
+  color: #fff;
+}
+
+.navLinkActive,
+.navLinkActive:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.navIcon {
+  flex-shrink: 0;
+}
+
+/* ── Main column ──────────────────────────────────────────── */
+.main {
+  margin-left: var(--admin-sidebar-w, 248px);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 64px;
+  padding-inline: var(--space-6);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.menuBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-1);
+}
+
+.topbarSpacer {
+  flex: 1;
+}
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.sessionMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.sessionRole {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+
+.sessionEmail {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding-inline: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.logout:hover:not(:disabled) {
+  background: var(--bg-surface-warm);
+  border-color: var(--mp-navy-400);
+}
+
+.logout:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.content {
+  flex: 1;
+  padding: var(--space-8) var(--space-6);
+  max-width: var(--container-max);
+  width: 100%;
+}
+
+.scrim {
+  display: none;
+}
+
+/* ── Mobile: off-canvas drawer ────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-lg);
+  }
+  .sidebarOpen {
+    transform: translateX(0);
+  }
+  .drawerClose {
+    display: block;
+  }
+  .main {
+    margin-left: 0;
+  }
+  .menuBtn {
+    display: inline-flex;
+  }
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: var(--overlay);
+  }
+  .content {
+    padding: var(--space-6) var(--space-4);
+  }
+}
