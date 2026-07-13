@@ -1,0 +1,251 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.emptyHint {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+.addVariant {
+  align-self: flex-start;
+}
+
+/* ── Variant card ─────────────────────────────────────────── */
+.card {
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  background: var(--bg-surface-warm);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cardTitle {
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.removeVariant {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.removeVariant:hover {
+  text-decoration: underline;
+}
+
+/* ── Fields ───────────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.label {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.input {
+  height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  width: 100%;
+}
+.input:focus-visible {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 3px rgb(43 95 143 / 0.18);
+}
+
+.colorRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.swatchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.colorInput {
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Images ───────────────────────────────────────────────── */
+.imageGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.imageCell {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.imageRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.newTag {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.addImage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 80px;
+  height: 80px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.addImage:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Sizes ────────────────────────────────────────────────── */
+.sizeList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sizeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sizeInput {
+  flex: 1;
+}
+
+.stockInput {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.sizeRemove {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.sizeRemove:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.sizeRemove:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.addSize {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-1) 0;
+}
+.addSize:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .colorRow {
+    grid-template-columns: 1fr;
+  }
+}

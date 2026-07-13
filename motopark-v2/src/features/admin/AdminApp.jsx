@@ -16,6 +16,8 @@ const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage.jsx'));
 const AdminLayout = lazy(() => import('./components/AdminLayout.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const SectionPlaceholder = lazy(() => import('./pages/SectionPlaceholder.jsx'));
+const ProductListPage = lazy(() => import('./products/ProductListPage.jsx'));
+const ProductFormPage = lazy(() => import('./products/ProductFormPage.jsx'));
 
 function AdminLoader() {
   return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading admin" />;
@@ -23,7 +25,6 @@ function AdminLoader() {
 
 /** Roadmap sections not yet built (docs/HANDOFF §6) — routable placeholders. */
 const PLACEHOLDER_SECTIONS = [
-  { path: 'products', title: 'Products', subtitle: 'Catalog management — create, edit, and organize products.' },
   { path: 'categories', title: 'Categories', subtitle: 'Manage the storefront category taxonomy.' },
   { path: 'brands', title: 'Brands', subtitle: 'Manage product brands.' },
   { path: 'orders', title: 'Orders', subtitle: 'Process, fulfill, and track customer orders.' },
@@ -42,6 +43,12 @@ export default function AdminApp() {
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
+
+              {/* Products (Milestone 2) */}
+              <Route path="products" element={<ProductListPage />} />
+              <Route path="products/new" element={<ProductFormPage />} />
+              <Route path="products/:id" element={<ProductFormPage />} />
+
               {PLACEHOLDER_SECTIONS.map(({ path, title, subtitle }) => (
                 <Route
                   key={path}
