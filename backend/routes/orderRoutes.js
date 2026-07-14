@@ -44,6 +44,12 @@ import { createOrder } from "../controllers/orderController.js";
 
 const router = express.Router();
 
+/* Valid order statuses (manual-fulfilment lifecycle, docs/06). Shared by the
+   status-update and tracking endpoints. "shipped" retained for legacy rows. */
+const VALID_STATUSES = [
+  "pending", "confirmed", "packed", "dispatched", "shipped", "delivered", "cancelled", "returned",
+];
+
 /* ── OPTIONAL USER AUTH (guest-friendly) ── */
 const optionalAuth = async (req, res, next) => {
   const auth = req.headers.authorization;
@@ -141,15 +147,51 @@ router.put("/:id/status", authMiddleware, async (req, res) => { // [F4]
     }
 
     const { status } = req.body;
-    const VALID = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
-    if (!VALID.includes(status)) {
-      return res.status(400).json({ message: `Invalid status. Must be one of: ${VALID.join(", ")}` });
+    if (!VALID_STATUSES.includes(status)) {
+      return res.status(400).json({ message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}` });
     }
 
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { new: true, runValidators: true }
+    );
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/* ── UPDATE TRACKING (admin only) ──
+   Records courier hand-off details after dispatch (manual fulfilment, docs/06).
+   Optionally advances status in the same call (e.g. → "dispatched") so the admin
+   can record tracking + dispatch atomically. All fields optional. */
+router.patch("/:id/tracking", authMiddleware, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: "Invalid order ID" });
+    }
+
+    const { courierName, trackingNumber, status } = req.body;
+    const update = {};
+    if (courierName !== undefined) update.courierName = String(courierName).trim();
+    if (trackingNumber !== undefined) update.trackingNumber = String(trackingNumber).trim();
+    if (status !== undefined) {
+      if (!VALID_STATUSES.includes(status)) {
+        return res.status(400).json({ message: `Invalid status. Must be one of: ${VALID_STATUSES.join(", ")}` });
+      }
+      update.status = status;
+    }
+
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ message: "Nothing to update" });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true, runValidators: true }
     );
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ order });

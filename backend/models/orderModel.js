@@ -37,13 +37,24 @@ const orderSchema = new mongoose.Schema(
         },
 
         paymentMethod: { type: String, default: "cod" },
+        // Razorpay payment reference (set on paid checkout). Was previously
+        // dropped by strict mode — now persisted so the admin can show it.
+        paymentId:     { type: String, default: null },
         total:         { type: Number, required: true },
 
         status: {
             type:    String,
             default: "pending",
-            enum:    ["pending", "confirmed", "shipped", "delivered", "cancelled"],
+            // Manual-fulfilment lifecycle (docs/06): pending → confirmed → packed
+            // → dispatched → delivered (+ cancelled/returned). "shipped" is kept
+            // as a legacy-safe value for pre-existing order rows.
+            enum:    ["pending", "confirmed", "packed", "dispatched", "shipped", "delivered", "cancelled", "returned"],
         },
+
+        /* Manual fulfilment — courier handoff details (docs/06 §2, §4).
+           No courier API: the admin records these by hand after dispatch. */
+        courierName:    { type: String, default: "" },
+        trackingNumber: { type: String, default: "" },
     },
     { timestamps: true }
 );
