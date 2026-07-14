@@ -1,0 +1,278 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.mainCol,
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-h5);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── Items ────────────────────────────────────────────────── */
+.items {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-default);
+}
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.itemName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.swatchWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+}
+.itemQty {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.itemPrice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.itemUnit {
+  font-size: var(--text-caption);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* ── Financials ───────────────────────────────────────────── */
+.finance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.finRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+.finRow dd {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.finTotal {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-default);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.finTotal dt,
+.finTotal dd {
+  color: var(--text-primary);
+}
+
+.payLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-default);
+}
+.payBadge {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+}
+.payPaid {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.payCod {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+.payMethod {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+.payRef {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  font-family: ui-monospace, monospace;
+}
+
+/* ── Status / workflow ────────────────────────────────────── */
+.statusRow {
+  display: flex;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.terminalNote {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Tracking ─────────────────────────────────────────────── */
+.trackingBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.trackRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-body-sm);
+}
+.trackLabel {
+  color: var(--text-secondary);
+}
+.trackVal {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+}
+.mono {
+  font-family: ui-monospace, monospace;
+}
+.editTracking {
+  align-self: flex-start;
+  margin-top: var(--space-2);
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.muted {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+/* ── Customer / address ───────────────────────────────────── */
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.infoName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.infoLink {
+  font-size: var(--text-body-sm);
+  color: var(--accent);
+  text-decoration: none;
+  width: fit-content;
+}
+.infoLink:hover {
+  text-decoration: underline;
+}
+.accountTag {
+  margin-top: var(--space-1);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-style: normal;
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ── States ───────────────────────────────────────────────── */
+.notice {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.error {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.loadingBlock {
+  height: 400px;
+  border-radius: var(--card-radius);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

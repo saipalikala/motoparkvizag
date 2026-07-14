@@ -9,9 +9,12 @@ import styles from './OrderHistory.module.css';
 const STATUS = {
   pending: { label: 'Pending', cls: 'pending' },
   confirmed: { label: 'Confirmed', cls: 'confirmed' },
+  packed: { label: 'Packed', cls: 'packed' },
+  dispatched: { label: 'Dispatched', cls: 'dispatched' },
   shipped: { label: 'Shipped', cls: 'shipped' },
   delivered: { label: 'Delivered', cls: 'delivered' },
   cancelled: { label: 'Cancelled', cls: 'cancelled' },
+  returned: { label: 'Returned', cls: 'returned' },
 };
 
 const fmtDate = (d) => {
@@ -85,6 +88,11 @@ export default function OrderHistory() {
               {first ? first.name : 'Items'}
               {more > 0 ? ` and ${more} more item${more === 1 ? '' : 's'}` : ''}
             </p>
+            {o.courierName && o.trackingNumber && (
+              <p className={styles.tracking}>
+                {o.courierName} · <span className={styles.trackingNo}>{o.trackingNumber}</span>
+              </p>
+            )}
             <div className={styles.orderBottom}>
               <span className={styles.orderCount}>
                 {items.reduce((n, i) => n + (i.quantity || 1), 0)} item(s)

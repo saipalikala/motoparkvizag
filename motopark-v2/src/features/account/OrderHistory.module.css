@@ -64,9 +64,23 @@
 }
 .pending { color: var(--warning); background: var(--warning-soft); }
 .confirmed { color: var(--info); background: var(--info-soft); }
+.packed { color: var(--info); background: var(--info-soft); }
+.dispatched { color: var(--info); background: var(--info-soft); }
 .shipped { color: var(--info); background: var(--info-soft); }
 .delivered { color: var(--success); background: var(--success-soft); }
 .cancelled { color: var(--danger); background: var(--danger-soft); }
+.returned { color: var(--danger); background: var(--danger-soft); }
+
+/* Courier / tracking line (shown once dispatched) */
+.tracking {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+.trackingNo {
+  font-family: ui-monospace, monospace;
+  color: var(--text-primary);
+}
 
 /* Empty / error */
 .empty {

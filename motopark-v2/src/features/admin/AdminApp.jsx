@@ -20,6 +20,9 @@ const ProductListPage = lazy(() => import('./products/ProductListPage.jsx'));
 const ProductFormPage = lazy(() => import('./products/ProductFormPage.jsx'));
 const CategoryListPage = lazy(() => import('./categories/CategoryListPage.jsx'));
 const CollectionListPage = lazy(() => import('./collections/CollectionListPage.jsx'));
+const OrderListPage = lazy(() => import('./orders/OrderListPage.jsx'));
+const OrderDetailPage = lazy(() => import('./orders/OrderDetailPage.jsx'));
+const OrderPrintPage = lazy(() => import('./orders/OrderPrintPage.jsx'));
 
 function AdminLoader() {
   return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading admin" />;
@@ -27,7 +30,6 @@ function AdminLoader() {
 
 /** Roadmap sections not yet built (docs/HANDOFF §6) — routable placeholders. */
 const PLACEHOLDER_SECTIONS = [
-  { path: 'orders', title: 'Orders', subtitle: 'Process, fulfill, and track customer orders.' },
   { path: 'customers', title: 'Customers', subtitle: 'Browse registered customers and their order history.' },
   { path: 'analytics', title: 'Analytics', subtitle: 'Sales, revenue, and store performance insights.' },
   { path: 'settings', title: 'Settings', subtitle: 'Store configuration and admin preferences.' },
@@ -41,6 +43,9 @@ export default function AdminApp() {
           <Route path="/admin/login" element={<AdminLoginPage />} />
 
           <Route element={<AdminRoute />}>
+            {/* Packing slip — standalone, OUTSIDE AdminLayout (no sidebar/topbar). */}
+            <Route path="/admin/orders/:id/print" element={<OrderPrintPage />} />
+
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
 
@@ -52,6 +57,10 @@ export default function AdminApp() {
               {/* Categories & Collections (Milestone 3) */}
               <Route path="categories" element={<CategoryListPage />} />
               <Route path="collections" element={<CollectionListPage />} />
+
+              {/* Orders (Milestone 4) */}
+              <Route path="orders" element={<OrderListPage />} />
+              <Route path="orders/:id" element={<OrderDetailPage />} />
 
               {PLACEHOLDER_SECTIONS.map(({ path, title, subtitle }) => (
                 <Route
