@@ -324,6 +324,14 @@ export const createProduct = async (req, res) => {
             return res.status(400).json({ message: "A valid non-negative price is required" });
         }
 
+        // originalPrice (MRP) is optional; validate only when supplied.
+        const hasOriginalPrice =
+            req.body.originalPrice != null && String(req.body.originalPrice).trim() !== "";
+        const parsedOriginalPrice = hasOriginalPrice ? Number(req.body.originalPrice) : undefined;
+        if (hasOriginalPrice && (isNaN(parsedOriginalPrice) || parsedOriginalPrice < 0)) {
+            return res.status(400).json({ message: "Invalid original price (MRP)" });
+        }
+
         const category = req.body.category?.trim();
         if (!category) return res.status(400).json({ message: "Category is required" });
 
@@ -352,6 +360,7 @@ const isShowcase = req.body.isShowcase === "true" || req.body.isShowcase === tru
 const product = new Product({
     name:        name.trim(),
     price:       parsedPrice,
+    originalPrice: parsedOriginalPrice, // undefined when not supplied → field omitted
     brand:       brand.trim(),
     description: description || "",
     specs:       specs || "",
@@ -393,6 +402,18 @@ export const updateProduct = async (req, res) => {
             if (isNaN(p) || p < 0)
                 return res.status(400).json({ message: "Invalid price value" });
             updateData.price = p;
+        }
+
+        if ("originalPrice" in updateData) {
+            // Empty string → clear the MRP; otherwise validate as a non-negative number.
+            if (String(updateData.originalPrice).trim() === "") {
+                updateData.originalPrice = undefined;
+            } else {
+                const op = Number(updateData.originalPrice);
+                if (isNaN(op) || op < 0)
+                    return res.status(400).json({ message: "Invalid original price (MRP)" });
+                updateData.originalPrice = op;
+            }
         }
 
         if ("specs"    in updateData) updateData.specs    = updateData.specs    || "";

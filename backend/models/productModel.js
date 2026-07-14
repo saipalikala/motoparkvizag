@@ -63,6 +63,12 @@ const productSchema = new mongoose.Schema(
             required: true,
             min: 0,
         },
+        // MRP / strike-through price. Optional — when higher than `price`,
+        // the storefront renders it as the crossed-out original (sale display).
+        originalPrice: {
+            type: Number,
+            min: 0,
+        },
         brand: {
             type: String,
             required: true,
