@@ -1,0 +1,173 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.mainCol,
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-h5);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+/* ── Order history table cells ────────────────────────────── */
+.orderLink {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.orderLink:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.total {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Profile ──────────────────────────────────────────────── */
+.profile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.profileName {
+  font-size: var(--text-body-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.verified {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--success);
+}
+.unverified {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-body-sm);
+}
+.infoRow dt {
+  color: var(--text-secondary);
+}
+.infoRow dd {
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.infoRow a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.infoRow a:hover {
+  text-decoration: underline;
+}
+
+/* ── Addresses ────────────────────────────────────────────── */
+.addressList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.address {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-warm);
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.addressHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.addressLabel {
+  font-weight: 700;
+  font-size: var(--text-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+.defaultTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent-pressed);
+}
+.addressName {
+  font-weight: 600;
+}
+
+.error {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-body-sm);
+}
+.loadingBlock {
+  height: 320px;
+  border-radius: var(--card-radius);
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

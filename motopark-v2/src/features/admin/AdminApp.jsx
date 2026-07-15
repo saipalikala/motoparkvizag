@@ -23,6 +23,8 @@ const CollectionListPage = lazy(() => import('./collections/CollectionListPage.j
 const OrderListPage = lazy(() => import('./orders/OrderListPage.jsx'));
 const OrderDetailPage = lazy(() => import('./orders/OrderDetailPage.jsx'));
 const OrderPrintPage = lazy(() => import('./orders/OrderPrintPage.jsx'));
+const CustomerListPage = lazy(() => import('./customers/CustomerListPage.jsx'));
+const CustomerDetailPage = lazy(() => import('./customers/CustomerDetailPage.jsx'));
 
 function AdminLoader() {
   return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading admin" />;
@@ -30,7 +32,6 @@ function AdminLoader() {
 
 /** Roadmap sections not yet built (docs/HANDOFF §6) — routable placeholders. */
 const PLACEHOLDER_SECTIONS = [
-  { path: 'customers', title: 'Customers', subtitle: 'Browse registered customers and their order history.' },
   { path: 'analytics', title: 'Analytics', subtitle: 'Sales, revenue, and store performance insights.' },
   { path: 'settings', title: 'Settings', subtitle: 'Store configuration and admin preferences.' },
 ];
@@ -61,6 +62,10 @@ export default function AdminApp() {
               {/* Orders (Milestone 4) */}
               <Route path="orders" element={<OrderListPage />} />
               <Route path="orders/:id" element={<OrderDetailPage />} />
+
+              {/* Customers (Milestone 5) */}
+              <Route path="customers" element={<CustomerListPage />} />
+              <Route path="customers/:id" element={<CustomerDetailPage />} />
 
               {PLACEHOLDER_SECTIONS.map(({ path, title, subtitle }) => (
                 <Route
