@@ -7,7 +7,12 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
  * variants stacks as separate lines. Prices are display-only INR from services.
  */
 const CartContext = createContext(null);
-const KEY = 'mp-cart-v1';
+// v2: lines now carry `color` as the variant HEX (the order API matches on it)
+// plus `colorName` for display. v1 lines stored the NAME in `color`, which the
+// order API rejects as out-of-stock — and a v1 line's hex cannot be recovered
+// from its name, so the key bump drops stale carts rather than resurrecting
+// ones that would fail at checkout.
+const KEY = 'mp-cart-v2';
 
 const lineKey = (l) => `${l.id}|${l.color ?? ''}|${l.size ?? ''}`;
 

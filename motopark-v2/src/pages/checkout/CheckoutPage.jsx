@@ -339,7 +339,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className={styles.sumInfo}>
                   <span className={styles.sumName}>{it.name}</span>
-                  {(it.color || it.size) && <span className={styles.sumMeta}>{[it.color, it.size].filter(Boolean).join(' · ')}</span>}
+                  {(it.colorName || it.size) && <span className={styles.sumMeta}>{[it.colorName, it.size].filter(Boolean).join(' · ')}</span>}
                 </div>
                 <span className={`price ${styles.sumPrice}`}>{formatINR(it.priceINR * it.qty)}</span>
               </li>

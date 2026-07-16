@@ -76,7 +76,7 @@ export default function CartPage() {
                             {it.name}
                           </Link>
                           <p className={styles.lineVariant}>
-                            {[it.color, it.size].filter(Boolean).join(' · ')}
+                            {[it.colorName, it.size].filter(Boolean).join(' · ')}
                           </p>
                         </div>
                         <button

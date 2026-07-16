@@ -100,7 +100,11 @@ export default function ProductPage() {
       brand: product.brand,
       priceINR: product.priceINR,
       image: images[0] || null,
-      color: variant.colorName,
+      // `color` is the variant's hex — it is what the order API matches
+      // variants on (backend arrayFilters compare against variants.color).
+      // `colorName` is the human label, for display only.
+      color: variant.color,
+      colorName: variant.colorName,
       size: onlyStandard ? sizes[0].size : size,
       qty,
     });
