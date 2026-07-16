@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Bike } from 'lucide-react';
-import { BIKE_MENU } from '@/config/nav.js';
+import { useNav } from '@/contexts/NavContext.jsx';
 import styles from './BikesPage.module.css';
 
 /**
- * BikesPage `/bikes` — make grid → /bikes/:make. V1 has no structured fitment
- * data, so make pages are a best-effort text match (see BikeMakePage). This grid
- * is still solid navigation on its own.
+ * BikesPage `/bikes` — make grid → /bikes/:make. Reads the live fitment catalog
+ * from NavContext (Milestone 10), so a make added in the admin panel shows up
+ * here and in the navbar together. NavContext keeps the static seed as its
+ * fallback, so an API failure still renders a usable grid.
  */
 export default function BikesPage() {
+  const { bikes } = useNav();
+
   return (
     <div className="container section">
       <Helmet>
@@ -28,12 +31,17 @@ export default function BikesPage() {
       </header>
 
       <div className={styles.grid}>
-        {BIKE_MENU.map((b) => (
-          <Link key={b.slug} to={`/bikes/${b.slug}`} className={styles.tile}>
+        {bikes.map((g) => (
+          <Link key={g.makeSlug} to={`/bikes/${g.makeSlug}`} className={styles.tile}>
             <span className={styles.iconWrap} aria-hidden="true">
               <Bike size={24} strokeWidth={1.6} />
             </span>
-            <span className={styles.tileName}>{b.label}</span>
+            <span className={styles.tileName}>{g.make}</span>
+            {g.models.length > 0 && (
+              <span className={styles.tileMeta}>
+                {g.models.length} model{g.models.length === 1 ? '' : 's'}
+              </span>
+            )}
           </Link>
         ))}
       </div>

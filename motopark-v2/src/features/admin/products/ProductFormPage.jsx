@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles } from 'lucide-react';
 import { formatINR } from '@/lib/format.js';
 import PageHeader from '../components/PageHeader.jsx';
 import Toggle from '../components/Toggle.jsx';
 import Button from '@/components/ui/Button.jsx';
 import VariantEditor from './VariantEditor.jsx';
+import { autoDetectFitment, listBikes } from '../bikes/bikeService.js';
 import {
   createProduct,
   getBrandOptions,
@@ -28,6 +29,7 @@ const BLANK = {
   featured: false,
   trending: false,
   isShowcase: false,
+  compatibleBikes: [],
   variants: [{ color: '#000000', colorName: '', images: [], sizes: [{ size: '', stock: 0 }] }],
 };
 
@@ -48,9 +50,12 @@ export default function ProductFormPage() {
   const [notFound, setNotFound] = useState(false);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [bikes, setBikes] = useState([]);
   const [errors, setErrors] = useState({});
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [detectNote, setDetectNote] = useState(null);
 
   const set = (patch) => setModel((m) => ({ ...m, ...patch }));
 
@@ -59,6 +64,9 @@ export default function ProductFormPage() {
     let alive = true;
     getCategoryOptions().then((c) => alive && setCategories(c)).catch(() => {});
     getBrandOptions().then((b) => alive && setBrands(b)).catch(() => {});
+    // Fitment catalog. Failure leaves the picker empty with its own empty state —
+    // never blocks saving a product.
+    listBikes().then((b) => alive && setBikes(b)).catch(() => {});
     return () => {
       alive = false;
     };
@@ -111,6 +119,67 @@ export default function ProductFormPage() {
     } catch (err) {
       setSaveError(err?.message ?? 'Save failed. Please try again.');
       setSaving(false);
+    }
+  };
+
+  /* ── Fitment ──────────────────────────────────────────────── */
+
+  const selectedBikes = useMemo(
+    () => new Set(model.compatibleBikes ?? []),
+    [model.compatibleBikes],
+  );
+
+  /** Bikes grouped by make, so the picker reads as makes → models. */
+  const bikeGroups = useMemo(() => {
+    const byMake = new Map();
+    for (const b of bikes) {
+      let group = byMake.get(b.makeSlug);
+      if (!group) {
+        group = { make: b.make, makeSlug: b.makeSlug, models: [] };
+        byMake.set(b.makeSlug, group);
+      }
+      group.models.push(b);
+    }
+    return [...byMake.values()];
+  }, [bikes]);
+
+  const toggleBike = (id) => {
+    const next = new Set(model.compatibleBikes ?? []);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    set({ compatibleBikes: [...next] });
+  };
+
+  /**
+   * Ask the backend which bikes this product's copy names, then MERGE the hits
+   * into the current selection. Merge (not replace) is deliberate: auto-detect
+   * assists the admin, it must never silently drop a bike they picked by hand.
+   */
+  const runAutoDetect = async () => {
+    setDetectNote(null);
+    if (!model.name.trim() && !model.description.trim()) {
+      setDetectNote({ ok: false, text: 'Add a product name or description first.' });
+      return;
+    }
+    setDetecting(true);
+    try {
+      const ids = await autoDetectFitment({ title: model.name, description: model.description });
+      const before = new Set(model.compatibleBikes ?? []);
+      const merged = new Set([...before, ...ids]);
+      const added = merged.size - before.size;
+      set({ compatibleBikes: [...merged] });
+
+      if (!ids.length) {
+        setDetectNote({ ok: false, text: 'No bikes matched this copy — pick fitment manually.' });
+      } else if (!added) {
+        setDetectNote({ ok: true, text: `Matched ${ids.length} bike${ids.length === 1 ? '' : 's'} — already selected.` });
+      } else {
+        setDetectNote({ ok: true, text: `Added ${added} bike${added === 1 ? '' : 's'}. Review before saving.` });
+      }
+    } catch (err) {
+      setDetectNote({ ok: false, text: err?.message ?? 'Auto-detect failed.' });
+    } finally {
+      setDetecting(false);
     }
   };
 
@@ -281,6 +350,71 @@ export default function ProductFormPage() {
                 <span className={styles.sale}>{formatINR(Number(model.price))}</span>{' '}
                 <span className={styles.discount}>−{mrpPreview}%</span>
               </p>
+            )}
+          </section>
+
+          <section className={styles.panel}>
+            <div className={styles.fitHead}>
+              <h2 className={styles.panelTitle}>Fitment</h2>
+              {selectedBikes.size > 0 && (
+                <span className={styles.fitCount}>{selectedBikes.size} selected</span>
+              )}
+            </div>
+            <p className={styles.hint}>
+              Bikes this product fits. Drives the “Shop by bike” pages.
+            </p>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={runAutoDetect}
+              disabled={detecting || bikes.length === 0}
+            >
+              <Sparkles size={16} aria-hidden="true" />
+              {detecting ? 'Detecting…' : 'Auto-Detect Fitment'}
+            </Button>
+
+            {detectNote && (
+              <p className={detectNote.ok ? styles.detectOk : styles.detectWarn} role="status">
+                {detectNote.text}
+              </p>
+            )}
+
+            {bikes.length === 0 ? (
+              <p className={styles.hint}>
+                No bikes in the catalog yet. <Link to="/admin/bikes">Add bikes</Link> to enable
+                fitment.
+              </p>
+            ) : (
+              <>
+                <div className={styles.bikeList}>
+                  {bikeGroups.map((g) => (
+                    <fieldset key={g.makeSlug} className={styles.bikeGroup}>
+                      <legend className={styles.bikeMake}>{g.make}</legend>
+                      {g.models.map((b) => (
+                        <label key={b.id} className={styles.bikeRow}>
+                          <input
+                            type="checkbox"
+                            checked={selectedBikes.has(b.id)}
+                            onChange={() => toggleBike(b.id)}
+                          />
+                          <span>{b.model}</span>
+                        </label>
+                      ))}
+                    </fieldset>
+                  ))}
+                </div>
+                {selectedBikes.size > 0 && (
+                  <button
+                    type="button"
+                    className={styles.clearFit}
+                    onClick={() => set({ compatibleBikes: [] })}
+                  >
+                    Clear all fitment
+                  </button>
+                )}
+              </>
             )}
           </section>
 

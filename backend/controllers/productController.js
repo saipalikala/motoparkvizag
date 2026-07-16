@@ -54,6 +54,7 @@
 import Product   from "../models/productModel.js";
 import mongoose  from "mongoose";
 import Category from "../models/categoryModel.js";
+import Bike     from "../models/bikeModel.js";
 
 // ─── REGEX ESCAPE ─────────────────────────────────────────────────────────────
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -92,6 +93,50 @@ const safeParseVariants = (raw) => {
         console.error(`❌ variants JSON parse failed. Preview: ${preview}`);
         return null;
     }
+};
+
+/* ===============================
+   HELPER — parse compatibleBikes (Milestone 10)
+
+   Fitment arrives over multipart FormData, so the array is a JSON string on the
+   wire (same trick as `variants`). Tolerates a real array too, for JSON clients.
+
+   Returns: array of unique id strings, or null when the payload is malformed /
+   contains a non-ObjectId (caller turns null into a 400 — never a 500 cast error).
+=============================== */
+const dedupeBikeIds = (list) => {
+    const ids = list.map((v) => String(v ?? "").trim()).filter(Boolean);
+    if (ids.some((id) => !mongoose.Types.ObjectId.isValid(id))) return null;
+    return [...new Set(ids)];
+};
+
+export const parseCompatibleBikes = (raw) => {
+    if (raw == null || raw === "") return [];
+    if (Array.isArray(raw)) {
+        // Multer gives a bare array when the field is repeated (compatibleBikes=a&compatibleBikes=b)
+        return dedupeBikeIds(raw);
+    }
+    if (typeof raw !== "string") return null;
+
+    let list;
+    try {
+        list = JSON.parse(raw);
+    } catch {
+        return null;
+    }
+    if (!Array.isArray(list)) return null;
+    return dedupeBikeIds(list);
+};
+
+/**
+ * True when every id resolves to a real Bike. Guards against dangling refs —
+ * a product pointing at a deleted bike would silently vanish from its own
+ * fitment page, which is worse than a loud 400 at write time.
+ */
+const allBikesExist = async (ids) => {
+    if (!ids.length) return true;
+    const found = await Bike.countDocuments({ _id: { $in: ids } });
+    return found === ids.length;
 };
 
 /* ===============================
@@ -146,6 +191,7 @@ export const getProducts = async (req, res) => {
         const {
             category, brand, minPrice, maxPrice,
             size, color, flags, sort, search,
+            bike, bikeMake,
         } = req.query;
 
         // [F3]: clamp page + limit
@@ -178,6 +224,41 @@ export const getProducts = async (req, res) => {
             const colors = color.split(",").map(c => c.trim()).filter(Boolean);
             if (colors.length) query["variants.color"] = { $in: colors };
         }
+
+/* ── FITMENT FILTER (Milestone 10) ──
+   `bike`     → one model. Accepts a Bike _id, or the "makeSlug/modelSlug" pair
+                that the storefront URL (/bikes/:make/:model) already carries.
+   `bikeMake` → every model of a make (powers /bikes/:make).
+   `bike` wins when both are present (more specific).
+
+   An unresolvable bike returns an empty page rather than 404 — same contract as
+   the unknown-category branch below, so the PLP renders its normal empty state.
+*/
+if (bike) {
+    let bikeId = null;
+
+    if (mongoose.Types.ObjectId.isValid(bike)) {
+        bikeId = bike;
+    } else {
+        const [makeSlug, modelSlug] = String(bike).split("/").map(s => s?.trim().toLowerCase());
+        if (makeSlug && modelSlug) {
+            const doc = await Bike.findOne({ makeSlug, slug: modelSlug }).select("_id").lean();
+            bikeId = doc?._id ?? null;
+        }
+    }
+
+    if (!bikeId) return res.json({ products: [], total: 0, page, pages: 0 });
+    query.compatibleBikes = bikeId;
+
+} else if (bikeMake) {
+    const docs = await Bike
+        .find({ makeSlug: String(bikeMake).trim().toLowerCase() })
+        .select("_id")
+        .lean();
+
+    if (!docs.length) return res.json({ products: [], total: 0, page, pages: 0 });
+    query.compatibleBikes = { $in: docs.map(d => d._id) };
+}
 
 const orClauses = [];
 
@@ -340,6 +421,15 @@ const featured   = req.body.featured   === "true" || req.body.featured   === tru
 const trending   = req.body.trending   === "true" || req.body.trending   === true;
 const isShowcase = req.body.isShowcase === "true" || req.body.isShowcase === true;
 
+        // Fitment (Milestone 10) — optional; [] when the admin picks no bikes.
+        const compatibleBikes = parseCompatibleBikes(req.body.compatibleBikes);
+        if (compatibleBikes === null) {
+            return res.status(400).json({ message: "Invalid compatibleBikes — expected an array of bike IDs" });
+        }
+        if (!(await allBikesExist(compatibleBikes))) {
+            return res.status(400).json({ message: "One or more selected bikes no longer exist" });
+        }
+
         const rawVariants = safeParseVariants(req.body.variants);
         if (rawVariants === null) {
             return res.status(400).json({ message: "Invalid variants JSON — check frontend FormData" });
@@ -371,6 +461,7 @@ const product = new Product({
     trending,
     isShowcase,
     variants,
+    compatibleBikes,
 });
 
         await product.save();
@@ -419,6 +510,21 @@ export const updateProduct = async (req, res) => {
         if ("specs"    in updateData) updateData.specs    = updateData.specs    || "";
         if ("care"     in updateData) updateData.care     = updateData.care     || "";
         if (updateData.category)      updateData.category = updateData.category.trim();
+
+        // Fitment (Milestone 10). updateData spreads req.body verbatim, so over
+        // multipart this key is still a JSON STRING — $set-ing it raw would cast-
+        // error (or worse, store junk) against the ObjectId[] field. Parse it.
+        // Absent key = untouched; explicit [] = admin cleared all fitment.
+        if ("compatibleBikes" in updateData) {
+            const bikes = parseCompatibleBikes(updateData.compatibleBikes);
+            if (bikes === null) {
+                return res.status(400).json({ message: "Invalid compatibleBikes — expected an array of bike IDs" });
+            }
+            if (!(await allBikesExist(bikes))) {
+                return res.status(400).json({ message: "One or more selected bikes no longer exist" });
+            }
+            updateData.compatibleBikes = bikes;
+        }
 
         // [F8]: single findByIdAndUpdate with returnDocument:"before" to get
         // existing variants for image merging without a separate findById call.
@@ -574,7 +680,7 @@ export const bulkCreateProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-           .select("name price brand category variants description specs care featured trending newArrival isShowcase originalPrice")
+           .select("name price brand category variants description specs care featured trending newArrival isShowcase originalPrice compatibleBikes")
             .lean();
         if (!product) return res.status(404).json({ message: "Product not found" });
         res.json(product);

@@ -21,7 +21,11 @@ const SORTS = [
  * URL (docs/11 §4). A `category` prop locks results to one category (route-driven,
  * not a URL filter); brand + price + sort + page remain user-controlled in the URL.
  *
- * props: { eyebrow, title, seoTitle, seoDescription, canonical, category? }
+ * `bike` / `bikeMake` lock results to structured fitment (Milestone 10) and are
+ * route-driven the same way — the bike pages pass them, the user can't set them.
+ *
+ * props: { eyebrow, title, seoTitle, seoDescription, canonical, category?,
+ *          search?, brand?, bike?, bikeMake? }
  */
 export default function ProductListing({
   eyebrow,
@@ -32,6 +36,8 @@ export default function ProductListing({
   category,
   search,
   brand: lockedBrand,
+  bike,
+  bikeMake,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState({ products: [], total: 0, page: 1, pages: 0 });
@@ -64,14 +70,25 @@ export default function ProductListing({
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    getProducts({ page, limit: PAGE_SIZE, sort, brand: brandParam, minPrice, maxPrice, category, search })
+    getProducts({
+      page,
+      limit: PAGE_SIZE,
+      sort,
+      brand: brandParam,
+      minPrice,
+      maxPrice,
+      category,
+      search,
+      bike,
+      bikeMake,
+    })
       .then((d) => alive && setData(d))
       .catch(() => alive && setData({ products: [], total: 0, page: 1, pages: 0 }))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [page, sort, brandParam, minPrice, maxPrice, category, search]);
+  }, [page, sort, brandParam, minPrice, maxPrice, category, search, bike, bikeMake]);
 
   /** Patch URL params; any change (except page itself) resets to page 1. */
   const patch = (updates) => {

@@ -17,7 +17,8 @@
  *    `variantImages_<i>`; on update, surviving image URLs are declared per variant
  *    as `keepImages_<i>` (JSON). Backend result = keepImages + newly uploaded.
  *  • Flags are read as the strings "true"/"false".
- *  • MRP/originalPrice is NOT in the Product schema → cannot persist (see form).
+ *  • `compatibleBikes` (fitment) rides as a JSON string, same as `variants` —
+ *    multipart has no array type. Backend parses + validates it (Milestone 10).
  */
 import { adminApi } from '../lib/adminApi.js';
 
@@ -82,6 +83,8 @@ export function toFormModel(p) {
     featured: Boolean(p.featured),
     trending: Boolean(p.trending),
     isShowcase: Boolean(p.isShowcase),
+    // Fitment: raw doc holds ObjectIds → strings, so the picker can compare by ===
+    compatibleBikes: (p.compatibleBikes || []).map((b) => String(b?._id ?? b)),
     variants: (p.variants || []).map((v) => ({
       color: v.color ?? '',
       colorName: v.colorName ?? '',
@@ -157,6 +160,9 @@ function buildFormData(model, { includeKeepImages }) {
   for (const flag of ['newArrival', 'featured', 'trending', 'isShowcase']) {
     fd.append(flag, model[flag] ? 'true' : 'false');
   }
+
+  // Fitment — always sent (even empty) so clearing every bike actually persists.
+  fd.append('compatibleBikes', JSON.stringify(model.compatibleBikes ?? []));
 
   // Variants JSON carries color/label/sizes only — never images.
   const variantsJson = model.variants.map((v) => ({

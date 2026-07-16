@@ -65,7 +65,11 @@ export async function getHomepage() {
 /**
  * Paginated catalog listing (PLP). `params` maps 1:1 to the V1 /products query:
  * { page, limit, sort ('price_asc'|'price_desc'), brand (csv), minPrice, maxPrice,
- *   category, search, flags }. Returns UI cards + pagination meta.
+ *   category, search, flags, bike, bikeMake }. Returns UI cards + pagination meta.
+ *
+ * Fitment (Milestone 10): `bike` takes a Bike _id or the "makeSlug/modelSlug" pair
+ * straight from the /bikes/:make/:model URL; `bikeMake` takes a makeSlug and covers
+ * every model of that make. Both filter on structured compatibleBikes, not text.
  */
 export async function getProducts(params = {}) {
   // Drop empty params so the URL/query stays clean.

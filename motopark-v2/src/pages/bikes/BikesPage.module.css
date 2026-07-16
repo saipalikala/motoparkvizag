@@ -65,6 +65,11 @@
   font-size: var(--text-body-sm);
   font-weight: 600;
 }
+.tileMeta {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  margin-top: calc(var(--space-2) * -1);
+}
 
 @media (min-width: 600px) {
   .grid {
