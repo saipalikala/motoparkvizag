@@ -4,7 +4,7 @@ import Hero from './sections/Hero.jsx';
 import CategoryGrid from './sections/CategoryGrid.jsx';
 import Bestsellers from './sections/Bestsellers.jsx';
 import TrustBand from './sections/TrustBand.jsx';
-import ShopByBike from './sections/ShopByBike.jsx';
+import CinematicVideoShowcase from '@/components/commerce/CinematicVideoShowcase.jsx';
 import StoryBand from './sections/StoryBand.jsx';
 import NewArrivals from './sections/NewArrivals.jsx';
 import BrandRow from './sections/BrandRow.jsx';
@@ -13,8 +13,8 @@ import { getCategories } from '@/services/categories.js';
 
 /**
  * HomePage — Concept C, built section by section (docs/10 §C-4 hierarchy):
- *   Hero → Categories → Bestsellers → Trust → Shop-by-bike → Story → New
- *   arrivals → Reviews → Brands → Footer.
+ *   Hero → Categories → Cinematic video showcase → Bestsellers → Trust → Story
+ *   → New arrivals → Brands → Footer.
  * Page-level owns the ONE home-data fetch and feeds each section; sections are
  * presentational. Currently mounted: Hero. Others land as they're built.
  */
@@ -52,9 +52,9 @@ export default function HomePage() {
 
       <Hero products={featured} loading={loading} />
       <CategoryGrid categories={categories} loading={loading} />
+      <CinematicVideoShowcase />
       <Bestsellers products={data?.trending ?? []} loading={loading} />
       <TrustBand />
-      <ShopByBike />
       <StoryBand />
       <NewArrivals products={data?.newArrivals ?? []} loading={loading} />
       <BrandRow />

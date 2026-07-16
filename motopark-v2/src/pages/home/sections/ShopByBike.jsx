@@ -1,23 +1,39 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bike } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
-import { BIKE_MENU } from '@/config/nav.js';
+import { useNav } from '@/contexts/NavContext.jsx';
 import styles from './ShopByBike.module.css';
 
 /**
  * Shop-by-bike — Concept C §10 second discovery axis ("will it fit?" anxiety).
- * V1 has NO structured bike-model data, so this is an honest make picker →
- * /bikes/:make (not a fake make+model fitment engine). Model-level filtering
- * arrives when a compatibleModels backfill exists (see docs/12 limitations).
+ * Reads the live fitment catalog from NavContext (Milestone 10), which replaced
+ * the static make stub. Now that models carry real fitment, this is a genuine
+ * make → model picker rather than a make-only guess.
+ *
+ * The model select is optional and only appears once the chosen make has models,
+ * so a make with no models yet still routes to its make page instead of dead-ending.
  */
 export default function ShopByBike() {
-  const [make, setMake] = useState('');
+  const { bikes } = useNav();
+  const [makeSlug, setMakeSlug] = useState('');
+  const [modelSlug, setModelSlug] = useState('');
   const navigate = useNavigate();
+
+  const models = useMemo(
+    () => bikes.find((g) => g.makeSlug === makeSlug)?.models ?? [],
+    [bikes, makeSlug],
+  );
+
+  const onMakeChange = (slug) => {
+    setMakeSlug(slug);
+    setModelSlug(''); // last make's model must not leak into the new make's URL
+  };
 
   const submit = (e) => {
     e.preventDefault();
-    if (make) navigate(`/bikes/${make}`);
+    if (!makeSlug) return;
+    navigate(modelSlug ? `/bikes/${makeSlug}/${modelSlug}` : `/bikes/${makeSlug}`);
   };
 
   return (
@@ -33,7 +49,7 @@ export default function ShopByBike() {
               Shop gear for your bike
             </h2>
             <p className={styles.sub}>
-              Pick your make to browse gear and parts riders choose for it.
+              Pick your bike to browse gear and parts that fit it.
             </p>
           </div>
         </div>
@@ -45,17 +61,39 @@ export default function ShopByBike() {
           <select
             id="bike-make"
             className={styles.select}
-            value={make}
-            onChange={(e) => setMake(e.target.value)}
+            value={makeSlug}
+            onChange={(e) => onMakeChange(e.target.value)}
           >
             <option value="">Select your bike make…</option>
-            {BIKE_MENU.map((b) => (
-              <option key={b.slug} value={b.slug}>
-                {b.label}
+            {bikes.map((g) => (
+              <option key={g.makeSlug} value={g.makeSlug}>
+                {g.make}
               </option>
             ))}
           </select>
-          <Button type="submit" variant="primary" disabled={!make}>
+
+          {models.length > 0 && (
+            <>
+              <label htmlFor="bike-model" className="visually-hidden">
+                Choose your bike model
+              </label>
+              <select
+                id="bike-model"
+                className={styles.select}
+                value={modelSlug}
+                onChange={(e) => setModelSlug(e.target.value)}
+              >
+                <option value="">All {bikes.find((g) => g.makeSlug === makeSlug)?.make} models</option>
+                {models.map((m) => (
+                  <option key={m.slug} value={m.slug}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <Button type="submit" variant="primary" disabled={!makeSlug}>
             Show my gear
           </Button>
         </form>
