@@ -60,7 +60,7 @@ async function loadDotEnv() {
 function resolveApiBase() {
   if (process.env.SITEMAP_API_BASE) return process.env.SITEMAP_API_BASE.replace(/\/$/, '');
   if (process.env.VITE_API_BASE_URL) return process.env.VITE_API_BASE_URL.replace(/\/$/, '');
-  // The app's .env uses VITE_API_URL (host only, no /api suffix).
+  // Legacy fallback: VITE_API_URL held the host only, with no /api suffix.
   if (process.env.VITE_API_URL) return `${process.env.VITE_API_URL.replace(/\/$/, '')}/api`;
   return 'http://localhost:5000/api';
 }

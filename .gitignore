@@ -2,6 +2,10 @@
 .env.*
 .env.local
 .env.production
+# ...but the templates carry no secrets and MUST be tracked: they are the only
+# record of the correct variable names (a drifted name silently falls back).
+!.env.example
+
 # node modules
 node_modules/
 backend/node_modules/

@@ -1,6 +1,7 @@
 .env
 .env.*
+# Template carries no secrets and documents the required variable names.
+!.env.example
 
-.env
 node_modules
 uploads
