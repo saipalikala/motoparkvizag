@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Navigate, Routes, Route, useParams } from 'react-router-dom';
 
 /**
  * Route map = locked IA (docs/03 §1–2). Every page is lazy (docs/11 §10) so the
@@ -32,6 +32,18 @@ function PageLoader() {
   return <div style={{ minHeight: '60vh' }} aria-busy="true" aria-label="Loading" />;
 }
 
+/**
+ * V1 linked products at `/product/:id` (singular); V2 serves them at
+ * `/products/:slug`, where the param carries the same V1 id. Old inbound links —
+ * search results, bookmarks, and CMS-authored links such as the video showcase's
+ * buyNowLink — would otherwise land on the 404 page. `replace` keeps the dead URL
+ * out of history so Back doesn't bounce through it.
+ */
+function LegacyProductRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/products/${id}`} replace />;
+}
+
 export default function AppRouter() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -42,6 +54,8 @@ export default function AppRouter() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/c/:slug" element={<CategoryPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
+        {/* Legacy V1 URL — keep before the catch-all. */}
+        <Route path="/product/:id" element={<LegacyProductRedirect />} />
         <Route path="/brand/:slug" element={<BrandPage />} />
         <Route path="/brand/:slug/:categorySlug" element={<BrandPage />} />
         <Route path="/bikes" element={<BikesPage />} />
