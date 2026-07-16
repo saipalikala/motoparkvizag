@@ -61,8 +61,24 @@ const assertEnvMatchesDatabase = (uri) => {
   const parsed = parseMongoUri(uri);
   if (!parsed) throw new Error("MONGO_URI is not a valid MongoDB connection string.");
 
+  /**
+   * An omitted database name is never acceptable. Mongoose silently falls back
+   * to "test" on whatever host it was given, so a URI like
+   * `mongodb+srv://user:pw@<prod-cluster>/?appName=X` reads as "not the
+   * production database" and slips past the check below — while in fact
+   * connecting to the production CLUSTER. Requiring the name explicitly makes
+   * the target unambiguous instead of inferred.
+   */
+  if (!parsed.dbName) {
+    throw new Error(
+      `Refusing to boot: MONGO_URI specifies no database name (host ${parsed.hosts}). ` +
+        `Mongoose would silently default to "test" on that cluster. Append the database ` +
+        `explicitly, e.g. mongodb+srv://…/${prodDbName()}_dev?appName=Cluster0`
+    );
+  }
+
   const isProdTarget = parsed.hosts.includes(prodDbHost()) && parsed.dbName === prodDbName();
-  const target = `${parsed.hosts}/${parsed.dbName || "(no database)"}`;
+  const target = `${parsed.hosts}/${parsed.dbName}`;
 
   if (isProdTarget && !isProdEnv()) {
     throw new Error(

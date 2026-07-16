@@ -13,6 +13,11 @@ import styles from './ShopByBike.module.css';
  *
  * The model select is optional and only appears once the chosen make has models,
  * so a make with no models yet still routes to its make page instead of dead-ending.
+ *
+ * Mounted on the catalogue (StorePage), not the homepage: the cinematic video
+ * showcase took its old home slot, and "will it fit?" is a question shoppers ask
+ * while browsing gear rather than on arrival. It renders nothing until the
+ * fitment catalog loads, so it never occupies space it can't use.
  */
 export default function ShopByBike() {
   const { bikes } = useNav();
@@ -29,6 +34,10 @@ export default function ShopByBike() {
     setMakeSlug(slug);
     setModelSlug(''); // last make's model must not leak into the new make's URL
   };
+
+  // No fitment catalog (still loading, or none configured) ⇒ render nothing
+  // rather than an empty picker the shopper can't use.
+  if (!bikes.length) return null;
 
   const submit = (e) => {
     e.preventDefault();
