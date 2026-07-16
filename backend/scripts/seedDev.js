@@ -19,10 +19,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
 
 import connectDB from "../config/db.js";
-import Admin from "../models/Admin.js";
 import Category from "../models/categoryModel.js";
 import Product from "../models/productModel.js";
 import Bike from "../models/bikeModel.js";
@@ -46,7 +44,10 @@ const assertNotProduction = () => {
   }
 };
 
-const ADMIN = { email: "dev@motopark.local", password: "devadmin123" };
+// NOTE: this script does NOT seed an admin account. Admin login is env-based
+// (controllers/adminController.js compares against ADMIN_EMAIL /
+// ADMIN_PASSWORD_HASH); nothing reads the Admin collection. Seeding an Admin
+// document printed credentials that could never actually log in.
 
 const CATEGORIES = [
   { name: "Helmets", slug: "helmets", description: "Full-face, open-face and modular helmets." },
@@ -128,10 +129,7 @@ const seed = async () => {
 
   console.log(`\n🌱 Seeding "${mongoose.connection.name}" on ${mongoose.connection.host}\n`);
 
-  // ── Admin ──
-  await Admin.deleteMany({ email: ADMIN.email });
-  await Admin.create({ email: ADMIN.email, password: await bcrypt.hash(ADMIN.password, 10) });
-  console.log(`✅ admin        → ${ADMIN.email} / ${ADMIN.password}`);
+  console.log(`ℹ️  admin login  → uses ADMIN_EMAIL / ADMIN_PASSWORD_HASH from .env (not seeded)`);
 
   // ── Categories ──
   await Category.deleteMany({});
@@ -162,7 +160,7 @@ const seed = async () => {
   products.forEach((p) => console.log(`✅ product      → ${p.name} (₹${p.price})`));
 
   console.log(
-    `\n🌱 Done: ${categories.length} categories, ${bikes.length} bikes, ${products.length} products, 1 admin.\n`
+    `\n🌱 Done: ${categories.length} categories, ${bikes.length} bikes, ${products.length} products.\n`
   );
 };
 

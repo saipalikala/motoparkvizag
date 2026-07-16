@@ -166,7 +166,7 @@ motoparkvizag/
 │   ├── models/                  # 15 Mongoose schemas (Product, Order, User, Cart, Wishlist, …)
 │   ├── routes/                  # 17 route modules (one per resource)
 │   ├── scripts/migrateImages.js # one-time local→Cloudinary migration
-│   ├── createAdmin.js           # seeds an Admin doc (see note in §12)
+│   ├── scripts/seedDev.js       # sandbox seed (guarded; refuses production)
 │   └── uploads/                 # local disk fallback (carousel/logos/products)
 │
 └── motopark-web/
@@ -230,7 +230,7 @@ There are **two independent auth systems**.
 - Tight **login rate limit**: 10 attempts / 15 min / IP.
 - Token stored client-side as `localStorage.adminToken`; `ProtectedRoute` gates `/admin/*`; a 401 from the admin fetch wrapper clears the token and redirects to `/admin/login`.
 
-> Evidence note: `models/Admin.js` and `createAdmin.js` (which hashes `"admin123"` and inserts an Admin document) exist, but the **active login path uses environment-variable credentials, not the `Admin` collection.** The DB-backed Admin model appears to be legacy/unused for the current login flow.
+> Evidence note: the **active login path uses environment-variable credentials, not the `Admin` collection** — confirmed by end-to-end testing against a sandbox database, which showed nothing reads that collection. `createAdmin.js` (which hashed `"admin123"` and inserted an Admin document against whatever `MONGO_URI` was set, with no environment guard) has since been **removed**, along with the Admin seeding in `scripts/seedDev.js` that advertised credentials which could never log in. `models/Admin.js` remains but is unused by the login flow.
 
 **User auth** (`controllers/userController.js`, `middleware/userAuth.js`, `routes/userRoutes.js`)
 - **Email OTP**: `POST /otp/send` generates a 6-digit OTP (10-min expiry), upserts the user, and emails a branded code via Resend. `POST /otp/verify` validates, marks `isVerified`, returns a 30-day JWT.
