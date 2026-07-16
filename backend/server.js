@@ -20,6 +20,7 @@ import productRoutes       from "./routes/productRoutes.js";
 import collectionRoutes    from "./routes/collectionRoutes.js";
 import mediaRoutes         from "./routes/mediaRoutes.js";
 import categoryRoutes      from "./routes/categoryRoutes.js";
+import bikeRoutes          from "./routes/bikeRoutes.js";
 import storeConfigRoutes   from "./routes/storeConfigRoutes.js";
 import orderRoutes         from "./routes/orderRoutes.js";
 import userRoutes          from "./routes/userRoutes.js";
@@ -208,6 +209,7 @@ app.use("/api/video-showcase", addCacheHeaders, videoShowcaseRoutes);
 app.use("/api/store-config",   addCacheHeaders, storeConfigRoutes);
 app.use("/api/home-data",      addCacheHeaders, homeDataRoutes);
 app.use("/api/categories",     addCacheHeaders, categoryRoutes);
+app.use("/api/bikes",          addCacheHeaders, bikeRoutes);
 app.use("/api/home-layout",    addCacheHeaders, homeLayoutRoutes);
 
 app.use("/api/admin",      adminRoutes);

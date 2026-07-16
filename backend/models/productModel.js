@@ -82,6 +82,19 @@ const productSchema = new mongoose.Schema(
         variants: [variantSchema],
 
         /* =========================
+           FITMENT (Milestone 8)
+           Bikes this product fits. References Bike documents so the future
+           "Fits your bike" PDP feature can resolve make/model without
+           duplicating fitment strings on every product.
+        ========================= */
+        compatibleBikes: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Bike",
+            },
+        ],
+
+        /* =========================
            FLAGS
         ========================= */
         newArrival: {
@@ -165,6 +178,9 @@ productSchema.index({ category: 1, brand: 1, price: 1 });
 // ── Variant filters — used by Store/Category filter panel
 productSchema.index({ "variants.sizes.size": 1 });
 productSchema.index({ "variants.color": 1 });
+
+// ── Fitment — "Fits your bike" / products-for-this-bike lookups (Milestone 8)
+productSchema.index({ compatibleBikes: 1 });
 
 // ── Full-text search — compound index covers name AND description
 //    MongoDB only allows one text index per collection.
