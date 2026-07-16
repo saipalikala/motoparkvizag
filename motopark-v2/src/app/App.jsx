@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import AppRouter from './router.jsx';
+import { usePageViews } from '@/hooks/usePageViews.js';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import OfferBar from '@/components/layout/OfferBar.jsx';
 import Navbar from '@/components/layout/Navbar.jsx';
@@ -20,6 +21,7 @@ import { OFFER_MESSAGE } from '@/config/nav.js';
  *  storefront chrome or providers — and vice versa. */
 export default function App() {
   const { pathname } = useLocation();
+  usePageViews(); // GA4 SPA page views (no-op unless VITE_GA_MEASUREMENT_ID is set)
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     return <AdminApp />;
   }
