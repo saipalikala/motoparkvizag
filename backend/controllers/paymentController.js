@@ -1,16 +1,13 @@
-import Razorpay from "razorpay";
-import crypto from "crypto";
 import Product from "../models/productModel.js"; // ← add this import
+import { deliveryChargeFor } from "../config/store.js";
+import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
 
 // Step 1: Create order on Razorpay
 export const createOrder = async (req, res) => {
     try {
-        const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET,
-        });
+        const razorpay = razorpayClient();
 
-        const { items, deliveryCharge = 0 } = req.body; // ← receive items, NOT amount
+        const { items } = req.body; // ← receive items, NOT amount or deliveryCharge
 
         // ✅ Calculate total from DB — cannot be tampered by frontend
         let total = 0;
@@ -22,8 +19,13 @@ export const createOrder = async (req, res) => {
             total += product.price * item.quantity;
         }
 
+        // Derived server-side (config/store.js) — a client-supplied charge could
+        // be negative, shrinking the amount to pay. /orders derives it the same
+        // way, so the amount charged always matches the amount it will demand.
+        const deliveryCharge = deliveryChargeFor(total);
+
         const order = await razorpay.orders.create({
-    amount: Math.round((total + deliveryCharge) * 100), // paise — from DB ✅
+            amount: Math.round((total + deliveryCharge) * 100), // paise — from DB ✅
             currency: "INR",
             receipt: `receipt_${Date.now()}`,
         });
@@ -36,19 +38,20 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// Step 2: Verify payment signature — no changes needed here ✅
+/**
+ * Step 2: Verify the checkout signature.
+ *
+ * ADVISORY ONLY — this is a convenience check so the storefront can fail fast.
+ * It proves the callback came from Razorpay, NOT that the money arrived, and a
+ * client can simply skip it. The authoritative check (captured? right amount?
+ * right order? already used?) runs in controllers/orderController.js before the
+ * order is persisted. Do not treat a 200 from here as "paid".
+ */
 export const verifyPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body)
-            .digest("hex");
-
-        if (expectedSignature !== razorpay_signature) {
+        if (!isValidPaymentSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature })) {
             return res.status(400).json({ message: "Payment verification failed" });
         }
 

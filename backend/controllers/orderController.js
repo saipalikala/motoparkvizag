@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
+import { deliveryChargeFor } from "../config/store.js";
+import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
 
 // GET all orders (admin)
 export const getOrders = async (req, res) => {
@@ -15,7 +17,10 @@ export const getOrders = async (req, res) => {
 // POST create order (customer checkout)
 export const createOrder = async (req, res) => {
     try {
-        const { items, shippingAddress, paymentMethod, paymentId, deliveryCharge = 0 } = req.body; // ✅ removed total
+        // deliveryCharge is NOT read from the body — it is derived from the
+        // server-computed subtotal (config/store.js). paymentId is likewise
+        // ignored in favour of the Razorpay payment we verify below.
+        const { items, shippingAddress, paymentMethod } = req.body;
         // optionalAuth (routes/orderRoutes.js) sets req.userId — NOT req.user.
         // Reading req.user?._id here silently yielded undefined for every
         // request, so orders never linked to accounts and the idempotency
@@ -49,6 +54,84 @@ export const createOrder = async (req, res) => {
         const missing = items.find(i => !productById.has(i.product.toString()));
         if (missing) {
             return res.status(400).json({ message: `Product not found: ${missing.product}` });
+        }
+
+        // ── Build the line items and totals from the DB ✅ ─────────────────────
+        // Name and price come from the product doc; only quantity and the chosen
+        // variant come from the request. Storing the client's price verbatim let
+        // a tampered request write a bogus line price (the total stayed correct,
+        // but the admin derives subtotal/shipping from these lines, so the order
+        // detail and packing slip showed nonsense).
+        const verifiedItems = items.map(item => {
+            const product = productById.get(item.product.toString());
+            return {
+                product:       product._id,
+                name:          product.name,
+                price:         product.price,
+                quantity:      item.quantity,
+                selectedColor: item.selectedColor,
+                selectedSize:  item.selectedSize,
+            };
+        });
+
+        const subtotal       = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+        const deliveryCharge = deliveryChargeFor(subtotal);
+        const expectedTotal  = subtotal + deliveryCharge;
+
+        // ── Payment enforcement ───────────────────────────────────────────────
+        // Previously this endpoint took the client's word that payment had
+        // happened: paymentId was stored as an opaque string and never checked,
+        // so posting a made-up id created a real, paid-looking order and
+        // decremented stock. /payment/verify existed but was advisory — nothing
+        // forced a client through it and its result was never persisted.
+        //
+        // COD is not offered (the V2 checkout shows it as unavailable and both
+        // storefronts send "razorpay"), and paymentMethod is client-supplied, so
+        // anything else would be a free-order bypass.
+        if (paymentMethod !== "razorpay") {
+            return res.status(400).json({ message: "Unsupported payment method." });
+        }
+
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({ message: "Payment details are missing — order not saved." });
+        }
+
+        if (!isValidPaymentSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature })) {
+            return res.status(400).json({ message: "Payment verification failed." });
+        }
+
+        // Replay: one captured payment must buy exactly one order. This also
+        // covers guests, who the 60s window below never protected.
+        const alreadyUsed = await Order.findOne({ paymentId: razorpay_payment_id }).select("_id").lean();
+        if (alreadyUsed) {
+            return res.status(409).json({
+                message: "This payment has already been used for an order.",
+                orderId: alreadyUsed._id,
+            });
+        }
+
+        // A valid signature only proves the callback came from Razorpay. Ask
+        // Razorpay directly whether the money actually arrived, and how much.
+        let payment;
+        try {
+            payment = await razorpayClient().payments.fetch(razorpay_payment_id);
+        } catch (err) {
+            console.error("Razorpay payment fetch failed:", err?.message);
+            return res.status(502).json({
+                message: "Could not confirm your payment with Razorpay. Please contact support before reordering.",
+            });
+        }
+
+        if (payment.status !== "captured") {
+            return res.status(400).json({ message: `Payment is not captured (status: ${payment.status}).` });
+        }
+        if (payment.order_id !== razorpay_order_id) {
+            return res.status(400).json({ message: "Payment does not belong to this order." });
+        }
+        if (payment.amount !== Math.round(expectedTotal * 100)) {
+            return res.status(400).json({ message: "Paid amount does not match the order total." });
         }
 
         // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
@@ -131,37 +214,14 @@ export const createOrder = async (req, res) => {
             decremented.push(item);
         }
 
-        // ── TASK 3: Build the line items and total from the DB ✅ ─────────────
-        // Name and price come from the product doc; only quantity and the
-        // chosen variant come from the request. Storing the client's price
-        // verbatim let a tampered request write a bogus line price (the total
-        // stayed correct, but the admin derives subtotal/shipping from these
-        // lines, so the order detail and packing slip showed nonsense).
-        const verifiedItems = items.map(item => {
-            const product = productById.get(item.product.toString());
-            return {
-                product:       product._id,
-                name:          product.name,
-                price:         product.price,
-                quantity:      item.quantity,
-                selectedColor: item.selectedColor,
-                selectedSize:  item.selectedSize,
-            };
-        });
-
-        const verifiedTotal = verifiedItems.reduce(
-            (sum, i) => sum + i.price * i.quantity,
-            0
-        );
-
         // ── All stock decremented successfully — now save the order ──────────
         const order = await Order.create({
             user: userId || null,
             items: verifiedItems,
             shippingAddress,
             paymentMethod,
-            paymentId: paymentId || null,
-            total: verifiedTotal + deliveryCharge, // ✅ from DB, not frontend
+            paymentId: razorpay_payment_id, // verified as captured, for this amount
+            total: expectedTotal,           // ✅ from DB, not frontend
         });
 
         res.status(201).json(order);
