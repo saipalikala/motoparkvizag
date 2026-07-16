@@ -24,6 +24,7 @@ const OrderDetailPage = lazy(() => import('./orders/OrderDetailPage.jsx'));
 const OrderPrintPage = lazy(() => import('./orders/OrderPrintPage.jsx'));
 const CustomerListPage = lazy(() => import('./customers/CustomerListPage.jsx'));
 const CustomerDetailPage = lazy(() => import('./customers/CustomerDetailPage.jsx'));
+const BikeListPage = lazy(() => import('./bikes/BikeListPage.jsx'));
 const AiAnalyticsPage = lazy(() => import('./analytics/AiAnalyticsPage.jsx'));
 const SettingsPage = lazy(() => import('./settings/SettingsPage.jsx'));
 
@@ -61,6 +62,9 @@ export default function AdminApp() {
               {/* Customers (Milestone 5) */}
               <Route path="customers" element={<CustomerListPage />} />
               <Route path="customers/:id" element={<CustomerDetailPage />} />
+
+              {/* Bikes / fitment (Milestone 8) */}
+              <Route path="bikes" element={<BikeListPage />} />
 
               {/* Analytics & Settings (Milestone 6) */}
               <Route path="analytics" element={<AiAnalyticsPage />} />
