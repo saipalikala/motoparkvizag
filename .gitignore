@@ -17,3 +17,10 @@ dist/
 build/
 backend/uploads
 uploads
+
+# local IDE / agent tooling — not part of the app
+.claude/
+.codex/
+.mcp.json
+.playwright-mcp/
+AGENTS.md
