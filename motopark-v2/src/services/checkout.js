@@ -5,9 +5,13 @@
  */
 import { api } from '@/lib/api.js';
 
-/** Create a Razorpay order. items: [{ productId, quantity }]. Returns { orderId, amount, currency }. */
-export async function createRazorpayOrder({ items, deliveryCharge }) {
-  const { data } = await api.post('/payment/create-order', { items, deliveryCharge });
+/**
+ * Create a Razorpay order. items: [{ productId, quantity }]. The server prices
+ * the cart AND derives the delivery charge, so neither is sent from here.
+ * Returns { orderId, amount, currency } — `amount` is in paise.
+ */
+export async function createRazorpayOrder({ items }) {
+  const { data } = await api.post('/payment/create-order', { items });
   return data;
 }
 

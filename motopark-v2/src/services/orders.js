@@ -8,16 +8,22 @@ import { api } from '@/lib/api.js';
 
 /**
  * Create the order after a verified payment.
- * items: [{ product, name, price, quantity, selectedColor, selectedSize }]
- * Returns the created order (or, on a 60s-duplicate, a 409 with { orderId }).
+ * items: [{ product, quantity, selectedColor, selectedSize }] — selectedColor is
+ * the variant HEX; the server matches variants on it and takes name/price from
+ * the DB, so anything else sent here is ignored.
+ * payment: the Razorpay handler response — the server re-checks the signature
+ * and asks Razorpay whether the payment was captured, and for how much, before
+ * saving anything. Delivery is derived server-side and is not sent.
+ * Returns the created order (or, on a duplicate, a 409 with { orderId }).
  */
-export async function createOrder({ items, shippingAddress, paymentMethod, paymentId, deliveryCharge }) {
+export async function createOrder({ items, shippingAddress, payment }) {
   const { data } = await api.post('/orders', {
     items,
     shippingAddress,
-    paymentMethod,
-    paymentId,
-    deliveryCharge,
+    paymentMethod: 'razorpay',
+    razorpay_order_id: payment.razorpay_order_id,
+    razorpay_payment_id: payment.razorpay_payment_id,
+    razorpay_signature: payment.razorpay_signature,
   });
   return data;
 }

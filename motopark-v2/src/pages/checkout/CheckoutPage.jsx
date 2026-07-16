@@ -94,7 +94,6 @@ export default function CheckoutPage() {
 
       const rp = await createRazorpayOrder({
         items: items.map((i) => ({ productId: i.id, quantity: i.qty })),
-        deliveryCharge: delivery,
       });
 
       const options = {
@@ -114,16 +113,12 @@ export default function CheckoutPage() {
             const order = await createOrder({
               items: items.map((i) => ({
                 product: i.id,
-                name: i.name,
-                price: i.priceINR,
                 quantity: i.qty,
                 selectedColor: i.color,
                 selectedSize: i.size,
               })),
               shippingAddress: form,
-              paymentMethod: 'razorpay',
-              paymentId: response.razorpay_payment_id,
-              deliveryCharge: delivery,
+              payment: response,
             });
             clearCart();
             setPlaced({ id: order._id, paymentId: response.razorpay_payment_id });
