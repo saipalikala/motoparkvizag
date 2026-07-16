@@ -15,7 +15,6 @@ import AdminRoute from './AdminRoute.jsx';
 const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage.jsx'));
 const AdminLayout = lazy(() => import('./components/AdminLayout.jsx'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
-const SectionPlaceholder = lazy(() => import('./pages/SectionPlaceholder.jsx'));
 const ProductListPage = lazy(() => import('./products/ProductListPage.jsx'));
 const ProductFormPage = lazy(() => import('./products/ProductFormPage.jsx'));
 const CategoryListPage = lazy(() => import('./categories/CategoryListPage.jsx'));
@@ -25,16 +24,12 @@ const OrderDetailPage = lazy(() => import('./orders/OrderDetailPage.jsx'));
 const OrderPrintPage = lazy(() => import('./orders/OrderPrintPage.jsx'));
 const CustomerListPage = lazy(() => import('./customers/CustomerListPage.jsx'));
 const CustomerDetailPage = lazy(() => import('./customers/CustomerDetailPage.jsx'));
+const AiAnalyticsPage = lazy(() => import('./analytics/AiAnalyticsPage.jsx'));
+const SettingsPage = lazy(() => import('./settings/SettingsPage.jsx'));
 
 function AdminLoader() {
   return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading admin" />;
 }
-
-/** Roadmap sections not yet built (docs/HANDOFF §6) — routable placeholders. */
-const PLACEHOLDER_SECTIONS = [
-  { path: 'analytics', title: 'Analytics', subtitle: 'Sales, revenue, and store performance insights.' },
-  { path: 'settings', title: 'Settings', subtitle: 'Store configuration and admin preferences.' },
-];
 
 export default function AdminApp() {
   return (
@@ -67,13 +62,9 @@ export default function AdminApp() {
               <Route path="customers" element={<CustomerListPage />} />
               <Route path="customers/:id" element={<CustomerDetailPage />} />
 
-              {PLACEHOLDER_SECTIONS.map(({ path, title, subtitle }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={<SectionPlaceholder title={title} subtitle={subtitle} />}
-                />
-              ))}
+              {/* Analytics & Settings (Milestone 6) */}
+              <Route path="analytics" element={<AiAnalyticsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
 

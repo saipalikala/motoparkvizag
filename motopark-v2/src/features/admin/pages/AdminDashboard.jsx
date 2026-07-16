@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BarChart3, FolderTree, IndianRupee, Package, ShoppingBag } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BarChart3, IndianRupee, Package, ShoppingBag, Users } from 'lucide-react';
 import { formatINR } from '@/lib/format.js';
 import PageHeader from '../components/PageHeader.jsx';
 import StatCard from '../components/StatCard.jsx';
@@ -7,10 +8,10 @@ import { getDashboardStats } from '../services/adminStats.js';
 import styles from './AdminDashboard.module.css';
 
 /**
- * AdminDashboard — Milestone 1 shell. Four summary tiles wired to cheap real
- * counts (Orders, Products, Categories) plus a Revenue placeholder (no aggregate
- * endpoint on V1 yet — arrives with the Analytics milestone). Rich widgets land
- * later; this proves the auth → API → data path end-to-end.
+ * AdminDashboard — store overview. Four summary tiles wired to the real
+ * aggregation endpoint (GET /api/admin/stats): Revenue is summed server-side,
+ * so no client-side money math. A total request failure leaves every tile
+ * showing its placeholder dash.
  */
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -24,9 +25,7 @@ export default function AdminDashboard() {
         if (alive) setStats(s);
       })
       .catch(() => {
-        // Individual stats already degrade to null inside the service; a total
-        // failure (e.g. network) leaves every tile showing its placeholder.
-        if (alive) setStats({ orders: null, products: null, categories: null, revenue: null });
+        if (alive) setStats({ revenue: null, orders: null, products: null, customers: null });
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -40,10 +39,18 @@ export default function AdminDashboard() {
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle="Store overview at a glance. Live operational widgets arrive as each module ships."
+        subtitle="Store overview at a glance. Revenue is summed across all non-cancelled orders."
       />
 
       <div className={styles.grid}>
+        <StatCard
+          label="Revenue"
+          value={stats?.revenue == null ? null : formatINR(stats.revenue)}
+          icon={IndianRupee}
+          accent="green"
+          loading={loading}
+          hint="Excludes cancelled & returned"
+        />
         <StatCard
           label="Orders"
           value={stats?.orders}
@@ -61,28 +68,21 @@ export default function AdminDashboard() {
           hint="In catalog"
         />
         <StatCard
-          label="Categories"
-          value={stats?.categories}
-          icon={FolderTree}
+          label="Customers"
+          value={stats?.customers}
+          icon={Users}
           accent="blue"
           loading={loading}
-          hint="Taxonomy"
-        />
-        <StatCard
-          label="Revenue"
-          value={stats?.revenue == null ? null : formatINR(stats.revenue)}
-          icon={IndianRupee}
-          accent="green"
-          loading={loading}
-          hint="Coming with Analytics"
+          hint="Registered"
         />
       </div>
 
       <div className={styles.note}>
         <BarChart3 size={18} className={styles.noteIcon} aria-hidden="true" />
         <p>
-          Foundation is live. Next up on the roadmap: <strong>Products</strong> — full catalog
-          management reading the existing categories and brands.
+          Want deeper insight? The <Link to="/admin/analytics">AI Usage dashboard</Link> tracks
+          assistant calls, cost, and latency, and <Link to="/admin/settings">Settings</Link> controls
+          store shipping rules.
         </p>
       </div>
     </div>

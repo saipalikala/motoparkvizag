@@ -38,3 +38,15 @@
 .note strong {
   color: var(--text-primary);
 }
+
+.note a {
+  color: var(--mp-navy-600);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.note a:hover {
+  border-bottom-color: currentColor;
+}

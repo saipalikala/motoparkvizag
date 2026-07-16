@@ -1,38 +1,22 @@
 /**
- * services/adminStats.js — cheap dashboard counts for Milestone 1.
+ * services/adminStats.js — dashboard summary metrics.
  *
- * No dedicated admin-stats endpoint exists yet (backend is the shared V1 API,
- * not forked). So we derive counts from existing endpoints as cheaply as
- * possible:
- *   • products   → GET /products?limit=1  → data.total  (pagination meta)
- *   • categories → GET /categories        → array length
- *   • orders     → GET /orders?limit=1    → data.total  (admin JWT ⇒ all orders)
+ * Backed by the dedicated aggregation endpoint added in Milestone 6:
+ *   GET /api/admin/stats  (admin JWT) → { totalRevenue, totalOrders,
+ *                                         activeProducts, totalCustomers }
  *
- * Revenue has no aggregate endpoint on V1 → returned as null and rendered as a
- * placeholder tile; it gets wired for real in the Analytics milestone.
- *
- * Each stat resolves independently (Promise.allSettled) so one failing endpoint
- * never blanks the whole dashboard — failed stats come back as null.
+ * Revenue is summed server-side (MongoDB $group, cancelled/returned excluded) —
+ * never computed in the client. A failed request rejects; AdminDashboard
+ * degrades every tile to its placeholder dash.
  */
 import { adminApi } from '../lib/adminApi.js';
 
 export async function getDashboardStats() {
-  const [products, categories, orders] = await Promise.allSettled([
-    adminApi.get('/products', { params: { limit: 1 } }),
-    adminApi.get('/categories'),
-    adminApi.get('/orders', { params: { limit: 1 } }),
-  ]);
-
-  const ok = (r) => r.status === 'fulfilled';
-
+  const { data } = await adminApi.get('/admin/stats');
   return {
-    products: ok(products) ? products.value.data?.total ?? 0 : null,
-    categories: ok(categories)
-      ? Array.isArray(categories.value.data)
-        ? categories.value.data.length
-        : 0
-      : null,
-    orders: ok(orders) ? orders.value.data?.total ?? 0 : null,
-    revenue: null, // no aggregate endpoint yet — wired in Analytics milestone
+    revenue: data?.totalRevenue ?? null,
+    orders: data?.totalOrders ?? null,
+    products: data?.activeProducts ?? null,
+    customers: data?.totalCustomers ?? null,
   };
 }
