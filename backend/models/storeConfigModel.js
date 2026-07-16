@@ -22,6 +22,15 @@ const storeConfigSchema = new mongoose.Schema({
     settings: {
         currency: { type: String, default: "INR" },
         showOutOfStock: { type: Boolean, default: false },
+
+        // Shipping is computed by the backend at checkout (docs/06 §6) and is
+        // authoritative — the frontend never decides shipping. These are the
+        // admin-tunable knobs. Amounts are in whole rupees (live V1 convention).
+        shipping: {
+            flatRate:            { type: Number,  default: 100 },   // ₹ per order
+            freeThreshold:       { type: Number,  default: 2000 },  // free above this cart subtotal
+            freeShippingEnabled: { type: Boolean, default: true },  // master switch for the free-above rule
+        },
     },
 });
 

@@ -27,7 +27,7 @@
 
 import express    from "express";
 import rateLimit  from "express-rate-limit";
-import { adminLogin, logoutAdmin } from "../controllers/adminController.js";
+import { adminLogin, logoutAdmin, getStats } from "../controllers/adminController.js";
 import authMiddleware              from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -57,7 +57,7 @@ router.use(authMiddleware);
 // [F1]: Logout — revokes the current token
 router.post("/logout", logoutAdmin);
 
-// Add future admin-only routes here:
-// router.get("/dashboard-stats", getDashboardStats);
+// Dashboard summary metrics — revenue via server-side $group aggregation.
+router.get("/stats", getStats);
 
 export default router;
