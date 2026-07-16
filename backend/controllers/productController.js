@@ -495,10 +495,17 @@ export const updateProduct = async (req, res) => {
             updateData.price = p;
         }
 
+        // Set when the admin clears the MRP field. Mongoose strips `undefined`
+        // out of $set, so assigning undefined here left the previous value in
+        // place and the storefront kept advertising a discount that had ended.
+        // Clearing needs an explicit $unset.
+        let unsetOriginalPrice = false;
+
         if ("originalPrice" in updateData) {
             // Empty string → clear the MRP; otherwise validate as a non-negative number.
             if (String(updateData.originalPrice).trim() === "") {
-                updateData.originalPrice = undefined;
+                delete updateData.originalPrice;
+                unsetOriginalPrice = true;
             } else {
                 const op = Number(updateData.originalPrice);
                 if (isNaN(op) || op < 0)
@@ -555,7 +562,10 @@ export const updateProduct = async (req, res) => {
 
         const product = await Product.findByIdAndUpdate(
             req.params.id,
-            { $set: updateData },
+            {
+                $set: updateData,
+                ...(unsetOriginalPrice ? { $unset: { originalPrice: "" } } : {}),
+            },
             { new: true, runValidators: true, lean: true }
         );
 
