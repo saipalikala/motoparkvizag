@@ -299,6 +299,37 @@
 
 .megaAll:hover { color: var(--text-primary); }
 
+/* ── Grouped mega (Shop by Bike): make column → model links ── */
+.megaGroups {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin: 0;
+}
+
+.megaGroup { min-width: 0; }
+
+.megaGroupTitle {
+  display: block;
+  margin-bottom: var(--space-1);
+  padding: var(--space-2) 0;
+  font-size: var(--text-body-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.megaGroupTitle:hover { color: var(--accent-hover); }
+
+.megaGroupList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.megaGroupList .megaLink {
+  color: var(--text-secondary);
+}
+.megaGroupList .megaLink:hover { color: var(--accent-hover); }
+
 /* ── Responsive helpers ─────────────────────────────────── */
 .mobileOnly { display: grid; }
 .desktopOnly { display: none; }
@@ -427,6 +458,18 @@
 }
 
 .accordionLink:hover { background: var(--bg-surface-warm); }
+
+/* Drawer: model links nested under a make (Shop by Bike) */
+.accordionSubLink {
+  display: block;
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-6);
+  min-height: 32px;
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.accordionSubLink:hover { background: var(--bg-surface-warm); }
 
 .accordionAll {
   font-weight: 600;

@@ -1,8 +1,19 @@
 /**
- * Navigation configuration — static seed for the layout chrome.
- * Structure mirrors the locked IA (docs/03 §3). When the CMS navbar
- * service is wired (services/navbar.js), this file becomes the
- * fallback/default — the SHAPE here is the contract either way.
+ * Navigation configuration — the static seed AND resilience fallback for the
+ * layout chrome. Structure mirrors the locked IA (docs/03 §3).
+ *
+ * As of Milestone 7, the mega-menu categories and brands are fetched live from
+ * the backend (services/navigation.js → NavContext). These arrays are the
+ * initial state and the graceful fallback: if the API fails, the navbar keeps
+ * rendering them, so navigation never breaks. Item shape `{ label, slug }` is
+ * the contract either way.
+ *
+ * As of Milestone 10 BIKE_MENU is a fallback too, not the source: bikes come from
+ * GET /api/bikes via NavContext, which adapts this flat make list into the grouped
+ * `{ make, makeSlug, models }` shape when the API is unreachable. Consumers read
+ * NavContext, never BIKE_MENU directly, so a make added in the admin panel appears
+ * everywhere at once. NavContext is the ONLY importer of BIKE_MENU — keep it that
+ * way; importing it in a page reintroduces the stale-menu bug this replaced.
  */
 
 export const CATEGORY_MENU = [

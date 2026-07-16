@@ -1,18 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { BadgeCheck, ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import { useScrolled } from '@/hooks/useScrolled.js';
 import { useCart } from '@/contexts/CartContext.jsx';
-import { BIKE_MENU, BRAND_MENU, CATEGORY_MENU } from '@/config/nav.js';
+import { useNav } from '@/contexts/NavContext.jsx';
 import logoBadge from '@/assets/images/logo-badge.png';
 import styles from './Navbar.module.css';
-
-const MENUS = [
-  { id: 'shop', label: 'Shop', to: '/store', items: CATEGORY_MENU, base: '/c', eyebrow: 'Gear up by category' },
-  { id: 'brands', label: 'Brands', to: null, items: BRAND_MENU, base: '/brand', eyebrow: 'Genuine brands only' },
-  { id: 'bikes', label: 'Shop by Bike', to: '/bikes', items: BIKE_MENU, base: '/bikes', eyebrow: 'Made for your machine' },
-];
 
 /**
  * MotoPark two-tier header (Design Lead redesign).
@@ -23,6 +17,7 @@ const MENUS = [
 export default function Navbar() {
   const scrolled = useScrolled(8);
   const { count: cartCount } = useCart();
+  const { categories, brands, bikes } = useNav();
   const [openMenu, setOpenMenu] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
@@ -30,6 +25,19 @@ export default function Navbar() {
   const { pathname } = useLocation();
   const navRef = useRef(null);
   const drawerRef = useRef(null);
+
+  // Built from live nav data (NavContext), which seeds from and falls back to
+  // the static config/nav.js lists. Shape is unchanged, so the rail, mega panel,
+  // and mobile accordion below render exactly as before.
+  const MENUS = useMemo(
+    () => [
+      { id: 'shop', label: 'Shop', to: '/store', items: categories, base: '/c', eyebrow: 'Gear up by category' },
+      { id: 'brands', label: 'Brands', to: null, items: brands, base: '/brand', eyebrow: 'Genuine brands only' },
+      // Bikes use `groups` (make → models) rather than a flat `items` list.
+      { id: 'bikes', label: 'Shop by Bike', to: '/bikes', groups: bikes, base: '/bikes', eyebrow: 'Made for your machine' },
+    ],
+    [categories, brands, bikes],
+  );
 
   useEffect(() => {
     setOpenMenu(null);
@@ -169,15 +177,48 @@ export default function Navbar() {
           {MENUS.filter((m) => m.id === openMenu).map((menu) => (
             <div key={menu.id} className={styles.megaInner}>
               <p className={styles.megaEyebrow}>{menu.eyebrow}</p>
-              <ul className={styles.megaGrid}>
-                {menu.items.map((item) => (
-                  <li key={item.slug}>
-                    <Link role="menuitem" to={`${menu.base}/${item.slug}`} className={styles.megaLink}>
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+
+              {menu.groups ? (
+                <div className={styles.megaGroups}>
+                  {menu.groups.map((group) => (
+                    <div key={group.makeSlug} className={styles.megaGroup}>
+                      <Link
+                        role="menuitem"
+                        to={`${menu.base}/${group.makeSlug}`}
+                        className={styles.megaGroupTitle}
+                      >
+                        {group.make}
+                      </Link>
+                      {group.models.length > 0 && (
+                        <ul className={styles.megaGroupList}>
+                          {group.models.map((m) => (
+                            <li key={m.slug}>
+                              <Link
+                                role="menuitem"
+                                to={`${menu.base}/${group.makeSlug}/${m.slug}`}
+                                className={styles.megaLink}
+                              >
+                                {m.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ul className={styles.megaGrid}>
+                  {menu.items.map((item) => (
+                    <li key={item.slug}>
+                      <Link role="menuitem" to={`${menu.base}/${item.slug}`} className={styles.megaLink}>
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {menu.to && (
                 <Link to={menu.to} className={styles.megaAll}>
                   View all {menu.label.toLowerCase()} →
@@ -247,13 +288,30 @@ export default function Navbar() {
                   </button>
                   {openAccordion === menu.id && (
                     <ul className={styles.accordionList}>
-                      {menu.items.map((item) => (
-                        <li key={item.slug}>
-                          <Link to={`${menu.base}/${item.slug}`} className={styles.accordionLink}>
-                            {item.label}
-                          </Link>
-                        </li>
-                      ))}
+                      {menu.groups
+                        ? menu.groups.map((group) => (
+                            <li key={group.makeSlug}>
+                              <Link to={`${menu.base}/${group.makeSlug}`} className={styles.accordionLink}>
+                                {group.make}
+                              </Link>
+                              {group.models.map((m) => (
+                                <Link
+                                  key={m.slug}
+                                  to={`${menu.base}/${group.makeSlug}/${m.slug}`}
+                                  className={styles.accordionSubLink}
+                                >
+                                  {m.label}
+                                </Link>
+                              ))}
+                            </li>
+                          ))
+                        : menu.items.map((item) => (
+                            <li key={item.slug}>
+                              <Link to={`${menu.base}/${item.slug}`} className={styles.accordionLink}>
+                                {item.label}
+                              </Link>
+                            </li>
+                          ))}
                       {menu.to && (
                         <li>
                           <Link to={menu.to} className={styles.accordionAll}>
