@@ -205,6 +205,22 @@ const orderRes = await fetch(`${API}/payment/create-order`, {
                                 })),
                                 shippingAddress: form,
                                 paymentMethod: "razorpay",
+                                // The hardened /orders re-checks the signature
+                                // and asks Razorpay whether this payment was
+                                // captured, and for how much, before saving.
+                                // Without these three it rejects the order —
+                                // after the money has already been taken.
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                // Superset payload: the fields below are what
+                                // the PRE-hardening backend reads (it ignores
+                                // the three above, and the new one ignores
+                                // these). Sending both means this build works
+                                // against either, so it can be deployed before
+                                // the backend without a window where checkout
+                                // takes money and drops the order. Remove once
+                                // the hardened backend is live everywhere.
                                 paymentId: response.razorpay_payment_id,
                                 total: cartTotal + delivery,
                                 deliveryCharge: delivery,
