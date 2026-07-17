@@ -4,15 +4,34 @@ import Product from "../models/productModel.js";
 import { deliveryChargeFor } from "../config/store.js";
 import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
 
-// GET all orders (admin)
-export const getOrders = async (req, res) => {
-    try {
-        const orders = await Order.find().sort({ createdAt: -1 });
-        res.json({ orders });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+/**
+ * Give back the stock an in-flight checkout took, when that checkout then fails.
+ * `taken` holds the items already decremented — items without a variant were
+ * never decremented, so they are skipped here too.
+ */
+const restoreStock = async (taken) => {
+    for (const done of taken) {
+        if (!done.selectedSize || !done.selectedColor) continue;
+        await Product.updateOne(
+            { _id: done.product },
+            { $inc: { "variants.$[v].sizes.$[s].stock": done.quantity } },
+            {
+                arrayFilters: [
+                    { "v.color": done.selectedColor },
+                    { "s.size":  done.selectedSize  },
+                ],
+            }
+        );
     }
 };
+
+/* NOTE: order READS and the admin status update live in routes/orderRoutes.js,
+   which owns their auth ([F1]/[F2]/[F4]) and status validation. Unrouted copies
+   of them used to sit here — an unauthenticated `Order.find()` returning every
+   customer's address and phone, and a status write with neither auth nor an enum
+   check. Nothing imported them, but they were a re-wiring accident away from
+   undoing those fixes, so they are gone. Add order handlers to the router, not
+   here; this controller is the checkout write path only. */
 
 // POST create order (customer checkout)
 export const createOrder = async (req, res) => {
@@ -102,8 +121,15 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: "Payment verification failed." });
         }
 
-        // Replay: one captured payment must buy exactly one order. This also
-        // covers guests, who the 60s window below never protected.
+        // Replay: one captured payment must buy exactly one order. Covers guests
+        // and logged-in users alike, keyed on the payment rather than the account.
+        //
+        // This is a FAST PATH, not the guard — it is check-then-act, and a
+        // Razorpay round-trip plus N stock writes sit between it and the insert.
+        // The unique partial index on paymentId (models/orderModel.js) is what
+        // actually enforces the rule; see the Order.create catch below. Keeping
+        // this check spares the common case (a refresh, a double-tap) a pointless
+        // Razorpay call and a decrement/rollback cycle.
         const alreadyUsed = await Order.findOne({ paymentId: razorpay_payment_id }).select("_id").lean();
         if (alreadyUsed) {
             return res.status(409).json({
@@ -134,23 +160,7 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: "Paid amount does not match the order total." });
         }
 
-        // ── TASK 1: Idempotency — block duplicate within 60s ──────────────────
-        if (userId) {
-            const sixtySecsAgo = new Date(Date.now() - 60_000);
-            const recent = await Order.findOne({
-                user: userId,
-                createdAt: { $gte: sixtySecsAgo },
-            }).select("_id").lean();
-
-            if (recent) {
-                return res.status(409).json({
-                    message: "A recent order already exists.",
-                    orderId: recent._id,
-                });
-            }
-        }
-
-        // ── TASK 2: Atomic stock decrement ────────────────────────────────────
+        // ── Atomic stock decrement ────────────────────────────────────────────
         const decremented = [];
 
         for (const item of items) {
@@ -189,22 +199,17 @@ export const createOrder = async (req, res) => {
             );
 
             if (!result) {
-                // Rollback only items that had variants
-                for (const done of decremented) {
-                    if (!done.selectedSize || !done.selectedColor) continue;
-                    await Product.updateOne(
-                        { _id: done.product },
-                        {
-                            $inc: { "variants.$[v].sizes.$[s].stock": done.quantity },
-                        },
-                        {
-                            arrayFilters: [
-                                { "v.color": done.selectedColor },
-                                { "s.size": done.selectedSize },
-                            ],
-                        }
-                    );
-                }
+                await restoreStock(decremented);
+
+                // The payment is already captured at this point, so bailing out
+                // here leaves the customer charged with no order. Stock is rolled
+                // back above, but the money is not — it needs a manual refund.
+                console.error(
+                    "CRITICAL: payment captured but order NOT saved — manual refund required. " +
+                    `paymentId=${razorpay_payment_id} amount=INR${expectedTotal} ` +
+                    `reason=out_of_stock product="${productById.get(item.product.toString()).name}" ` +
+                    `color=${item.selectedColor} size=${item.selectedSize} qty=${item.quantity}`
+                );
 
                 return res.status(400).json({
                     message: `"${productById.get(item.product.toString()).name}" (Size: ${item.selectedSize}) is out of stock or insufficient quantity.`,
@@ -215,14 +220,43 @@ export const createOrder = async (req, res) => {
         }
 
         // ── All stock decremented successfully — now save the order ──────────
-        const order = await Order.create({
-            user: userId || null,
-            items: verifiedItems,
-            shippingAddress,
-            paymentMethod,
-            paymentId: razorpay_payment_id, // verified as captured, for this amount
-            total: expectedTotal,           // ✅ from DB, not frontend
-        });
+        let order;
+        try {
+            order = await Order.create({
+                user: userId || null,
+                items: verifiedItems,
+                shippingAddress,
+                paymentMethod,
+                paymentId: razorpay_payment_id, // verified as captured, for this amount
+                total: expectedTotal,           // ✅ from DB, not frontend
+            });
+        } catch (err) {
+            // Stock is decremented and the money is captured, and neither undoes
+            // itself. Give the stock back before deciding what to tell the client.
+            await restoreStock(decremented);
+
+            // Lost the race for this payment: a concurrent request carrying the
+            // same paymentId cleared the fast-path check above and inserted first.
+            // The unique index rejected us, which is exactly its job — the customer
+            // does have an order (the winner's), so this needs no refund.
+            if (err?.code === 11000) {
+                const winner = await Order.findOne({ paymentId: razorpay_payment_id })
+                    .select("_id")
+                    .lean();
+                return res.status(409).json({
+                    message: "This payment has already been used for an order.",
+                    orderId: winner?._id,
+                });
+            }
+
+            // Any other write failure DOES strand the money: captured, no order.
+            console.error(
+                "CRITICAL: payment captured but order NOT saved — manual refund required. " +
+                `paymentId=${razorpay_payment_id} amount=INR${expectedTotal} ` +
+                `reason=order_write_failed detail=${err?.message}`
+            );
+            throw err;
+        }
 
         res.status(201).json(order);
 
@@ -232,17 +266,3 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// PUT update order status (admin)
-export const updateOrderStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        const order = await Order.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true }
-        );
-        res.json(order);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-};
