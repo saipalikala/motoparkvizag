@@ -30,8 +30,22 @@
  *
  * [F5] .lean() on read-only queries
  *
+ * [F6] PUT /:id/cancel — unauthenticated cancellation
+ *      Before: the check read `order.user && req.userId && mismatch`.
+ *      With no token req.userId is undefined, so the condition
+ *      short-circuited to false and the 403 never fired — anyone
+ *      holding an order ID could cancel a paid order and hand its
+ *      stock back. The absence of a credential read as permission.
+ *      After: requireUserAuth (matching GET /:id, so an anonymous
+ *      caller is rejected before the order is even looked up), then
+ *      an explicit owner-or-admin check.
+ *
  * NOTE: createOrder uses optionalAuth (preserved) — guest checkout works.
- * NOTE: cancel order uses optionalAuth (preserved) — guest can cancel own order.
+ * NOTE: cancel requires auth, so a GUEST order (user: null) is admin-only —
+ *       there is no owner to prove. No regression: the V1 order page loads via
+ *       GET /:id, which already requires auth, so a guest never reached the
+ *       cancel button anyway. Guest self-cancel needs the OTP-style ownership
+ *       proof described in [F1] before it can exist at all.
  */
 
 import express  from "express";
@@ -200,8 +214,8 @@ router.patch("/:id/tracking", authMiddleware, async (req, res) => {
   }
 });
 
-/* ── CANCEL ORDER (customer, with optionalAuth for guests) ── */
-router.put("/:id/cancel", optionalAuth, async (req, res) => {
+/* ── CANCEL ORDER (owner or admin) ── */
+router.put("/:id/cancel", requireUserAuth, async (req, res) => { // [F6]
   try {
     // [F3]
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -211,8 +225,14 @@ router.put("/:id/cancel", optionalAuth, async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Only block if both user sides are present and don't match
-    if (order.user && req.userId && order.user.toString() !== req.userId.toString()) {
+    // [F6] Cancelling is destructive (it flips status and hands stock back), so
+    // it demands proof of ownership — not merely the absence of a contradiction.
+    // A guest order has no owner to prove, so only an admin can cancel one.
+    const isAdmin = req.role === "admin";
+    const isOwner = Boolean(order.user) && Boolean(req.userId) &&
+                    order.user.toString() === req.userId.toString();
+
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
