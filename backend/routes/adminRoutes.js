@@ -28,6 +28,7 @@
 import express    from "express";
 import rateLimit  from "express-rate-limit";
 import { adminLogin, logoutAdmin, getStats } from "../controllers/adminController.js";
+import { getStrandedPayments }     from "../controllers/reconciliationController.js";
 import authMiddleware              from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -59,5 +60,9 @@ router.post("/logout", logoutAdmin);
 
 // Dashboard summary metrics — revenue via server-side $group aggregation.
 router.get("/stats", getStats);
+
+// Reconciliation — captured payments (payment.captured webhook) with no matching
+// Order, older than a grace window. Detects orphaned payments post-cutover.
+router.get("/reconciliation/stranded", getStrandedPayments);
 
 export default router;
