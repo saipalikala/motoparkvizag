@@ -7,6 +7,7 @@ import {
   Clapperboard,
   ShoppingBag,
   Users,
+  ClipboardCheck,
   BarChart3,
   Settings,
 } from 'lucide-react';
@@ -29,6 +30,7 @@ export const ADMIN_NAV = [
   { to: '/admin/showcase', label: 'Showcase', icon: Clapperboard },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/customers', label: 'Customers', icon: Users },
+  { to: '/admin/reconciliation', label: 'Reconciliation', icon: ClipboardCheck },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];

@@ -24,6 +24,7 @@ const OrderDetailPage = lazy(() => import('./orders/OrderDetailPage.jsx'));
 const OrderPrintPage = lazy(() => import('./orders/OrderPrintPage.jsx'));
 const CustomerListPage = lazy(() => import('./customers/CustomerListPage.jsx'));
 const CustomerDetailPage = lazy(() => import('./customers/CustomerDetailPage.jsx'));
+const StrandedPaymentsPage = lazy(() => import('./reconciliation/StrandedPaymentsPage.jsx'));
 const BikeListPage = lazy(() => import('./bikes/BikeListPage.jsx'));
 const VideoShowcaseListPage = lazy(() => import('./showcase/VideoShowcaseListPage.jsx'));
 const AiAnalyticsPage = lazy(() => import('./analytics/AiAnalyticsPage.jsx'));
@@ -63,6 +64,10 @@ export default function AdminApp() {
               {/* Customers (Milestone 5) */}
               <Route path="customers" element={<CustomerListPage />} />
               <Route path="customers/:id" element={<CustomerDetailPage />} />
+
+              {/* Reconciliation — orphaned-payment detection (Phase 3) */}
+              <Route path="reconciliation" element={<StrandedPaymentsPage />} />
+
 
               {/* Bikes / fitment (Milestone 8) */}
               <Route path="bikes" element={<BikeListPage />} />
