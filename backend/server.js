@@ -29,6 +29,7 @@ import homeDataRoutes      from "./routes/homeDataRoutes.js";
 import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import aiRoutes            from "./routes/aiRoutes.js";
+import webhookRoutes       from "./routes/webhookRoutes.js";
 import connectDB           from "./config/db.js";
 
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -145,6 +146,14 @@ app.use(
 );
 
 app.use(compression());
+
+// ── Webhooks — MUST precede express.json ──
+// Razorpay's signature is HMAC over the RAW body; the global JSON parser below
+// would consume and re-serialize it, breaking verification. This mount gets its
+// own express.raw() so the controller sees the exact bytes. It also sits above
+// the /api rate limiters (globalApiLimiter, paymentLimiter) so webhook retries
+// are never throttled into a non-2xx retry storm. See routes/webhookRoutes.js.
+app.use("/api/webhooks", express.raw({ type: "application/json", limit: "1mb" }), webhookRoutes);
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
