@@ -17,7 +17,9 @@ import styles from './CheckoutPage.module.css';
 const STEPS = ['Delivery', 'Payment', 'Review'];
 
 export default function CheckoutPage() {
-  const { items, count, subtotalINR, clearCart } = useCart();
+  // CartContext exposes `clear`; destructuring `clearCart` silently yielded
+  // undefined and threw the moment it was called.
+  const { items, count, subtotalINR, clear: clearCart } = useCart();
   const { user, isAuthed } = useAuth();
   const navigate = useNavigate();
 
@@ -107,6 +109,12 @@ export default function CheckoutPage() {
         theme: { color: '#e8532e' },
         modal: { ondismiss: () => setPaying(false) },
         handler: async (response) => {
+          // The money is already taken by the time this runs, so the only
+          // question is whether the order saved. Scope the try to the save
+          // itself: anything thrown afterwards is a UI problem and must NOT be
+          // reported as "saving your order failed" — that message previously
+          // fired on an order that had in fact been saved.
+          let orderId;
           try {
             const v = await verifyPayment(response);
             if (!v.success) throw new Error('Payment verification failed. Please contact support.');
@@ -120,20 +128,24 @@ export default function CheckoutPage() {
               shippingAddress: form,
               payment: response,
             });
-            clearCart();
-            setPlaced({ id: order._id, paymentId: response.razorpay_payment_id });
+            orderId = order._id;
           } catch (err) {
+            // 409 = this payment already bought an order (a resubmit). The
+            // order exists, so this is a success for the rider.
             if (err?.code === 409) {
-              clearCart();
-              setPlaced({ id: err.raw?.response?.data?.orderId, paymentId: response.razorpay_payment_id });
+              orderId = err.raw?.response?.data?.orderId;
+            } else {
+              setError(
+                `Payment succeeded but saving your order failed. Please contact support with payment id ${response.razorpay_payment_id}.`,
+              );
+              setPaying(false);
               return;
             }
-            setError(
-              `Payment succeeded but saving your order failed. Please contact support with payment id ${response.razorpay_payment_id}.`,
-            );
-          } finally {
-            setPaying(false);
           }
+
+          clearCart();
+          setPlaced({ id: orderId, paymentId: response.razorpay_payment_id });
+          setPaying(false);
         },
       };
 
