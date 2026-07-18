@@ -92,6 +92,8 @@ That gap is the **client-render path**. The `<img>` doesn't exist in the DOM unt
 1. **The budget is a FIELD statistic.** `docs/09 §14` says "LCP < 2.5 s mobile **p75**" — p75 of real users, which no lab tool can produce. `web-vitals` → GA4 went live with this deploy, so that number is being collected for the first time. **Judge the gate on GA4 field p75, not on the Lighthouse median.** Lab noise is ~2.9 s (spread 2725–5674 ms), too wide to adjudicate a ±100 ms gate.
 2. If field p75 also misses, options are recorded in `docs/13 §3d`: a **static hero shell** in `index.html` (highest leverage; must not regress CLS from its perfect 0), reducing boot cost, or **deliberately revising** a budget written before anything measured it. Revision is legitimate — 2.5 s simulated-mobile LCP is hard for any CSR SPA — but must be a recorded decision, not quiet drift.
 
+> **The static hero shell is already built and waiting on branch `perf/static-hero-shell` (`ed1609e`, pushed).** Do not merge it while field data is accumulating — changing LCP delivery mid-collection blends two populations into one p75 and destroys the gate decision. Verified there: it paints as the LCP candidate, hands off to Hero.jsx once the real `<img>` is `complete`, leaves no node behind, is removed on non-home routes, and adds no second image request (one hero fetch, 39.1 kB). CLS measured like-for-like against `main` on the same server: **0.08833 vs 0.08832 — the shell adds nothing.** That 0.088 is a dev-only StrictMode artifact (the footer collapsing), not the production 0; **confirm production CLS with `npm run lhci` before merging.** A Vercel preview deployment of the branch is the cheapest way to get that number.
+
 ---
 
 ## 4. Key Constraints — non-negotiable
