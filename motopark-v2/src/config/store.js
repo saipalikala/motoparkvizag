@@ -14,6 +14,13 @@ export const STORE = {
   brandsCount: '25+',
   freeShipThreshold: 2000,
   shippingFlat: 150, // charged below the free-shipping threshold (matches V1)
+
+  // ⚠️ TEMPORARY — REVERT BEFORE THE motoparkvizag.in DOMAIN CUTOVER. ⚠️
+  // Waives delivery so staging can be tested with ₹1 orders. Twin of
+  // SHIPPING_DISABLED in backend/config/store.js — both must flip together or
+  // the server rejects the payment on an amount mismatch. Threshold/flat stay
+  // at their real values so the marketing copy remains truthful after revert.
+  shippingDisabled: true,
   returnWindowDays: 7,
   deliveryEstimate: '2–3 business days',
 
