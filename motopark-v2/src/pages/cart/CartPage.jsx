@@ -19,7 +19,7 @@ export default function CartPage() {
 
   const threshold = STORE.freeShipThreshold;
   const remaining = Math.max(0, threshold - subtotalINR);
-  const freeShip = STORE.shippingDisabled || subtotalINR >= threshold;
+  const freeShip = subtotalINR >= threshold;
   const progress = Math.min(100, Math.round((subtotalINR / threshold) * 100));
 
   return (
