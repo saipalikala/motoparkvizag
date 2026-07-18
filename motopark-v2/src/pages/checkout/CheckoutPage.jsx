@@ -97,8 +97,16 @@ export default function CheckoutPage() {
       const ok = await loadRazorpay();
       if (!ok) throw new Error('Couldn’t load the payment gateway — check your connection and retry.');
 
+      // Variants and address go up front so the server can record a payment
+      // intent — that is what lets the webhook place this order without us.
       const rp = await createRazorpayOrder({
-        items: items.map((i) => ({ productId: i.id, quantity: i.qty })),
+        items: items.map((i) => ({
+          productId: i.id,
+          quantity: i.qty,
+          selectedColor: i.color,
+          selectedSize: i.size,
+        })),
+        shippingAddress: form,
       });
 
       const options = {

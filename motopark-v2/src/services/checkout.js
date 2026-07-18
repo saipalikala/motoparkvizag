@@ -6,12 +6,20 @@
 import { api } from '@/lib/api.js';
 
 /**
- * Create a Razorpay order. items: [{ productId, quantity }]. The server prices
- * the cart AND derives the delivery charge, so neither is sent from here.
+ * Create a Razorpay order. items: [{ productId, quantity, selectedColor,
+ * selectedSize }]. The server prices the cart AND derives the delivery charge,
+ * so neither is sent from here.
+ *
+ * `shippingAddress` is sent BEFORE payment on purpose: it lets the server record
+ * a payment intent, which is what allows the payment.captured webhook to place
+ * the order if this browser never makes it back (a stalled Razorpay modal after
+ * a cross-device UPI payment). Without it the order can only be created by the
+ * `handler` callback, and a frozen modal means captured money and no order.
+ *
  * Returns { orderId, amount, currency } — `amount` is in paise.
  */
-export async function createRazorpayOrder({ items }) {
-  const { data } = await api.post('/payment/create-order', { items });
+export async function createRazorpayOrder({ items, shippingAddress }) {
+  const { data } = await api.post('/payment/create-order', { items, shippingAddress });
   return data;
 }
 
