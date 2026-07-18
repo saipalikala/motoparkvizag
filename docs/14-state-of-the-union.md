@@ -140,7 +140,22 @@ Three gates enforce this automatically. All were verified against a **deliberate
 ## 6. Open items
 
 - ~~**AccountPage was never verified in a browser**~~ ✅ **Verified 2026-07-18.** Auth gate redirects `/account` → `/login?redirect=/account`; the `disabled`+`hint` path renders correctly (Email disabled, hint linked via `aria-describedby`); all six address fields are labelled; and the address happy path saves end-to-end. **It found a real bug** — both form-level errors (`profileError`, `addrErr`) were bare `<p>` elements with no `role="alert"`, so a failed submit was silent to screen readers. Fixed. To log in for future checks: V2's UI offers **only OTP and Google** — there is no password field — so get a token from `POST /api/users/login/email` and set `mp-auth-token` + `mp-auth-user` in localStorage.
-- **V1 admin parity gap — a genuine cutover blocker.** Six V1 sections have no V2 equivalent but live backend routes: `InventoryManager`, `AdminCarouselManager`, `AdminNavbarManager`, `AdminHomeLayout`/`HomeBuilder`, `AdminMedia`, `OffersAdmin`. Owner chose to **audit usage empirically first** (document counts + `updatedAt` recency per collection) rather than rebuild blind. `InventoryManager` is the likeliest genuine keeper — V2 only edits stock per-product inside `VariantEditor.jsx`.
+- **V1 admin parity gap — AUDITED 2026-07-18 against the production `motopark` database. The gap is much smaller than it looked; rebuild almost nothing.** Reproduce with `node scripts/auditAdminUsage.mjs .env motopark` (read-only).
+
+  | V1 section | collection | docs | last write | verdict |
+  |---|---|---|---|---|
+  | AdminCarouselManager | `carousels` | 6 | 25d ago | **Do not rebuild** |
+  | AdminNavbarManager | `navbars` | 1 | 129d ago | **Do not rebuild** |
+  | AdminHomeLayout / HomeBuilder | `homelayouts` | 1 | 83d ago | **Do not rebuild** |
+  | AdminMedia | `media` | 1 | 118d ago | **Do not rebuild** |
+  | OffersAdmin | `offers` | 2 | 25d ago | **Capability gap — see below** |
+  | InventoryManager | `products` | 50 | today | **Do not rebuild** |
+
+  **The decisive fact: V2 consumes none of these five content collections.** Not one. Its homepage order is code (`HomePage.jsx`), its nav is `config/nav.js` plus the real taxonomy collections (never `navbars`), its offer bar is hardcoded in `OfferBar.jsx`, and Concept C has no carousel at all. The only `/carousel` and `/media` strings in V2 are the unrelated `/upload/*` endpoints for the video showcase. These five sections administer data that V2's design has already replaced.
+
+  **`InventoryManager` is NOT the keeper it looked like.** 46 of its 50 product writes landed on one day (2026-07-08) — a bulk backfill, not stock editing; only 4 genuine per-product edits happened in the following 10 days, and just 5 distinct `updatedAt` values exist across all 50 products. V2's per-product `VariantEditor` comfortably covers that volume.
+
+  **The one real regression is `OffersAdmin`.** `OfferBar.jsx` hardcodes the promo message, so changing it now needs a code deploy where V1 allowed an admin edit — and `offers` was genuinely touched 25 days ago. This does not mean rebuilding OffersAdmin; it means giving V2 a small native way to edit that strip. Same question applies more weakly to the nav (`config/nav.js` is also code), but `navbars` has not been written in 129 days.
 - ~~**Six undocumented env vars**~~ ✅ **Documented 2026-07-18** (`6ac859a`). While doing it, one thing surfaced that is worth treating as a real security item, not just a doc gap: **the customer JWT paths fall back to the hardcoded string `"motopark_user_secret"` when `JWT_SECRET` is unset** (`userController.js:14`, `orderRoutes.js:72,87`, `paymentRoutes.js:41`), and that fallback is committed to this repo — so an unset `JWT_SECRET` means anyone reading the source can forge a customer session. The admin path has no fallback and fails closed instead. The local `backend/.env` does set it; **whether Railway sets it has not been checked — do that first.** Then remove the fallback so the customer path fails closed like the admin one. Small change, high value.
 - **Abandoned-cart recovery does not exist.** No job, no trigger, no cron — despite being a PRD KPI and sometimes assumed present. Not a cutover blocker; decide separately.
 - **No test framework anywhere.** Four hand-rolled scripts in `backend/scripts/` are good and unwired to CI — especially `testPlaceOrder.js`'s partial-rollback case, which silently destroys inventory if broken.
