@@ -7,6 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:guards": "node scripts/testPaymentGuards.js",
+    "test:placeorder": "node scripts/testPlaceOrder.js",
     "start": "node server.js",
     "db:seed": "node scripts/seedDev.js",
     "ai:backfill": "node ai/search/backfill.js",

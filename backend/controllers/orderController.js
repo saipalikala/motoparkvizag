@@ -3,27 +3,14 @@ import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import { deliveryChargeFor } from "../config/store.js";
 import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
+import { placeOrder, OutOfStockError } from "../services/placeOrder.js";
 
-/**
- * Give back the stock an in-flight checkout took, when that checkout then fails.
- * `taken` holds the items already decremented — items without a variant were
- * never decremented, so they are skipped here too.
- */
-const restoreStock = async (taken) => {
-    for (const done of taken) {
-        if (!done.selectedSize || !done.selectedColor) continue;
-        await Product.updateOne(
-            { _id: done.product },
-            { $inc: { "variants.$[v].sizes.$[s].stock": done.quantity } },
-            {
-                arrayFilters: [
-                    { "v.color": done.selectedColor },
-                    { "s.size":  done.selectedSize  },
-                ],
-            }
-        );
-    }
-};
+/* Stock decrement, rollback and the replay guard now live in
+   services/placeOrder.js — the payment.captured webhook has to place orders too,
+   and two copies of that logic would drift into overselling. This controller
+   keeps what is specific to a browser-driven checkout: validating client input,
+   pricing the cart from the DB, and proving the Razorpay callback corresponds to
+   real captured money. */
 
 /* NOTE: order READS and the admin status update live in routes/orderRoutes.js,
    which owns their auth ([F1]/[F2]/[F4]) and status validation. Unrouted copies
@@ -127,9 +114,10 @@ export const createOrder = async (req, res) => {
         // This is a FAST PATH, not the guard — it is check-then-act, and a
         // Razorpay round-trip plus N stock writes sit between it and the insert.
         // The unique partial index on paymentId (models/orderModel.js) is what
-        // actually enforces the rule; see the Order.create catch below. Keeping
-        // this check spares the common case (a refresh, a double-tap) a pointless
-        // Razorpay call and a decrement/rollback cycle.
+        // actually enforces the rule; services/placeOrder.js handles losing that
+        // race. This check is kept HERE, ahead of the Razorpay fetch, because
+        // placeOrder's own copy only runs after it — repeating it spares the
+        // common case (a refresh, a double-tap) a pointless Razorpay round-trip.
         const alreadyUsed = await Order.findOne({ paymentId: razorpay_payment_id }).select("_id").lean();
         if (alreadyUsed) {
             return res.status(409).json({
@@ -160,102 +148,32 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: "Paid amount does not match the order total." });
         }
 
-        // ── Atomic stock decrement ────────────────────────────────────────────
-        const decremented = [];
-
-        for (const item of items) {
-
-            // ✅ Skip stock check if product has no size/color variants
-            if (!item.selectedSize || !item.selectedColor) {
-                decremented.push(item);
-                continue;
-            }
-
-            const result = await Product.findOneAndUpdate(
-                {
-                    _id: item.product,
-                    variants: {
-                        $elemMatch: {
-                            color: item.selectedColor,
-                            sizes: {
-                                $elemMatch: {
-                                    size: item.selectedSize,
-                                    stock: { $gte: item.quantity },
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    $inc: { "variants.$[v].sizes.$[s].stock": -item.quantity },
-                },
-                {
-                    arrayFilters: [
-                        { "v.color": item.selectedColor },
-                        { "s.size": item.selectedSize },
-                    ],
-                    new: false,
-                }
-            );
-
-            if (!result) {
-                await restoreStock(decremented);
-
-                // The payment is already captured at this point, so bailing out
-                // here leaves the customer charged with no order. Stock is rolled
-                // back above, but the money is not — it needs a manual refund.
-                console.error(
-                    "CRITICAL: payment captured but order NOT saved — manual refund required. " +
-                    `paymentId=${razorpay_payment_id} amount=INR${expectedTotal} ` +
-                    `reason=out_of_stock product="${productById.get(item.product.toString()).name}" ` +
-                    `color=${item.selectedColor} size=${item.selectedSize} qty=${item.quantity}`
-                );
-
-                return res.status(400).json({
-                    message: `"${productById.get(item.product.toString()).name}" (Size: ${item.selectedSize}) is out of stock or insufficient quantity.`,
-                });
-            }
-
-            decremented.push(item);
-        }
-
-        // ── All stock decremented successfully — now save the order ──────────
-        let order;
+        // ── Take the stock and write the order ────────────────────────────────
+        // Stock decrement, rollback, and the replay guard live in the shared
+        // service so the webhook cannot drift from this path.
+        let order, alreadyExisted;
         try {
-            order = await Order.create({
-                user: userId || null,
+            ({ order, alreadyExisted } = await placeOrder({
                 items: verifiedItems,
                 shippingAddress,
+                user: userId,
+                total: expectedTotal,            // ✅ from DB, not frontend
+                paymentId: razorpay_payment_id,  // verified as captured, for this amount
                 paymentMethod,
-                paymentId: razorpay_payment_id, // verified as captured, for this amount
-                total: expectedTotal,           // ✅ from DB, not frontend
-            });
+            }));
         } catch (err) {
-            // Stock is decremented and the money is captured, and neither undoes
-            // itself. Give the stock back before deciding what to tell the client.
-            await restoreStock(decremented);
-
-            // Lost the race for this payment: a concurrent request carrying the
-            // same paymentId cleared the fast-path check above and inserted first.
-            // The unique index rejected us, which is exactly its job — the customer
-            // does have an order (the winner's), so this needs no refund.
-            if (err?.code === 11000) {
-                const winner = await Order.findOne({ paymentId: razorpay_payment_id })
-                    .select("_id")
-                    .lean();
-                return res.status(409).json({
-                    message: "This payment has already been used for an order.",
-                    orderId: winner?._id,
-                });
+            if (err instanceof OutOfStockError) {
+                // Already logged as CRITICAL, and the stock is already back.
+                return res.status(400).json({ message: err.message });
             }
-
-            // Any other write failure DOES strand the money: captured, no order.
-            console.error(
-                "CRITICAL: payment captured but order NOT saved — manual refund required. " +
-                `paymentId=${razorpay_payment_id} amount=INR${expectedTotal} ` +
-                `reason=order_write_failed detail=${err?.message}`
-            );
             throw err;
+        }
+
+        if (alreadyExisted) {
+            return res.status(409).json({
+                message: "This payment has already been used for an order.",
+                orderId: order?._id,
+            });
         }
 
         res.status(201).json(order);
