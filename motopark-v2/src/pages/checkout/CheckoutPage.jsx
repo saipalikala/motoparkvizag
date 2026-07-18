@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, Lock, Truck, ShoppingBag, ChevronRight } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
+import Field from '@/components/ui/Field.jsx';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { formatINR } from '@/lib/format.js';
@@ -352,32 +353,18 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className={styles.grid2}>
-                <Field label="Full name" error={errors.name}>
-                  <input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" autoComplete="name" />
-                </Field>
-                <Field label="Phone number" error={errors.phone}>
-                  <input value={form.phone} onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))} placeholder="10-digit mobile" maxLength={10} inputMode="numeric" autoComplete="tel" />
-                </Field>
+                <Field label="Full name" error={errors.name} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" autoComplete="name" />
+                <Field label="Phone number" error={errors.phone} value={form.phone} onChange={(e) => set('phone', e.target.value.replace(/\D/g, ''))} placeholder="10-digit mobile" maxLength={10} inputMode="numeric" autoComplete="tel" />
               </div>
-              <Field label="Email (optional)">
-                <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="for order updates" autoComplete="email" />
-              </Field>
-              <Field label="Address" error={errors.address}>
-                <textarea rows={3} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="House no, street, area, landmark" />
-              </Field>
+              <Field label="Email (optional)" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="for order updates" autoComplete="email" />
+              <Field label="Address" as="textarea" error={errors.address} rows={3} value={form.address} onChange={(e) => set('address', e.target.value)} placeholder="House no, street, area, landmark" />
               <div className={styles.grid2}>
-                <Field label="City" error={errors.city}>
-                  <input value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="Visakhapatnam" autoComplete="address-level2" />
-                </Field>
-                <Field label="Pincode" error={errors.pincode}>
-                  <input value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, ''))} placeholder="530016" maxLength={6} inputMode="numeric" autoComplete="postal-code" />
-                </Field>
+                <Field label="City" error={errors.city} value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="Visakhapatnam" autoComplete="address-level2" />
+                <Field label="Pincode" error={errors.pincode} value={form.pincode} onChange={(e) => set('pincode', e.target.value.replace(/\D/g, ''))} placeholder="530016" maxLength={6} inputMode="numeric" autoComplete="postal-code" />
               </div>
-              <Field label="State" error={errors.state}>
-                <select value={form.state} onChange={(e) => set('state', e.target.value)}>
-                  <option value="">Select state</option>
-                  {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+              <Field label="State" as="select" error={errors.state} value={form.state} onChange={(e) => set('state', e.target.value)}>
+                <option value="">Select state</option>
+                {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
               </Field>
               <Button variant="primary" size="lg" onClick={next} className={styles.cta}>
                 Continue to payment <ChevronRight size={18} strokeWidth={2} aria-hidden="true" />
@@ -481,12 +468,3 @@ export default function CheckoutPage() {
   );
 }
 
-function Field({ label, error, children }) {
-  return (
-    <label className={styles.field}>
-      <span className={styles.fieldLabel}>{label}</span>
-      {children}
-      {error && <span className={styles.fieldErr}>{error}</span>}
-    </label>
-  );
-}

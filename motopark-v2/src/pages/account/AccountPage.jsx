@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { LogOut, Plus, Trash2, Check } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
+import Field from '@/components/ui/Field.jsx';
 import OrderHistory from '@/features/account/OrderHistory.jsx';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { updateProfile, saveAddress, deleteAddress } from '@/services/account.js';
@@ -101,18 +102,9 @@ export default function AccountPage() {
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>Profile</h2>
           <form onSubmit={saveProfile} className={styles.form}>
-            <label className={styles.field}>
-              <span>Name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
-            </label>
-            <label className={styles.field}>
-              <span>Email</span>
-              <input value={user?.email || ''} disabled />
-            </label>
-            <label className={styles.field}>
-              <span>Phone</span>
-              <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" autoComplete="tel" />
-            </label>
+            <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+            <Field label="Email" value={user?.email || ''} disabled hint="Your sign-in email can't be changed here." />
+            <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" autoComplete="tel" />
             {profileError && <p className={styles.err}>{profileError}</p>}
             <Button type="submit" variant="primary" disabled={savingProfile}>
               {savedName ? (<><Check size={16} strokeWidth={2.4} aria-hidden="true" /> Saved</>) : savingProfile ? 'Saving…' : 'Save changes'}
@@ -157,19 +149,22 @@ export default function AccountPage() {
           {showAddr && (
             <form onSubmit={addAddress} className={styles.addrForm}>
               {addrErr && <p className={styles.err}>{addrErr}</p>}
+              {/* Labelled, not placeholder-only: a placeholder is not a label —
+                  it disappears on input and is unreliably announced. Wording
+                  matches checkout so the two address forms read the same. */}
               <div className={styles.row2}>
-                <input placeholder="Name" value={addr.name} onChange={(e) => setA('name', e.target.value)} />
-                <input placeholder="Phone" value={addr.phone} onChange={(e) => setA('phone', e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" />
+                <Field label="Full name" placeholder="Your name" value={addr.name} onChange={(e) => setA('name', e.target.value)} autoComplete="name" />
+                <Field label="Phone number" placeholder="10-digit mobile" value={addr.phone} onChange={(e) => setA('phone', e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" autoComplete="tel" />
               </div>
-              <textarea placeholder="Address" rows={2} value={addr.address} onChange={(e) => setA('address', e.target.value)} />
+              <Field label="Address" as="textarea" rows={2} placeholder="House no, street, area, landmark" value={addr.address} onChange={(e) => setA('address', e.target.value)} />
               <div className={styles.row2}>
-                <input placeholder="City" value={addr.city} onChange={(e) => setA('city', e.target.value)} />
-                <input placeholder="Pincode" value={addr.pincode} onChange={(e) => setA('pincode', e.target.value.replace(/\D/g, ''))} maxLength={6} inputMode="numeric" />
+                <Field label="City" placeholder="Visakhapatnam" value={addr.city} onChange={(e) => setA('city', e.target.value)} autoComplete="address-level2" />
+                <Field label="Pincode" placeholder="530016" value={addr.pincode} onChange={(e) => setA('pincode', e.target.value.replace(/\D/g, ''))} maxLength={6} inputMode="numeric" autoComplete="postal-code" />
               </div>
-              <select value={addr.state} onChange={(e) => setA('state', e.target.value)}>
+              <Field label="State" as="select" value={addr.state} onChange={(e) => setA('state', e.target.value)}>
                 <option value="">Select state</option>
                 {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              </Field>
               <div className={styles.addrActions}>
                 <button type="button" className={styles.cancel} onClick={() => { setShowAddr(false); setAddrErr(''); setAddr(EMPTY_ADDR); }}>Cancel</button>
                 <Button type="submit" variant="primary" size="sm" disabled={savingAddr}>{savingAddr ? 'Saving…' : 'Save address'}</Button>

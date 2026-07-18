@@ -31,21 +31,9 @@
 .cardTitle { font-size: var(--text-h5); }
 
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
-.field { display: flex; flex-direction: column; gap: var(--space-2); }
-.field span { font-size: var(--text-body-sm); font-weight: 600; }
-.field input,
-.addrForm input,
-.addrForm textarea,
-.addrForm select {
-  height: var(--input-height);
-  padding-inline: var(--space-3);
-  background: var(--bg-page);
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  color: var(--text-primary);
-}
-.addrForm textarea { height: auto; padding-block: var(--space-2); resize: vertical; }
-.field input:disabled { color: var(--text-secondary); background: var(--bg-surface-warm); }
+/* Field/control styles removed — now owned by components/ui/Field (docs/11 §1).
+   Both forms previously styled their own inputs, with padding and disabled
+   handling that had drifted from checkout and auth. */
 
 .addBtn, .shopLink {
   display: inline-flex;

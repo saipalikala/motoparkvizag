@@ -82,28 +82,8 @@
 
 .grid2 { display: grid; grid-template-columns: 1fr; gap: var(--space-4); }
 
-.field { display: block; margin-bottom: var(--space-4); }
-.fieldLabel { display: block; font-size: var(--text-body-sm); font-weight: 600; margin-bottom: var(--space-2); }
-.field input,
-.field textarea,
-.field select {
-  width: 100%;
-  min-height: var(--input-height);
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-page);
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-  color: var(--text-primary);
-}
-.field textarea { resize: vertical; }
-.field input:focus-visible,
-.field textarea:focus-visible,
-.field select:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
-  border-color: var(--focus-ring);
-}
-.fieldErr { display: block; margin-top: var(--space-1); font-size: var(--text-caption); color: var(--danger); }
+/* Field styles removed — the local Field component was promoted to
+   components/ui/Field (docs/11 §1). This file no longer styles form controls. */
 
 .cta { width: 100%; margin-top: var(--space-2); }
 

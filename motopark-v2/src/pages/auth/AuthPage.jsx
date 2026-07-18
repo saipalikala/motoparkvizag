@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Mail, ArrowLeft, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
+import Field from '@/components/ui/Field.jsx';
 import GoogleSignIn from '@/features/auth/GoogleSignIn.jsx';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import logoBadge from '@/assets/images/logo-badge.png';
@@ -110,11 +111,10 @@ export default function AuthPage() {
 
         {step === 'email' ? (
           <form onSubmit={requestCode} className={styles.form}>
-            <label className={styles.label} htmlFor="otp-email">Email address</label>
-            <input
+            <Field
               id="otp-email"
+              label="Email address"
               type="email"
-              className={styles.input}
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -136,14 +136,14 @@ export default function AuthPage() {
             >
               <ArrowLeft size={14} strokeWidth={2} aria-hidden="true" /> Use a different email
             </button>
-            <label className={styles.label} htmlFor="otp-code">Enter the 6-digit code</label>
-            <input
+            <Field
               id="otp-code"
+              label="Enter the 6-digit code"
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
               maxLength={6}
-              className={`${styles.input} ${styles.code}`}
+              controlClassName={styles.code}
               placeholder="••••••"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}

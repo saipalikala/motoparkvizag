@@ -1,0 +1,88 @@
+/* Field — DS primitive. Tokens only (docs/11 §8.1).
+
+   Reconciles three drifted implementations that previously lived in
+   CheckoutPage / AuthPage / AccountPage module CSS:
+     padding   3/4 vs 4 vs 3        -> --space-3 block, --space-4 inline
+     sizing    min-height vs height -> min-height, so textareas can grow
+     focus     offset 1px + border  -> kept (the more deliberate of the two);
+               vs the global 2px       uses --input-border-focus, which was
+                                       defined in tokens.css and used nowhere
+     disabled  only account had it  -> kept
+*/
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.label {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hint {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  margin-top: calc(var(--space-1) * -1);
+}
+
+.control {
+  width: 100%;
+  min-height: var(--input-height); /* 48px — DS §12 touch target */
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: var(--text-body); /* 16px floor: prevents iOS zoom-on-focus */
+  background: var(--bg-page);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* textarea is the only control that should grow */
+textarea.control {
+  resize: vertical;
+}
+
+.control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+  border-color: var(--input-border-focus);
+}
+
+.control:disabled {
+  color: var(--text-secondary);
+  background: var(--bg-surface-warm);
+  cursor: not-allowed;
+}
+
+/* Error state. Border carries it visually; aria-invalid carries it
+   programmatically. Colour is never the only signal — the message is always
+   rendered alongside (DS §12). */
+.invalid {
+  border-color: var(--danger);
+}
+.invalid:focus-visible {
+  border-color: var(--danger);
+}
+
+.error {
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+}
