@@ -105,7 +105,10 @@ export default function AccountPage() {
             <Field label="Name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
             <Field label="Email" value={user?.email || ''} disabled hint="Your sign-in email can't be changed here." />
             <Field label="Phone" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" autoComplete="tel" />
-            {profileError && <p className={styles.err}>{profileError}</p>}
+            {/* role="alert" so a submit failure is announced. Field owns this for
+                per-control errors; these two form-level ones are hand-rolled and
+                were silent to screen readers until verified in a browser. */}
+            {profileError && <p className={styles.err} role="alert">{profileError}</p>}
             <Button type="submit" variant="primary" disabled={savingProfile}>
               {savedName ? (<><Check size={16} strokeWidth={2.4} aria-hidden="true" /> Saved</>) : savingProfile ? 'Saving…' : 'Save changes'}
             </Button>
@@ -148,7 +151,7 @@ export default function AccountPage() {
 
           {showAddr && (
             <form onSubmit={addAddress} className={styles.addrForm}>
-              {addrErr && <p className={styles.err}>{addrErr}</p>}
+              {addrErr && <p className={styles.err} role="alert">{addrErr}</p>}
               {/* Labelled, not placeholder-only: a placeholder is not a label —
                   it disappears on input and is unreliably announced. Wording
                   matches checkout so the two address forms read the same. */}
