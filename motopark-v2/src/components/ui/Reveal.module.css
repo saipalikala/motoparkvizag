@@ -1,0 +1,33 @@
+/* Scroll reveal — transform/opacity only, per the Motion Doctrine.
+   `armed` is added by JS, so without JS there is no hidden state to get stuck in. */
+
+.armed {
+  opacity: 0;
+  transform: translateY(14px);
+  /* Hint the compositor for the one transition this element will ever run.
+     Dropped on .in so we don't leave every section permanently layerised. */
+  will-change: opacity, transform;
+}
+
+.armed.in {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+  transition:
+    opacity var(--reveal-duration, 280ms) var(--ease-out, ease-out),
+    transform var(--reveal-duration, 280ms) var(--ease-out, ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Reduced motion: the content is simply present. No transition, no transform,
+   no delay — a delayed appearance is still motion-triggered discomfort. */
+@media (prefers-reduced-motion: reduce) {
+  .armed,
+  .armed.in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    transition-delay: 0ms;
+    will-change: auto;
+  }
+}

@@ -11,6 +11,7 @@ import BrandRow from './sections/BrandRow.jsx';
 import { getHomepage } from '@/services/products.js';
 import { getCategories } from '@/services/categories.js';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll.js';
+import Reveal from '@/components/ui/Reveal.jsx';
 
 /**
  * HomePage — Concept C, built section by section (docs/10 §C-4 hierarchy):
@@ -54,14 +55,33 @@ export default function HomePage() {
         <link rel="canonical" href="https://motoparkvizag.in/" />
       </Helmet>
 
+      {/* Hero is deliberately NOT wrapped: it holds the LCP image, and an
+          opacity transition on the LCP element delays the metric it is judged
+          by. Sections already on screen at first paint self-disable inside
+          useReveal, so the reveal only ever applies below the fold. */}
       <Hero products={featured} loading={loading} />
-      <CategoryGrid categories={categories} loading={loading} />
-      <CinematicVideoShowcase />
-      <Bestsellers products={data?.trending ?? []} loading={loading} />
-      <TrustBand />
-      <StoryBand />
-      <NewArrivals products={data?.newArrivals ?? []} loading={loading} />
-      <BrandRow />
+      <Reveal>
+        <CategoryGrid categories={categories} loading={loading} />
+      </Reveal>
+      <Reveal>
+        <CinematicVideoShowcase />
+      </Reveal>
+      <Reveal>
+        <Bestsellers products={data?.trending ?? []} loading={loading} />
+      </Reveal>
+      <Reveal>
+        <TrustBand />
+      </Reveal>
+      {/* The one 400ms reveal doctrine allows — the navy story moment. */}
+      <Reveal duration={400}>
+        <StoryBand />
+      </Reveal>
+      <Reveal>
+        <NewArrivals products={data?.newArrivals ?? []} loading={loading} />
+      </Reveal>
+      <Reveal>
+        <BrandRow />
+      </Reveal>
       {/* Footer is global chrome (app/App.jsx). Featured reviews deferred —
           no review backend in V1 (PRD feature); won't fabricate testimonials. */}
     </>
