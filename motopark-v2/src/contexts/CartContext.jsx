@@ -16,6 +16,19 @@ const KEY = 'mp-cart-v2';
 
 const lineKey = (l) => `${l.id}|${l.color ?? ''}|${l.size ?? ''}`;
 
+/**
+ * Clamp a quantity to the stock captured on the line at add-time. This is a UX
+ * guard only — `stock` is a localStorage snapshot and goes stale, so the server's
+ * atomic `stock: { $gte: quantity }` decrement stays the authority on what can
+ * actually be bought. Lines without a numeric `stock` (carts saved before stock
+ * was tracked, and no-variant products, which carry no stock record at all) are
+ * left unclamped rather than pinned to 1.
+ */
+const capQty = (line, qty) => {
+  const wanted = Math.max(1, qty);
+  return Number.isInteger(line?.stock) ? Math.min(wanted, Math.max(1, line.stock)) : wanted;
+};
+
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY));
@@ -43,10 +56,13 @@ export function CartProvider({ children }) {
       const qty = Math.max(1, line.qty || 1);
       if (idx >= 0) {
         const next = [...prev];
-        next[idx] = { ...next[idx], qty: next[idx].qty + qty };
+        // The incoming line carries a fresher stock reading than the stored one,
+        // so merge onto it — otherwise re-adding keeps applying a stale cap.
+        const merged = { ...next[idx], ...line };
+        next[idx] = { ...merged, qty: capQty(merged, next[idx].qty + qty) };
         return next;
       }
-      return [...prev, { ...line, qty }];
+      return [...prev, { ...line, qty: capQty(line, qty) }];
     });
   }, []);
 
@@ -56,7 +72,7 @@ export function CartProvider({ children }) {
 
   const updateQty = useCallback((key, qty) => {
     setItems((prev) =>
-      prev.map((x) => (lineKey(x) === key ? { ...x, qty: Math.max(1, qty) } : x)),
+      prev.map((x) => (lineKey(x) === key ? { ...x, qty: capQty(x, qty) } : x)),
     );
   }, []);
 

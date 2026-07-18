@@ -84,12 +84,16 @@ export default function ProductPage() {
   const needsSize = !onlyStandard && sizes.length > 0;
   const variantInStock = sizes.some((s) => s.stock > 0);
   const canAdd = onlyStandard ? sizes[0]?.stock > 0 : Boolean(chosenSizeObj && chosenSizeObj.stock > 0);
+  // Units available for the size actually selected — bounds the stepper below and
+  // rides along on the cart line so /cart can cap without refetching the product.
+  const availableStock = chosenSizeObj?.stock ?? 0;
   const discount = product.mrpINR ? discountPercent(product.mrpINR, product.priceINR) : 0;
 
   const selectColor = (i) => {
     setColorIdx(i);
     setImgIdx(0);
     setSize('');
+    setQty(1); // stock is per colour+size; the old qty means nothing here
   };
 
   const handleAdd = () => {
@@ -106,6 +110,7 @@ export default function ProductPage() {
       color: variant.color,
       colorName: variant.colorName,
       size: onlyStandard ? sizes[0].size : size,
+      stock: availableStock,
       qty,
     });
     setAdded(true);
@@ -239,7 +244,13 @@ export default function ProductPage() {
                       key={s.size}
                       type="button"
                       className={`${styles.size} ${size === s.size ? styles.sizeActive : ''} ${oos ? styles.sizeOos : ''}`}
-                      onClick={() => !oos && setSize(s.size)}
+                      onClick={() => {
+                        if (oos) return;
+                        setSize(s.size);
+                        // Sizes stock independently — a qty picked for a roomier
+                        // size must not carry over onto a scarcer one.
+                        setQty((q) => Math.min(q, Math.max(1, s.stock)));
+                      }}
                       disabled={oos}
                       aria-pressed={size === s.size}
                     >
@@ -272,7 +283,12 @@ export default function ProductPage() {
                 <Minus size={16} strokeWidth={2} aria-hidden="true" />
               </button>
               <span aria-live="polite">{qty}</span>
-              <button type="button" onClick={() => setQty((q) => q + 1)} aria-label="Increase quantity">
+              <button
+                type="button"
+                onClick={() => setQty((q) => Math.min(q + 1, Math.max(1, availableStock)))}
+                aria-label="Increase quantity"
+                disabled={qty >= availableStock}
+              >
                 <Plus size={16} strokeWidth={2} aria-hidden="true" />
               </button>
             </div>

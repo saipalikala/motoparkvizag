@@ -19,7 +19,7 @@ export default function CartPage() {
 
   const threshold = STORE.freeShipThreshold;
   const remaining = Math.max(0, threshold - subtotalINR);
-  const freeShip = subtotalINR >= threshold;
+  const freeShip = STORE.shippingDisabled || subtotalINR >= threshold;
   const progress = Math.min(100, Math.round((subtotalINR / threshold) * 100));
 
   return (
@@ -58,6 +58,9 @@ export default function CartPage() {
             <ul className={styles.list}>
               {items.map((it) => {
                 const key = lineKey(it);
+                // Lines saved before stock was tracked carry no `stock`; leave those
+                // uncapped here — the server rejects an over-order either way.
+                const atStockCap = Number.isInteger(it.stock) && it.qty >= it.stock;
                 return (
                   <li key={key} className={styles.line}>
                     <Link to={`/products/${it.id}`} className={styles.thumb}>
@@ -90,23 +93,30 @@ export default function CartPage() {
                       </div>
 
                       <div className={styles.lineBottom}>
-                        <div className={styles.qty} aria-label="Quantity">
-                          <button
-                            type="button"
-                            onClick={() => updateQty(key, it.qty - 1)}
-                            aria-label="Decrease quantity"
-                            disabled={it.qty <= 1}
-                          >
-                            <Minus size={15} strokeWidth={2} aria-hidden="true" />
-                          </button>
-                          <span aria-live="polite">{it.qty}</span>
-                          <button
-                            type="button"
-                            onClick={() => updateQty(key, it.qty + 1)}
-                            aria-label="Increase quantity"
-                          >
-                            <Plus size={15} strokeWidth={2} aria-hidden="true" />
-                          </button>
+                        <div className={styles.qtyGroup}>
+                          <div className={styles.qty} aria-label="Quantity">
+                            <button
+                              type="button"
+                              onClick={() => updateQty(key, it.qty - 1)}
+                              aria-label="Decrease quantity"
+                              disabled={it.qty <= 1}
+                            >
+                              <Minus size={15} strokeWidth={2} aria-hidden="true" />
+                            </button>
+                            <span aria-live="polite">{it.qty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQty(key, it.qty + 1)}
+                              aria-label="Increase quantity"
+                              disabled={atStockCap}
+                              title={atStockCap ? `Only ${it.stock} in stock` : undefined}
+                            >
+                              <Plus size={15} strokeWidth={2} aria-hidden="true" />
+                            </button>
+                          </div>
+                          {atStockCap && (
+                            <span className={styles.stockNote}>Only {it.stock} left</span>
+                          )}
                         </div>
                         <span className={`price ${styles.linePrice}`}>
                           {formatINR(it.priceINR * it.qty)}

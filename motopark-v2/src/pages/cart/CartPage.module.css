@@ -153,6 +153,16 @@
   margin-top: var(--space-3);
 }
 
+.qtyGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.stockNote {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
 .qty {
   display: inline-flex;
   align-items: center;
