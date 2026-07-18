@@ -28,6 +28,7 @@
 import express from "express";
 import jwt     from "jsonwebtoken";
 import { createOrder, verifyPayment } from "../controllers/paymentController.js";
+import { jwtSecret } from "../config/jwt.js";
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ const optionalAuth = (req, res, next) => {
     try {
       const decoded = jwt.verify(
         auth.split(" ")[1],
-        process.env.JWT_SECRET || "motopark_user_secret"
+        jwtSecret()
       );
       req.userId = decoded.id;
     } catch { /* invalid/expired token — treat as guest, no error */ }

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { jwtSecret } from "../config/jwt.js";
 import jwt from "jsonwebtoken";
 import { revokeToken } from "../middleware/authMiddleware.js";
 import Order from "../models/orderModel.js";
@@ -28,7 +29,7 @@ export const adminLogin = async (req, res) => {
 
   const token = jwt.sign(
     { role: "admin", email },
-    process.env.JWT_SECRET,
+    jwtSecret(),
     { expiresIn: "24h" }
   );
 

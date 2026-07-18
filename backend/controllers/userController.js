@@ -5,13 +5,14 @@ import jwt from "jsonwebtoken";
 import { Resend } from "resend";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/userModel.js";
+import { jwtSecret } from "../config/jwt.js";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /* ── HELPERS ── */
 const generateToken = (id) =>
-    jwt.sign({ id }, process.env.JWT_SECRET || "motopark_user_secret", { expiresIn: "30d" });
+    jwt.sign({ id }, jwtSecret(), { expiresIn: "30d" });
 
 const generateOtp = () =>
     Math.floor(100000 + Math.random() * 900000).toString();

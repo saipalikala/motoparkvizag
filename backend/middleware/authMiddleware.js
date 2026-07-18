@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { jwtSecret } from "../config/jwt.js";
 
 // In-memory blacklist — survives the process lifetime.
 // For multi-instance deployments, move this to Redis.
@@ -43,7 +44,7 @@ const authMiddleware = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, jwtSecret());
         if (decoded.role !== "admin") {
             return res.status(403).json({ message: "Forbidden: Admins only" });
         }

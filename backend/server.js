@@ -32,6 +32,7 @@ import aiRoutes            from "./routes/aiRoutes.js";
 import webhookRoutes       from "./routes/webhookRoutes.js";
 import checkoutRoutes      from "./routes/checkoutRoutes.js";
 import connectDB           from "./config/db.js";
+import { hasJwtSecret }    from "./config/jwt.js";
 
 const IS_PROD = process.env.NODE_ENV === "production";
 
@@ -287,6 +288,17 @@ const PORT = parseInt(process.env.PORT || "5000", 10);
 const start = async () => {
   try {
     console.log(`📌 PORT: ${PORT} | NODE_ENV: ${process.env.NODE_ENV}`);
+
+    // Surfaced at boot rather than at the first login attempt. Auth now fails
+    // closed without JWT_SECRET (config/jwt.js), so the symptom would otherwise
+    // be customers unable to sign in, with nothing in the logs explaining why.
+    if (!hasJwtSecret()) {
+      console.error(
+        "🔴 JWT_SECRET is NOT set. Customer and admin authentication will fail " +
+          "on every request. Set it (see backend/.env.example) and redeploy.",
+      );
+    }
+
     console.log("⏳ Connecting to MongoDB...");
     await connectDB();
 

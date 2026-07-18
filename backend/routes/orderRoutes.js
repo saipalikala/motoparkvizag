@@ -54,6 +54,7 @@ import mongoose from "mongoose";
 import Order    from "../models/orderModel.js";
 import Product  from "../models/productModel.js";
 import authMiddleware from "../middleware/authMiddleware.js"; // admin auth
+import { jwtSecret } from "../config/jwt.js";
 import { createOrder } from "../controllers/orderController.js";
 
 const router = express.Router();
@@ -69,7 +70,7 @@ const optionalAuth = async (req, res, next) => {
   const auth = req.headers.authorization;
   if (auth?.startsWith("Bearer ")) {
     try {
-      const decoded = jwt.verify(auth.split(" ")[1], process.env.JWT_SECRET || "motopark_user_secret");
+      const decoded = jwt.verify(auth.split(" ")[1], jwtSecret());
       req.userId = decoded.id;
       req.role   = decoded.role; // "admin" or undefined
     } catch { /* invalid token — treat as guest */ }
@@ -84,7 +85,7 @@ const requireUserAuth = (req, res, next) => {
     return res.status(401).json({ message: "Authentication required" });
   }
   try {
-    const decoded = jwt.verify(auth.split(" ")[1], process.env.JWT_SECRET || "motopark_user_secret");
+    const decoded = jwt.verify(auth.split(" ")[1], jwtSecret());
     req.userId = decoded.id;
     req.role   = decoded.role;
     next();

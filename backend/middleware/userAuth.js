@@ -2,6 +2,7 @@
    File: backend/middleware/userAuth.js
    ================================================ */
 import jwt from "jsonwebtoken";
+import { jwtSecret } from "../config/jwt.js";
 import User from "../models/userModel.js";
 
 export const protect = async (req, res, next) => {
@@ -13,7 +14,7 @@ export const protect = async (req, res, next) => {
         }
 
         const token = auth.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, jwtSecret());
         const user = await User.findById(decoded.id).select("-password -otp -otpExpiry");
 
         if (!user) {
