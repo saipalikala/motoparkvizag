@@ -3,7 +3,6 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import { formatINR } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
-import heroImg from '@/assets/hero.jpg';
 import styles from './Hero.module.css';
 
 /**
@@ -22,17 +21,34 @@ export default function Hero({ products = [], loading = false }) {
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
-      {/* Cinematic media layer — navy base + warm photo + scrim for AA text */}
+      {/* Cinematic media layer — navy base + warm photo + scrim for AA text.
+          Paths are STATIC (public/), not JS imports: the preload scanner must be
+          able to start this fetch from raw HTML, before any bundle executes.
+          index.html carries a matching <link rel="preload">. Regenerate the
+          variants with `npm run images` (scripts/generate-hero-images.mjs). */}
       <div className={styles.media} aria-hidden="true">
-        <img
-          src={heroImg}
-          alt=""
-          className={styles.photo}
-          fetchPriority="high"
-          decoding="async"
-          width="1600"
-          height="900"
-        />
+        {/* Selection is by MEDIA QUERY, never srcset width-descriptors. With
+            w-descriptors the preload scanner and the layout engine compute the
+            needed width independently and can disagree — measured: scanner took
+            hero-960 at 11ms, the <img> then took hero-1280 at 170ms, i.e. the
+            LCP image downloaded TWICE. A media query is a boolean both evaluate
+            identically, so index.html's preload can never diverge from this.
+            Keep the breakpoints here and in index.html in lockstep. */}
+        <picture className={styles.picture}>
+          <source type="image/avif" media="(max-width: 767px)" srcSet="/hero-960.avif" />
+          <source type="image/avif" media="(min-width: 768px)" srcSet="/hero-1600.avif" />
+          <source type="image/webp" media="(max-width: 767px)" srcSet="/hero-960.webp" />
+          <source type="image/webp" media="(min-width: 768px)" srcSet="/hero-1600.webp" />
+          <img
+            src="/hero-1600.jpg"
+            alt=""
+            className={styles.photo}
+            fetchPriority="high"
+            decoding="async"
+            width="1600"
+            height="900"
+          />
+        </picture>
         <div className={styles.scrim} />
       </div>
 

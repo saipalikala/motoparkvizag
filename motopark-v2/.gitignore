@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Performance tooling. A raw Lighthouse report is ~540 kB and a five-run capture
+# is 2.8 MB — and docs/13 asks for a fresh capture after every deploy, so
+# committing them would grow the repo ~3 MB per measurement, forever. Run them
+# through scripts/summarize-lhr.mjs instead: 2.8 MB -> 3 kB, per-run metrics
+# retained. Only perf/baseline/<label>.json is committed.
+.lighthouseci/
+perf/lhci/
+perf/stats.html
+perf/baseline/home-*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

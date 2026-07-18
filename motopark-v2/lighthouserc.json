@@ -1,0 +1,40 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "https://motopark-v2-ebon.vercel.app/",
+        "https://motopark-v2-ebon.vercel.app/store",
+        "https://motopark-v2-ebon.vercel.app/cart",
+        "https://motopark-v2-ebon.vercel.app/checkout"
+      ],
+      "numberOfRuns": 5,
+      "settings": {
+        "preset": "perf",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "screenEmulation": {
+          "mobile": true,
+          "width": 412,
+          "height": 823,
+          "deviceScaleFactor": 1.75,
+          "disabled": false
+        }
+      }
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 184320 }],
+        "uses-responsive-images": "warn",
+        "prioritize-lcp-image": "warn",
+        "unused-javascript": "warn"
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./perf/lhci"
+    }
+  }
+}

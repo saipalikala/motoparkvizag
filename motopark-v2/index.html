@@ -6,6 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#fdfbf7" />
     <title>MotoPark — Premium Motorcycle Gear, Pan-India</title>
+
+    <!-- LCP preload. The homepage hero is the LCP element on "/", and it used to
+         be discoverable only after index.js + HomePage.js had downloaded, parsed
+         and executed (it was a JS `import`). These links let the browser's preload
+         scanner start the fetch from the raw HTML instead, before any bundle runs.
+         `type` means non-AVIF browsers skip them and fall back to the <picture>
+         in Hero.jsx without wasting a request.
+
+         Selection is by `media`, matching Hero.jsx exactly. Do NOT switch these
+         to imagesrcset/imagesizes: with width-descriptors the scanner and the
+         layout engine can pick different variants and download the LCP image
+         twice (measured). Change these breakpoints and Hero.jsx together. -->
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      href="/hero-960.avif"
+      media="(max-width: 767px)"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      type="image/avif"
+      href="/hero-1600.avif"
+      media="(min-width: 768px)"
+      fetchpriority="high"
+    />
     <meta
       name="description"
       content="Genuine motorcycle helmets, riding gear, luggage and parts. The right gear for your ride — shipped across India from Visakhapatnam."
