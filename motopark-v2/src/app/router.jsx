@@ -46,6 +46,11 @@ function PageLoader() {
  * copies exist because vercel.json does not apply to `npm run dev`, and as a
  * backstop if an edge rule is ever removed.
  *
+ * This comment lives here because vercel.json cannot hold one. Vercel validates
+ * that file against a strict schema and rejects ANY unrecognised top-level key —
+ * including the conventional "//" pseudo-comment, which fails the build outright
+ * (`should NOT have additional property '//'`). Keep it to known keys only.
+ *
  * `replace` keeps the dead URL out of history so Back doesn't bounce through it.
  */
 

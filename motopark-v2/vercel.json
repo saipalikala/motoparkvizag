@@ -1,6 +1,4 @@
 {
-  "//": "V1 (motopark-web) URLs that changed in V2. These are real 301s issued at the edge, BEFORE the rewrite below — a client-side <Navigate> would work for humans but is a weaker signal for search, so indexed pages (categories, products) would shed ranking at the domain cutover. The router carries matching redirects for local dev, where this file does not apply.",
-
   "redirects": [
     {
       "source": "/category/:slug",
