@@ -1,5 +1,7 @@
 import PaymentEvent from "../models/paymentEventModel.js";
+import PaymentIntent from "../models/paymentIntentModel.js";
 import { isValidWebhookSignature } from "../utils/razorpay.js";
+import { placeOrder, OutOfStockError } from "../services/placeOrder.js";
 
 /**
  * controllers/webhookController.js — Razorpay webhook receiver.
@@ -9,16 +11,31 @@ import { isValidWebhookSignature } from "../utils/razorpay.js";
  * bytes Razorpay sent. The signature is HMAC over those bytes — never parse
  * before verifying.
  *
- * Scope of this slice: durably RECORD every captured payment, idempotently.
- * It deliberately does NOT decide whether a payment is "stranded" (no matching
- * order) — that races the browser's POST /orders and is derived at read time in
- * a later admin slice. Keeping this handler to verify + record makes it correct
- * regardless of delivery order or timing.
+ * This handler does two things, in order:
+ *
+ *   1. RECORD every captured payment, idempotently. This happens FIRST and
+ *      unconditionally, so the money leaves a durable trace even if everything
+ *      below fails. The admin reconciliation view reads these rows.
+ *
+ *   2. PLACE THE ORDER, if a PaymentIntent was recorded for this Razorpay order.
+ *      This is what makes checkout survive the customer's browser: order creation
+ *      used to live only in the Razorpay `handler` callback, so a stalled modal
+ *      after a cross-device UPI payment meant captured money and no order. This
+ *      path does not involve the browser at all.
+ *
+ * It still does NOT decide whether a payment is "stranded" — that races the
+ * browser's POST /orders and is derived at read time by the admin view. Both this
+ * handler and the browser may place the same order; the unique partial index on
+ * Order.paymentId means exactly one wins and the loser is told so (see
+ * services/placeOrder.js). Whoever arrives first is correct.
  *
  * Response contract (Razorpay retries on any non-2xx):
  *   400 — bad/missing signature or unparseable body (never retry-worthy for us)
- *   200 — accepted: recorded, or an event type we don't act on (ack, no retry)
- *   500 — our DB failed; let Razorpay retry so the event is not lost
+ *   200 — accepted: recorded and/or ordered, an event we don't act on, or a
+ *         failure that RETRYING CANNOT FIX (no intent, wrong amount, out of
+ *         stock). Those are logged for reconciliation, not retried forever.
+ *   500 — a transient failure on our side (DB write); let Razorpay retry so the
+ *         event is not lost
  */
 export const handleRazorpayWebhook = async (req, res) => {
   const signature = req.headers["x-razorpay-signature"];
@@ -86,5 +103,85 @@ export const handleRazorpayWebhook = async (req, res) => {
     return res.status(500).json({ message: "Could not record event." });
   }
 
-  return res.status(200).json({ received: true });
+  // ── Place the order, if we know what this payment was for ─────────────────
+  // Everything below is best-effort ON TOP of the record above: the payment is
+  // already durably logged, so any failure here degrades to "stranded payment"
+  // — visible in admin reconciliation — rather than a lost event.
+  let intent;
+  try {
+    intent = await PaymentIntent.findOne({ razorpayOrderId: entity.order_id }).lean();
+  } catch (err) {
+    // Transient read failure — retry so we don't abandon a placeable order.
+    console.error("Razorpay webhook: intent lookup failed —", err?.message);
+    return res.status(500).json({ message: "Could not load payment intent." });
+  }
+
+  if (!intent) {
+    // No intent recorded for this Razorpay order. Expected for V1 (motopark-web)
+    // checkouts, which never write one, and for any checkout whose intent write
+    // failed. The browser remains the only way that order can be created, which
+    // is the pre-existing behaviour — and reconciliation catches it if it isn't.
+    return res.status(200).json({ received: true, ordered: false, reason: "no-intent" });
+  }
+
+  if (intent.status === "consumed" && intent.orderId) {
+    // Redelivery of an event we have already acted on.
+    return res.status(200).json({ received: true, ordered: true, orderId: intent.orderId, duplicate: true });
+  }
+
+  // The intent records exactly what we asked Razorpay to charge. If the captured
+  // amount differs, something is wrong that placing an order would only make
+  // worse — refuse, and leave it for a human. Retrying cannot change the amount,
+  // so this acks.
+  if (entity.amount !== intent.amountPaise) {
+    console.error(
+      "CRITICAL: captured amount does not match the recorded intent — order NOT placed. " +
+      `paymentId=${entity.id} razorpayOrderId=${entity.order_id} ` +
+      `captured=${entity.amount} expected=${intent.amountPaise}`
+    );
+    return res.status(200).json({ received: true, ordered: false, reason: "amount-mismatch" });
+  }
+
+  let order, alreadyExisted;
+  try {
+    ({ order, alreadyExisted } = await placeOrder({
+      items:           intent.items,
+      shippingAddress: intent.shippingAddress,
+      user:            intent.user,
+      total:           intent.total,
+      paymentId:       entity.id,
+      paymentMethod:   "razorpay",
+    }));
+  } catch (err) {
+    if (err instanceof OutOfStockError) {
+      // Stock ran out between checkout and capture. Already logged as CRITICAL
+      // by placeOrder, and the stock is already back. Retrying will not conjure
+      // inventory, so ack — the payment stays visible in reconciliation as one
+      // needing a manual refund.
+      return res.status(200).json({ received: true, ordered: false, reason: "out-of-stock" });
+    }
+    // Anything else is likely transient (a failed write): retry.
+    console.error("Razorpay webhook: placing the order failed —", err?.message);
+    return res.status(500).json({ message: "Could not place order." });
+  }
+
+  // Record the outcome on the intent. If THIS write fails the order still
+  // exists, and a redelivery will simply find it via placeOrder's replay check
+  // and mark the intent then — so it is not worth a retry.
+  try {
+    await PaymentIntent.updateOne(
+      { razorpayOrderId: entity.order_id },
+      { $set: { status: "consumed", orderId: order._id } }
+    );
+  } catch (err) {
+    console.warn("Razorpay webhook: order placed but intent not marked consumed —", err?.message);
+  }
+
+  return res.status(200).json({
+    received: true,
+    ordered: true,
+    orderId: order._id,
+    // true when the browser got there first — the healthy, common case.
+    alreadyExisted,
+  });
 };
