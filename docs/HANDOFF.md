@@ -1,11 +1,15 @@
 # MotoPark V2 Handoff
 
+> ⚠️ **PARTIALLY STALE (as of 2026-07-18). Read `docs/14-state-of-the-union.md` first.**
+> Corrections: the **V2 admin panel is COMPLETE** (18 real sections — §1 and §6 below say "not started"; that is wrong, do not rebuild it). GA4 is live. The sitemap is generated at build. The git status in §4 is stale.
+> Still accurate and worth reading here: **§3 Architecture Decisions**, **§7 Important Files**, **§8 Do NOT Repeat**.
+
 ## 1. Project Overview
 - **Stack (frontend `motopark-v2/`):** React 19 + Vite + JavaScript + React Router 7. CSS Modules + design tokens (NO Tailwind, NO state library). Lazy routes + `app/ErrorBoundary.jsx`.
 - **Stack (backend `backend/`):** Node/Express (ESM), Mongoose ^9, MongoDB Atlas, JWT auth. **Shared V1 backend** on `localhost:5000` — V2 reads it; do not fork it.
 - **V1 frontend (`motopark-web/`):** the live site + full admin at motoparkvizag.in (Railway). Reference-only; keep, don't reuse its UI.
 - **Dev:** V2 Vite on `localhost:5174` (CORS-whitelisted). Backend on `5000`.
-- **State:** Storefront FEATURE-COMPLETE. Next workstream = V2 Admin Panel (not started).
+- **State:** ~~Storefront FEATURE-COMPLETE. Next workstream = V2 Admin Panel (not started).~~ **OUTDATED — storefront AND admin are both feature-complete (18 admin sections, all real). Current workstream is performance + polish; see `docs/14`.**
 
 ## 2. Completed Features
 - **Storefront pages (all real, verified desktop+mobile):** Home, Store/PLP, Category `/c/:slug`, PDP `/products/:id`, Cart, Wishlist, Search, Brand, Bikes (3), Collections (2), Checkout, Account, Track, Auth `/login`, static/policy, 404.
@@ -39,7 +43,7 @@
 - **Dynamic sitemap:** static exists; product/brand URLs need generation from the API.
 - **Deployment:** V2 frontend + `backend/ai/*` routes → Railway; set prod envs (`GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, Razorpay keys). Vector index + embeddings already on prod Atlas.
 
-## 6. Next Development Task — V2 Admin Panel
+## 6. ~~Next Development Task — V2 Admin Panel~~ ✅ DONE — kept for historical rationale only
 - **Why rebuild in V2:** V1 admin already controls the shared backend, but the goal is to retire V1 entirely for one unified codebase + design system.
 - **Approved roadmap (in order):** Foundation → Products → Categories → Brands → Orders → Customers → Analytics → Settings.
 - **Rationale:** foundation (auth+layout+nav) before features; Products first = highest daily value and only needs to READ existing categories/brands via API; operational Orders before read-only Customers; aggregates (Analytics/Settings) last.
