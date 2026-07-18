@@ -117,6 +117,52 @@ The first attempt added `manualChunks` rules forcing `src/features/admin/` into 
 
 ---
 
+## 3d. AFTER — measured on staging post-deploy (2026-07-18)
+
+Same conditions, same loop, 5 runs. Summary: `perf/baseline/after-2026-07-18-phase0.json`.
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| **Largest Contentful Paint** | 4712 ms | **3926 ms** | **−786 ms** |
+| First Contentful Paint | 1914 ms | 1916 ms | +2 ms |
+| Speed Index | 4484 ms | 4591 ms | +107 ms (noise) |
+| Total Blocking Time | 23 ms | 27 ms | +4 ms |
+| Cumulative Layout Shift | 0 | 0 | — |
+| Performance score (median) | 78 | 83 | +5 |
+
+**The LCP budget is still NOT met: 3926 ms against 2500 ms.** Amendment 1's blocking condition therefore still holds — no WebGL work ships.
+
+### Where the remaining 3.9 s actually goes
+
+This is the important part, because it is *not* something more image optimisation can fix. From the post-deploy run:
+
+- `hero-960.avif` starts at **245 ms** and finishes at **633 ms** — the preload works; it downloads in the first wave alongside the JS.
+- All JS is down by **~590 ms**; all fonts by **~631 ms**.
+- `render-blocking-resources`: **score 1.0** (none).
+- `font-display`: **score 1.0**.
+- `prioritize-lcp-image`: **score 1.0** — Lighthouse itself confirms the LCP image is correctly prioritised.
+- TBT **27 ms**, CLS **0** — neither the main thread nor layout is the problem.
+- LCP element is still the hero `<img>`.
+
+So every byte the hero needs is on the device by ~633 ms, nothing blocks rendering, and the main thread is idle — yet the image does not *paint* until ~3926 ms.
+
+**The remaining cost is the client-render path itself.** This is a client-rendered SPA: the `<img>` element does not exist in the DOM until `index.js` and `HomePage.js` have booted React and rendered the tree. A preload can make the bytes arrive early; it cannot make the element exist early. Under Lighthouse's simulated slow-4G + 4× CPU model, booting React and rendering is what the remaining time is.
+
+Phase 0 fixed the resource layer completely. What is left is architectural.
+
+### Two caveats before treating this as a hard failure
+
+1. **The budget is written as a field statistic.** docs/09 §14 says "LCP < 2.5 s mobile **p75**" — p75 of real users. This number is one synthetic device on a modelled network. `web-vitals` → GA4 went live with this same deploy, so the number the budget is actually written in is now being collected for the first time. Lab and field routinely diverge for client-rendered SPAs, usually in the field's favour.
+2. **The lab noise is still ~2.9 s** (LCP spread 2725–5674 ms). A −786 ms median shift is real and directionally consistent with the mechanism, but it sits inside the spread.
+
+### Options if field p75 also misses
+
+- **Static hero shell in `index.html`** — put the hero `<img>` in the initial HTML, outside `#root`, so it paints before React boots; remove it on mount. Highest-leverage fix compatible with the locked stack (no Next.js, no SSR). Main risk is double-paint and CLS, and CLS is currently a perfect 0 — that must not regress.
+- **Reduce boot cost** — entry 21 kB + vendor-react 74 kB. Modest.
+- **Revise the budget** — 2.5 s simulated-mobile LCP is a hard target for any client-rendered SPA. The number was written aspirationally, before anything measured it. Revising it is legitimate, but should be a deliberate decision recorded here, not a quiet drift.
+
+---
+
 ## 4. Tooling
 
 | Tool | Command | Purpose |
