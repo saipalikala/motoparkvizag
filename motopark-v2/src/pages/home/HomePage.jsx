@@ -10,6 +10,7 @@ import NewArrivals from './sections/NewArrivals.jsx';
 import BrandRow from './sections/BrandRow.jsx';
 import { getHomepage } from '@/services/products.js';
 import { getCategories } from '@/services/categories.js';
+import { useSmoothScroll } from '@/hooks/useSmoothScroll.js';
 
 /**
  * HomePage — Concept C, built section by section (docs/10 §C-4 hierarchy):
@@ -19,6 +20,9 @@ import { getCategories } from '@/services/categories.js';
  * presentational. Currently mounted: Hero. Others land as they're built.
  */
 export default function HomePage() {
+  // Home only, desktop only, and torn down by this component's unmount.
+  useSmoothScroll();
+
   const [data, setData] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -15,6 +15,14 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Lenis (home route, desktop) takes ownership of the scroll, and native
+   `scroll-behavior: smooth` fights it for the same gesture — anchor jumps end up
+   animated by both. Lenis sets this class on <html> only while it is running, so
+   every other route keeps native smooth scrolling. */
+html.lenis {
+  scroll-behavior: auto;
+}
+
 body {
   font-family: var(--font-body);
   font-size: var(--text-body);
