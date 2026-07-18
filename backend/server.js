@@ -93,6 +93,7 @@ const STATIC_ORIGINS = [
   "http://localhost:5174", // motopark-v2 dev (Vite fallback when 5173 is taken)
   "https://motoparkvizag.in",
   "https://www.motoparkvizag.in",
+  "https://motopark-v2-ebon.vercel.app", // V2 standalone Vercel deploy (pre-domain-cutover)
 ];
 // Vite's autoPort picks a random port when 5173/5174 are busy; allow any
 // localhost/127.0.0.1 port in dev so the V2 build never gets CORS-blocked.
