@@ -221,3 +221,62 @@ The honest reasoning, including against C:
 **Simplified degradation ladder (what remains):** if CWV budgets fail at build → cut ambient video → cut hero entrance choreography. Everything else is already static-first.
 
 **Enforcement:** this doctrine is checked at design review (mockups) AND code review (build). Design System §8 (incl. reduced-motion rules and the "when NOT to animate" list) applies unchanged beneath it.
+
+---
+
+# AMENDMENT 1 — Decorative WebGL in the hero frame (owner decision, 2026-07-18)
+
+**Status:** amends the Approved Motion Doctrine above. Everything not explicitly changed here stands unchanged.
+
+## Why this amendment exists
+
+The owner asked for a more cinematic homepage in the spirit of lusion.co, which would require Three.js / React Three Fiber and scroll-linked motion. As written, the doctrine above bans essentially all of it. Rather than route around a locked decision quietly, the owner chose to amend it on the record. This section is that record.
+
+**The amendment is deliberately narrow and additive.** The reasoning for keeping it narrow is the doctrine's own sentence, which is not amended and remains the governing test:
+
+> *"Premium comes from layout, typography, spacing, photography, hierarchy — animation is seasoning, not the dish."*
+
+lusion.co is a studio portfolio. It has no conversion responsibility, its visitors arrive wanting to be impressed, and it ships megabytes without consequence. A MotoPark visitor is a rider on a mobile connection trying to find out whether a helmet fits their bike. The failure mode of a broad amendment is not a bad Lighthouse score — it is an agency showreel that sells fewer helmets. So the two additions below are scoped to one element, on one breakpoint, after the page is already usable.
+
+## Newly ALLOWED (exhaustive — nothing else is unbanned)
+
+**A. A decorative WebGL layer inside the hero media frame.** Permitted only under every one of these conditions:
+
+1. **Desktop only** — hard stop below 1024px viewport width, and hard stop on `pointer: coarse`. Mobile remains exactly as static as before this amendment.
+2. **Post-LCP** — the module is not even fetched until the `largest-contentful-paint` entry has been observed, then at `requestIdleCallback`. The static hero image remains the LCP element permanently.
+3. **Non-interactive** — it does not receive pointer or keyboard events and never sits above a CTA.
+4. **Contains no content** — no text, no links, no product data inside the canvas. Anything a customer or a crawler needs stays in static DOM. *The cinematic layer is decorative or it does not ship.*
+5. **Additive to a complete hero** — the existing headline, subline, dual CTA and shoppable product ticker render and are usable whether or not the canvas ever loads.
+6. **Self-limiting at runtime** — capped DPR, paused when hidden or scrolled out, and it unmounts itself back to the static hero if frame times degrade.
+7. **Reduced-motion, save-data, low-memory and no-WebGL all fall back silently** to the static hero.
+
+**B. Scroll-linked opacity/transform on the hero media layer only** — desktop only, capped, transform/opacity only. This is *not* a reopening of parallax generally; it applies to the single hero media element and nothing else on the page.
+
+## Still BANNED (unchanged, and explicitly reaffirmed)
+
+- **Scroll-jacking — any form.**
+- **Long pinned/sticky storytelling sections.**
+- **Parallax anywhere other than the hero media element** permitted in (B).
+- **Continuous/looping animation in commerce sections.** The ambient hero video exception is unchanged; the WebGL layer in (A) is now a second exception, bound by the conditions above.
+- **Any motion that delays product discovery.** Products remain reachable in the first scroll at all times. No entrance animation may gate the hero product ticker or the category grid.
+
+## Extended degradation ladder
+
+If CWV budgets fail: **cut the WebGL hero → cut ambient video → cut hero entrance choreography.**
+
+WebGL goes first because it is the newest, the most expensive, and the most isolated — removing it touches no commerce code.
+
+## Enforcement
+
+Design review and code review as before, plus three mechanical gates that did not exist when the original doctrine was written:
+
+1. `scripts/check-budgets.mjs` fails the build if any 3D/animation chunk enters the `/` **static** graph.
+2. `.oxlintrc.json` `no-restricted-imports` blocks `three` / `@react-three/*` / `gsap` / `lenis` outside `src/cinematic/`.
+3. The mobile TBT gate in docs/13 §5 must not move. Mobile never loads the cinematic chunk, so any movement proves the isolation leaked.
+
+**Blocking condition:** this amendment is void if the measured LCP budget is not met. See docs/13 — the staging baseline is currently **4.71 s median against a 2.5 s budget**. No WebGL work ships until that is resolved and re-measured.
+
+## Changelog
+
+- 2026-07-05 — Motion Doctrine FINAL (above).
+- 2026-07-18 — **Amendment 1** (this section). Owner authorised WebGL/cinematic work; scope narrowed to the hero frame, desktop-only, post-LCP, decorative. All other bans reaffirmed. Degradation ladder extended. Mechanical enforcement added.

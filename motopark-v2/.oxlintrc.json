@@ -1,8 +1,31 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "oxc"],
+  "plugins": ["react", "oxc", "import"],
   "rules": {
     "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
+    "react/only-export-components": ["warn", { "allowConstantExport": true }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["three", "three/*", "@react-three/*", "gsap", "gsap/*", "lenis", "lenis/*"],
+            "message": "3D/scroll libraries are confined to src/cinematic/ (docs/11 §7b). They cost 230-280 kB gz against ~30 kB of route headroom, so they must be reached ONLY via import() from pages/home. Import the lazy wrapper instead."
+          },
+          {
+            "group": ["@/cinematic/*", "**/cinematic/*"],
+            "message": "src/cinematic/ must be reached ONLY through a dynamic import() (docs/11 §7b) — a STATIC import merges it into the commerce bundle. Use React.lazy(() => import('@/cinematic/...')) from pages/home. This rule intentionally does not flag dynamic import()."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/cinematic/**"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }

@@ -22,6 +22,7 @@ motopark-v2/src/
 ├── services/         domain API modules — the ONLY callers of lib/api.js
 ├── contexts/         React Context providers (CartContext, AuthContext, ToastContext…)
 ├── ai/               future AI capabilities (RAG, Fitment Advisor, Vision, Insights) — lazy-only
+├── cinematic/        3D / scroll choreography (§7b) — lazy-only, decorative, no data deps
 ├── hooks/            shared generic hooks (useMediaQuery, useDebounce, useOnScreen…)
 ├── lib/              infrastructure: api.js (axios) · format.js · storage.js (future)
 ├── config/           constants: nav config, route paths, category icons, budgets
@@ -51,6 +52,7 @@ Layers, lowest → highest. **Imports may only point downward** (a layer imports
 | 10 | `pages/` | features, components/*, contexts, services, hooks, lib, config | app |
 | 11 | `app/` | everything | — |
 | — | `ai/` | services, lib, config, components/ui | **nothing outside imports ai/ except pages/app via `React.lazy`** |
+| — | `cinematic/` | config, hooks (generic), components/ui | **nothing outside imports cinematic/ except pages/home via `React.lazy`/`import()`** — and it may NOT import services, contexts, or lib/api (§7b) |
 
 \* domain-specific hooks that touch services/contexts live inside their `features/<domain>/` or `contexts/`, not in shared `hooks/`.
 
@@ -126,6 +128,32 @@ component → features/pages → services/<domain>.js → lib/api.js (axios) →
 
 ---
 
+## 7b. Cinematic Layer Boundaries (added 2026-07-18 — see docs/10 Amendment 1)
+
+The cinematic layer (Three.js / React Three Fiber, and any scroll machinery) is large, optional and decorative — the same shape of problem `ai/` solved in §7, so it gets the same treatment.
+
+1. **Isolation:** all 3D/scroll-choreography code lives in `src/cinematic/`.
+2. **One-way door:** `cinematic/` may import `config/`, generic `hooks/`, and `components/ui/`. **Nothing imports `cinematic/` except `pages/home` through `React.lazy()` / `import()`.**
+3. **Narrower than `ai/`:** it may **not** import `services/`, `contexts/`, or `lib/api.js`. The cinematic layer is decorative and has **zero data dependencies**. If a cinematic module needs product data, the design is wrong.
+4. **No content inside the canvas:** no text, no links, no product data. The `<h1>`, CTAs and product ticker stay in static DOM — for customers, for crawlers, and for anyone whose GPU refuses.
+5. **Kill-switch guarantee:** deleting `src/cinematic/` and its lazy mounts must leave the storefront fully functional and visually complete.
+
+### Why a manual chunk is NOT how this is enforced
+
+Measured 2026-07-18 (docs/13 §3c): adding `manualChunks` rules to fence `features/admin/` into its own chunk *increased* route JS from 127 kB → 154 kB brotli. Forcing modules into a named chunk caused rolldown to co-locate shared dependencies (axios, React CJS interop) into that chunk, which the entry needs — so the entry ended up **statically importing** the code the rule was written to exclude.
+
+> **A manual chunk does not fence code off; it only relocates it.** Relocating a module that shared code depends on inverts the dependency and drags the whole chunk forward. Isolation comes from the `import()` boundary and nothing else.
+
+Do **not** add `three` / `@react-three` / `gsap` entries to `manualChunks`. They are dynamically imported and get their own chunks automatically.
+
+### Mechanical enforcement
+
+- `.oxlintrc.json` — `no-restricted-imports` blocks `three`, `@react-three/*`, `gsap`, `lenis` everywhere except `src/cinematic/**`. The layer table expressed as a lint rule.
+- `scripts/check-budgets.mjs` — fails the build if a matching chunk, or any `src/cinematic/` module, appears in the `/` **static** graph.
+- docs/13 §5 mobile TBT gate — mobile never loads the cinematic chunk, so any TBT movement is a boolean proof that isolation leaked.
+
+---
+
 ## 8. Design Token Usage Rules
 
 1. `styles/tokens.css` is the **only** place raw values (hex, px scales, shadows, easing) may exist. Components consume `var(--…)` exclusively — a raw hex/shadow/magic-number in a component file fails review.
@@ -171,5 +199,8 @@ component → features/pages → services/<domain>.js → lib/api.js (axios) →
 ## 11. Changelog
 - 2026-07-05 — v1.0 drafted; structure frozen pending approval.
 - 2026-07-05 — v1.0 🔒 LOCKED. Owner approved all four binding decisions individually (CSS Modules, no state library at MVP, strict layer table, lazy pages). Implementation phase begins: Homepage Concept C, section by section.
+- 2026-07-18 — **v1.1. Structural amendment: `src/cinematic/` added** as a top-level folder, with §7b and a new layer-table row.
+  **Justification (the bar is "absolutely necessary"):** docs/10 Amendment 1 authorises a decorative WebGL hero. That stack costs 230–280 kB gz against ~30 kB of remaining route headroom (docs/13). There is no existing folder that can hold it without violating this document: `components/commerce/` is statically imported by `HomePage.jsx` (which is exactly how framer-motion ended up in the HomePage chunk), and `components/ui/` is defined as pure and presentational, which an R3F `<Canvas>` owning a WebGL context and a rAF loop is not. Without a dedicated isolated folder the only alternative is scattering the dependencies through `components/`, a direct violation of the §10 perf budget, which is itself review-blocking. `ai/` §7 already established this exact pattern; §7b copies it and tightens it.
+  **Also in v1.1:** §10 budget unit restated as *transferred (brotli)* rather than gzip, since Vercel serves brotli and Lighthouse reports transfer size — one budget, one unit. Measurement is now real (`scripts/check-budgets.mjs`, `lighthouserc.json`, `web-vitals` → GA4) rather than the aspirational "Lighthouse CI (or manual budget check)" this document has claimed since v1.0. Baseline and gates: docs/13.
 
 *On approval this document is FROZEN. Architectural changes require an explicit entry here with justification — "absolutely necessary" is the bar.*
