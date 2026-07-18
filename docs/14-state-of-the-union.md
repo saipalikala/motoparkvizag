@@ -44,16 +44,31 @@ Documents and one lint rule; zero application code. `docs/10` Amendment 1 + `doc
 
 `components/ui/Field.jsx` now owns **every** form control in `src/pages` — zero raw `<input>`/`<textarea>`/`<select>` remain. It replaced three drifted implementations and fixed a real defect: **no error was programmatically linked to its control anywhere**. Verified live — an empty checkout submit marks 6 fields `aria-invalid` with `aria-describedby` → `role="alert"` messages. Account's address form was placeholder-only with no labels at all; now labelled. CSS net **−361 bytes**.
 
+### Phase 3 — Lenis smooth scroll ✅ (`501c96f`)
+
+Home route only, desktop only, destroyed on unmount (= on route change). `lenis` was installed but imported nowhere; now reached by dynamic `import()` from `hooks/useSmoothScroll.js` → `cinematic/smoothScroll.js`. Chunks separately at **5.4 kB gzip**, outside the `/` static graph.
+
+The apparent lint conflict (`.oxlintrc.json` blocks `lenis` outside `src/cinematic/`, the mandate puts it on Home) needed **no doctrine or lint change** — the cinematic README already claims "scroll choreography, and the machinery that drives them".
+
+**`src/lib/motionEligibility.js` is the new shared gate — Phase 5 should reuse it.** It lives *outside* `src/cinematic/` on purpose: it decides whether to download that folder, so it must be evaluable without loading it. Desktop + fine pointer + no reduced-motion, re-evaluated on media-query change rather than latched.
+
+### Phase 4 — Scroll reveals ✅ (`32aea8f`)
+
+`hooks/useReveal.js` + `components/ui/Reveal.jsx`. Sections (not items — the ≤3 concurrent cap) fade+rise once; 280ms commerce, 400ms story band.
+
+**Built on IntersectionObserver + a CSS class toggle, NOT the LazyMotion pattern docs/14 originally specified.** Deliberate: the open problem is the client-render path, and per-element Framer work during scroll adds to it; reduced-motion also collapses to one `@media` block. Framer remains for `AnimatePresence`.
+
+Two properties worth preserving if this is ever refactored: **nothing above the fold animates** (already-visible elements are marked revealed synchronously, and Hero is unwrapped because it holds the LCP image), and **content cannot strand at opacity 0** (the hidden state is applied by JS, plus the jump guard in §5).
+
 **Deliberately NOT built: Skeleton, Badge, Card.** Usage was surveyed first and the demand wasn't there — the skeleton pattern is already correct, there's one sale badge and one status pill serving different purposes, and only two `.card` blocks are identical. Do not "finish the set" without new evidence.
 
 ---
 
 ## 3. The Current Gate 🚦
 
-**Phases 3 and 4 are next and are NOT gated:**
+**Phases 3 and 4 are DONE (2026-07-18) — see §2. Phase 5 is the only thing left, and it is blocked.**
 
-- **Phase 3 — Lenis smooth scroll**, home route only. Already mandated by `docs/11 §10` ("Lenis mounted on Home route only, destroyed on route change") — this is unfinished implementation, not a doctrine change. `lenis@1.3.25` is installed and imported nowhere.
-- **Phase 4 — Scroll reveals.** There are currently **zero IntersectionObservers** in `src/`. Build `useOnScreen` + the `LazyMotion`/`domAnimation` pattern already established in `CinematicVideoShowcase.jsx:129`. **Do not install GSAP** — every allowed effect is one-shot transform/opacity work that the already-paid-for `framer-motion` does.
+**Do not install GSAP** — every allowed effect is one-shot transform/opacity work already covered.
 
 ### Phase 5 — WebGL hero is STRICTLY GATED 🔴
 
@@ -117,6 +132,8 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **`lhci collect --numberOfRuns>1` crashes on Windows** (`EPERM`, chrome-launcher temp cleanup). Use the one-at-a-time loop in `docs/13 §6`; the `|| true` is load-bearing.
 - **Never commit raw Lighthouse reports** (~540 kB each). Run them through `scripts/summarize-lhr.mjs`.
 - **Lighthouse cannot measure INP at all**, and cannot produce p75. TBT is a lab proxy, not the same metric.
+- **IntersectionObserver does not fire on a jump.** It fires when a threshold is *crossed*; an instant jump takes a section from ratio 0 below the viewport to ratio 0 above it in one frame, so no callback ever runs. Any reveal built on IO alone leaves jumped-past sections invisible forever — and the homepage triggers this itself via the hero's `#trust` anchor, plus scroll restoration and Ctrl+End. `useReveal.js` carries a debounced sweep for exactly this. Don't "simplify" it away.
+- **The in-app browser pane reports `visibilityState: "hidden"`.** That suppresses IntersectionObserver callbacks and freezes `requestAnimationFrame`, so reveals and Lenis motion **cannot be verified there** — screenshots and rAF-based probes just hang. Verify scroll/animation work through the Playwright MCP browser instead; it renders and reports `prefers-reduced-motion: no-preference`.
 
 ---
 
