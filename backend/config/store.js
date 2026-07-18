@@ -14,20 +14,6 @@
 export const FREE_SHIP_THRESHOLD = 2000;
 export const SHIPPING_FLAT = 150;
 
-/**
- * ⚠️ TEMPORARY — REVERT BEFORE THE motoparkvizag.in DOMAIN CUTOVER. ⚠️
- *
- * Waives delivery on every order so the V2 staging deploy can be exercised with
- * ₹1 test purchases instead of ₹151 ones. Left on, the live store ships for free
- * below ₹2,000 and eats ₹150 per order.
- *
- * Its twin is `shippingDisabled` in motopark-v2/src/config/store.js. BOTH must
- * flip together: the client shows this total and the server re-derives it, and
- * the payment is rejected when they disagree (`Paid amount does not match the
- * order total`). Reverting this commit flips both at once.
- */
-export const SHIPPING_DISABLED = true;
-
 /** Delivery charge in rupees for a given cart subtotal (rupees). */
 export const deliveryChargeFor = (subtotal) =>
-  SHIPPING_DISABLED || subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
+  subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;

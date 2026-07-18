@@ -110,10 +110,7 @@ export default function CheckoutPage() {
     setErrors({});
   };
 
-  // Mirrors deliveryChargeFor() in backend/config/store.js — the server re-derives
-  // this and rejects the payment if the two disagree.
-  const delivery =
-    STORE.shippingDisabled || subtotalINR >= STORE.freeShipThreshold ? 0 : STORE.shippingFlat;
+  const delivery = subtotalINR >= STORE.freeShipThreshold ? 0 : STORE.shippingFlat;
   const total = subtotalINR + delivery;
 
   const set = (k, v) => {
