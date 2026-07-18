@@ -33,15 +33,32 @@ function PageLoader() {
 }
 
 /**
- * V1 linked products at `/product/:id` (singular); V2 serves them at
- * `/products/:slug`, where the param carries the same V1 id. Old inbound links —
- * search results, bookmarks, and CMS-authored links such as the video showcase's
- * buyNowLink — would otherwise land on the 404 page. `replace` keeps the dead URL
- * out of history so Back doesn't bounce through it.
+ * ── V1 → V2 URL redirects ──────────────────────────────────────────────────
+ *
+ * V1 (motopark-web) served the same catalogue under different paths. At the
+ * domain cutover every one of those URLs stays alive in Google's index, in
+ * customer bookmarks, in WhatsApp shares and in order emails — and would land on
+ * the 404 page.
+ *
+ * The AUTHORITATIVE redirects are 301s in vercel.json, issued at the edge before
+ * the SPA loads: a client-side <Navigate> moves a human just fine but is a weak
+ * signal for search, so indexed pages would shed ranking. These router-level
+ * copies exist because vercel.json does not apply to `npm run dev`, and as a
+ * backstop if an edge rule is ever removed.
+ *
+ * `replace` keeps the dead URL out of history so Back doesn't bounce through it.
  */
+
+/** `/product/:id` (V1, singular) → `/products/:slug`, param carries the same id. */
 function LegacyProductRedirect() {
   const { id } = useParams();
   return <Navigate to={`/products/${id}`} replace />;
+}
+
+/** `/category/:slug` (V1) → `/c/:slug`. The most SEO-valuable of these. */
+function LegacyCategoryRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/c/${slug}`} replace />;
 }
 
 export default function AppRouter() {
@@ -54,8 +71,9 @@ export default function AppRouter() {
         <Route path="/store" element={<StorePage />} />
         <Route path="/c/:slug" element={<CategoryPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
-        {/* Legacy V1 URL — keep before the catch-all. */}
+        {/* Legacy V1 URLs — keep before the catch-all. Mirrors vercel.json. */}
         <Route path="/product/:id" element={<LegacyProductRedirect />} />
+        <Route path="/category/:slug" element={<LegacyCategoryRedirect />} />
         <Route path="/brand/:slug" element={<BrandPage />} />
         <Route path="/brand/:slug/:categorySlug" element={<BrandPage />} />
         <Route path="/bikes" element={<BikesPage />} />
@@ -74,6 +92,14 @@ export default function AppRouter() {
 
         {/* Account (auth-gated, noindex) */}
         <Route path="/account/*" element={<AccountPage />} />
+        {/* V1 had a standalone order history at /orders and a per-order page at
+            /orders/:id; V2 lists orders in a section of /account and has no
+            per-order route, so both land there. Linked from old order emails. */}
+        <Route path="/orders" element={<Navigate to="/account" replace />} />
+        <Route path="/orders/:id" element={<Navigate to="/account" replace />} />
+        {/* V1 had password signup; V2 auth is passwordless (Google / email OTP),
+            so signing in IS registering. */}
+        <Route path="/register" element={<Navigate to="/login" replace />} />
 
         {/* Static / policy pages (Razorpay + DPDP requirement) */}
         <Route path="/about" element={<StaticPage page="about" />} />
