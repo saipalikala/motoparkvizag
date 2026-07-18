@@ -37,6 +37,7 @@ import PaymentEvent from "../models/paymentEventModel.js";
 import PaymentIntent from "../models/paymentIntentModel.js";
 import { placeOrder } from "../services/placeOrder.js";
 import { handleRazorpayWebhook } from "../controllers/webhookController.js";
+import { getCheckoutStatus } from "../controllers/checkoutStatusController.js";
 
 /* ── Safety: dev and production share one Atlas cluster, and the only thing
       separating them is the database name. Refuse to touch anything else. ── */
@@ -127,9 +128,13 @@ const run = async () => {
 
     const stamp = Date.now();
     const ids = [];
-    /* One matched pair per scenario: a Razorpay order id and the payment against it. */
+    /* One matched pair per scenario: a Razorpay order id and the payment against it.
+       Shaped like the real thing — "order_" followed by alphanumerics only, no
+       underscores. GET /api/checkout/status validates that shape, so ids with
+       stray underscores would be rejected here while passing in production. */
     const pair = (n) => {
-        const p = { orderId: `order_TEST_${stamp}_${n}`, paymentId: `pay_TEST_${stamp}_${n}` };
+        const p = { orderId: `orderTEST${stamp}${n}`.replace(/^order/, "order_"),
+                    paymentId: `payTEST${stamp}${n}`.replace(/^pay/, "pay_") };
         ids.push(p);
         return p;
     };
@@ -252,6 +257,46 @@ const run = async () => {
             check("forged signature is rejected: no order, no record, no stock moved",
                 res.statusCode === 400 && !order && !event && after === before,
                 `status ${res.statusCode} ${JSON.stringify(res.body)}; order=${!!order}; recorded=${!!event}`);
+        }
+        /* ── 8-11. The status endpoint the storefront polls ───────────────── */
+        {
+            const status = async (razorpayOrderId) => {
+                const res = mockRes();
+                await getCheckoutStatus({ params: { razorpayOrderId } }, res);
+                return res;
+            };
+
+            // Placed (test 1's intent was consumed by the webhook).
+            const done = await status(ids[0].orderId);
+            check("status reports 'placed' with the order id once the webhook has placed it",
+                done.statusCode === null && done.body?.status === "placed" && !!done.body?.orderId,
+                JSON.stringify(done.body));
+
+            // Paid-but-refused (test 5, amount mismatch) still reads as pending —
+            // the client must not be told to show success.
+            const pending = await status(ids[4].orderId);
+            check("status reports 'pending' for an intent that was never consumed",
+                pending.body?.status === "pending" && !pending.body?.orderId,
+                JSON.stringify(pending.body));
+
+            // Unknown/expired id: 404, and identical for a fabricated one.
+            const unknown = await status("order_TESTdoesnotexist");
+            check("status reports 404 'unknown' for an id with no intent",
+                unknown.statusCode === 404 && unknown.body?.status === "unknown",
+                `status ${unknown.statusCode} ${JSON.stringify(unknown.body)}`);
+
+            // Junk must be rejected without a DB query.
+            const junk = await status("../../etc/passwd");
+            check("status rejects a malformed order reference",
+                junk.statusCode === 400,
+                `status ${junk.statusCode} ${JSON.stringify(junk.body)}`);
+
+            // Nothing beyond {status, orderId} may leak — this endpoint is
+            // unauthenticated and the id travels through the browser.
+            const keys = Object.keys(done.body || {}).sort().join(",");
+            check("status response leaks no customer data",
+                keys === "orderId,status",
+                `keys: ${keys}`);
         }
     } finally {
         const paymentIds = ids.map((i) => i.paymentId);

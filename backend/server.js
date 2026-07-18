@@ -30,6 +30,7 @@ import videoShowcaseRoutes from "./routes/videoShowcaseRoutes.js";
 import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import aiRoutes            from "./routes/aiRoutes.js";
 import webhookRoutes       from "./routes/webhookRoutes.js";
+import checkoutRoutes      from "./routes/checkoutRoutes.js";
 import connectDB           from "./config/db.js";
 
 const IS_PROD = process.env.NODE_ENV === "production";
@@ -209,6 +210,24 @@ const paymentLimiter = rateLimit({
   legacyHeaders  : false,
   message        : { message: "Too many payment attempts. Please wait." },
 });
+
+/* Checkout status is POLLED — one checkout makes tens of calls while the customer
+   completes a UPI payment on their phone. It therefore gets its own budget rather
+   than sharing globalApiLimiter's 200/15min, which one slow payment could eat.
+   Sized for several concurrent checkouts behind a single IP, since Indian mobile
+   carriers CGNAT heavily and a shared limit would punish unrelated customers. The
+   endpoint is a read returning only { status, orderId }. */
+const checkoutStatusLimiter = rateLimit({
+  windowMs       : 15 * 60 * 1000,
+  max            : 300,
+  standardHeaders: true,
+  legacyHeaders  : false,
+  message        : { message: "Too many status checks. Please wait." },
+});
+
+/* Mounted ABOVE globalApiLimiter so polling cannot exhaust the customer's general
+   API budget mid-checkout and lock them out of the site they just bought from. */
+app.use("/api/checkout", checkoutStatusLimiter, checkoutRoutes);
 
 app.use("/api", globalApiLimiter);
 

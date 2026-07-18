@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, Lock, Truck, ShoppingBag, ChevronRight } from 'lucide-react';
@@ -9,7 +9,7 @@ import { formatINR } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
 import { STORE } from '@/config/store.js';
 import { loadRazorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay.js';
-import { createRazorpayOrder, verifyPayment } from '@/services/checkout.js';
+import { createRazorpayOrder, verifyPayment, getCheckoutStatus } from '@/services/checkout.js';
 import { createOrder } from '@/services/orders.js';
 import { INDIAN_STATES } from '@/config/geo.js';
 import styles from './CheckoutPage.module.css';
@@ -30,6 +30,59 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [placed, setPlaced] = useState(null); // { id, paymentId }
   const [errors, setErrors] = useState({});
+  // True once the modal is open and we are watching for the order to land —
+  // drives the "Confirming your payment…" copy, so a stalled Razorpay modal
+  // reads as work in progress rather than a dead screen.
+  const [confirming, setConfirming] = useState(false);
+
+  /* Poll timer + the Razorpay instance, so both can be torn down from anywhere
+     (handler fired, order spotted, page unmounted). Refs, not state: changing
+     them must not re-render, and the cleanup below needs the current value. */
+  const pollRef = useRef(null);
+  const rzpRef = useRef(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    setConfirming(false);
+  };
+
+  /**
+   * Take the Razorpay modal down, whether or not it is still responsive.
+   *
+   * rzp.close() only ASKS the checkout iframe to dismiss itself — and this whole
+   * code path exists because that iframe has stopped responding. When the ask
+   * goes unanswered it leaves a full-viewport overlay at z-index 2147483647
+   * sitting on top of the success page, plus `overflow: hidden` on <body>: the
+   * customer's order is placed, and they are still staring at a frozen modal on
+   * an unscrollable page. Observed directly, not theorised.
+   *
+   * So: ask politely, then clear up whatever is left. If close() did work, the
+   * elements are already gone and the sweep is a no-op.
+   */
+  const dismissRazorpay = () => {
+    try { rzpRef.current?.close(); } catch { /* already gone — fine */ }
+    rzpRef.current = null;
+
+    window.setTimeout(() => {
+      document.querySelectorAll('.razorpay-container, .razorpay-backdrop')
+        .forEach((el) => el.remove());
+      // Razorpay locks page scroll while open and normally restores it on close.
+      if (document.body.style.overflow === 'hidden') {
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('contain');
+      }
+    }, 400);
+  };
+
+  // Leaving the page mid-payment must not leave a timer running against a
+  // component that no longer exists. The ORDER is safe either way — the webhook
+  // places it server-side — so abandoning the poll loses nothing.
+  useEffect(() => () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+  }, []);
   // Prefill from the rider's first saved address (falls back to profile fields).
   const [form, setForm] = useState(() => {
     const a = savedAddresses[0];
@@ -118,6 +171,9 @@ export default function CheckoutPage() {
         order_id: rp.orderId,
         prefill: { name: form.name, email: form.email, contact: form.phone },
         theme: { color: '#e8532e' },
+        // Polling deliberately CONTINUES after a dismiss: closing the modal after
+        // paying is one of the ways people end up paid-but-not-shown-success, and
+        // the poll is what recovers it. It expires on its own timer.
         modal: { ondismiss: () => setPaying(false) },
         handler: async (response) => {
           // The money is already taken by the time this runs, so the only
@@ -154,6 +210,7 @@ export default function CheckoutPage() {
             }
           }
 
+          stopPolling(); // handler won the race — nothing left to watch for
           clearCart();
           setPlaced({ id: orderId, paymentId: response.razorpay_payment_id });
           setPaying(false);
@@ -161,11 +218,54 @@ export default function CheckoutPage() {
       };
 
       const rzp = new window.Razorpay(options);
+      rzpRef.current = rzp;
       rzp.open();
+      startPolling(rp.orderId);
     } catch (err) {
       setError(err?.message || 'Couldn’t start payment. Please try again.');
       setPaying(false);
     }
+  };
+
+  /**
+   * Watch for the order landing, independently of the Razorpay modal.
+   *
+   * The `handler` callback is the fast path and usually wins. But for a
+   * cross-device UPI payment the desktop modal only learns of success by polling
+   * Razorpay while the customer pays on their phone — and a backgrounded tab gets
+   * its timers throttled, so that poll can stall and `handler` never fires. The
+   * order still gets placed (the payment.captured webhook does it server-side);
+   * this is purely how the PAGE finds out, so the customer sees success instead
+   * of a frozen modal.
+   *
+   * 4s for 4 minutes. Slow enough to stay well inside the endpoint's rate limit
+   * even with several checkouts behind one carrier-NAT IP, long enough to cover a
+   * leisurely UPI approval. Giving up only stops the watching — the order is
+   * already safe server-side, and /track or the confirmation email still find it.
+   */
+  const startPolling = (razorpayOrderId) => {
+    if (!razorpayOrderId || pollRef.current) return;
+    setConfirming(true);
+
+    const deadline = Date.now() + 4 * 60 * 1000;
+
+    pollRef.current = setInterval(async () => {
+      if (Date.now() > deadline) return stopPolling();
+
+      const res = await getCheckoutStatus(razorpayOrderId);
+      if (res?.status !== 'placed' || !res.orderId) return; // keep waiting
+
+      // The order exists. Close the modal the customer is stuck behind, then
+      // show it — same end state the handler would have produced.
+      stopPolling();
+      dismissRazorpay();
+      clearCart();
+      // Clears "saving your order failed" if the handler's save threw but the
+      // webhook placed the order anyway — that message is now simply wrong.
+      setError('');
+      setPlaced((prev) => prev || { id: res.orderId });
+      setPaying(false);
+    }, 4000);
   };
 
   /* ── Confirmation ── */
@@ -335,10 +435,16 @@ export default function CheckoutPage() {
                 </div>
                 <p className={styles.reviewValue}>Pay online via Razorpay</p>
               </div>
+              {confirming && (
+                <p className={styles.confirming} role="status">
+                  Confirming your payment… If you’ve paid, don’t close this page —
+                  we’ll show your order as soon as it’s confirmed.
+                </p>
+              )}
               <div className={styles.stepNav}>
                 <button type="button" className={styles.backBtn} onClick={() => setStep(2)}>← Back</button>
-                <Button variant="primary" size="lg" onClick={handlePay} disabled={paying}>
-                  {paying ? 'Opening payment…' : `Pay ${formatINR(total)}`}
+                <Button variant="primary" size="lg" onClick={handlePay} disabled={paying || confirming}>
+                  {confirming ? 'Confirming payment…' : paying ? 'Opening payment…' : `Pay ${formatINR(total)}`}
                 </Button>
               </div>
             </section>

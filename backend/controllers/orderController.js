@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
+import PaymentIntent from "../models/paymentIntentModel.js";
 import { deliveryChargeFor } from "../config/store.js";
 import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
 import { placeOrder, OutOfStockError } from "../services/placeOrder.js";
@@ -167,6 +168,20 @@ export const createOrder = async (req, res) => {
                 return res.status(400).json({ message: err.message });
             }
             throw err;
+        }
+
+        // Mark the intent consumed. The webhook does this too, but whichever path
+        // places the order must record it: GET /api/checkout/status reads the
+        // intent, and a browser-placed order that left the intent "pending" would
+        // make a polling client believe its order never landed. Non-fatal — the
+        // order is already safe, and a webhook redelivery would mark it anyway.
+        if (razorpay_order_id) {
+            PaymentIntent.updateOne(
+                { razorpayOrderId: razorpay_order_id },
+                { $set: { status: "consumed", orderId: order?._id } }
+            ).catch((err) =>
+                console.warn("Order placed but intent not marked consumed —", err?.message)
+            );
         }
 
         if (alreadyExisted) {
