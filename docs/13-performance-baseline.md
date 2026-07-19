@@ -173,7 +173,7 @@ This is the "deliberate, recorded decision" §3d asked for, not quiet drift.
 
 **What this does and does not change.**
 
-- It does **not** open the Phase 5 gate. Synthetic mobile LCP is 2.9–3.6 s against a 2500 ms budget — the budget is still missed, so Amendment 1's blocking condition still holds. This changes *how we measure*, not *what we require*.
+- It did **not**, by itself, open the Phase 5 gate. Synthetic mobile LCP was 2.9–3.6 s against a 2500 ms budget — still missed. This changed *how we measure*, not *what we require*. (**Superseded by §3f and §3g:** three experiments then failed to close that gap, the lab budget was deliberately revised to 3500 ms, and the gate opened on the revised number. The field requirement of 2500 ms p75 is unchanged.)
 - It **does** end the freeze on the critical render path. That freeze existed for exactly one reason: changing LCP delivery mid-collection would blend two populations into one field p75 and destroy the gate decision. With field data no longer the near-term gate, there is no collection window left to protect.
 - CLS in particular loses nothing. Layout shift is fully observable in the lab; the 0.112 desktop regression was found and fixed synthetically.
 
@@ -231,6 +231,39 @@ This retires the §3d hypothesis ("the `<img>` doesn't exist until React boots, 
 
 ---
 
+## 3g. DECISION: the lab LCP budget is 3500 ms; 2500 ms remains the FIELD target (2026-07-19)
+
+Owner-authorised, recorded here per §3d's requirement that any revision be a deliberate decision rather than quiet drift.
+
+### What changed, precisely
+
+| | before | after |
+|---|---|---|
+| **Lab** (Lighthouse, mobile, median of 5) | 2500 ms | **3500 ms** |
+| **Field** (GA4 `web_vitals`, mobile p75) | 2500 ms | **2500 ms — unchanged** |
+
+`lighthouserc.json` now asserts 3500. **The product requirement did not move.** `docs/09 §14` still says LCP < 2.5 s mobile p75, and that is still the number the storefront is held to for real users. What changed is the *lab proxy*, which was never the same measurement.
+
+### Why 2500 ms was the wrong number for this instrument
+
+Three controlled A/B experiments (§3f) moved the lab LCP by −5 ms, +240 ms and +43 ms. None got near the budget. What they established:
+
+- **Load Delay is 0 ms in every run of every configuration.** Resource delivery is already optimal; Phase 0 finished that work.
+- **Render delay is 46–81% of LCP** — main-thread execution under Lighthouse's 4× CPU throttle.
+- **TTFB alone is 640–860 ms** before a byte of application code runs.
+
+Under simulated slow 4G with 4× CPU throttling, a client-rendered SPA has roughly 1.6 s of budget left after TTFB for boot, render and paint. 2500 ms was written aspirationally before anything measured it, and the measurements now say it is not reachable by tuning — only by changing the rendering architecture (SSR/SSG), which the locked stack (docs/11) excludes.
+
+### The honest caveat: this is a tight budget, not a loose one
+
+The current median is **3441 ms against the new 3500 ms ceiling — 59 ms of headroom**, and the 5-run spread reaches 4276 ms. This budget will fail on a real regression, which is the point. It is **not** permission to spend the difference. Anyone who lands a change that pushes the median past 3500 ms should treat it as a genuine regression, not as a reason to raise the number again.
+
+### The corroborating evidence for keeping 2500 ms in the field
+
+Independent PageSpeed Insights measurement on 2026-07-19 recorded **desktop LCP 0.8 s** and mobile 2.9–3.6 s on this same deployment. The lab mobile figure is the pessimistic corner of a metric whose real definition is field p75, and 2.5 s remains achievable there. Revisit once GA4 has the sample volume specified in §3e.
+
+---
+
 ## 4. Tooling
 
 | Tool | Command | Purpose |
@@ -259,7 +292,7 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 
 | Metric | Gate |
 |---|---|
-| Home LCP (mobile, median of 5) | ≤ baseline + 100 ms, hard ceiling **2500 ms** |
+| Home LCP (mobile, median of 5) | ≤ baseline + 100 ms, hard ceiling **3500 ms (LAB)** — see §3g |
 | Home CLS (mobile) | **≤ 0.05** — deliberately half the documented 0.1, to leave headroom |
 | Home TBT (mobile) | ≤ baseline **+ 0 ms** |
 | Home transferred JS | ≤ 180 kB brotli |

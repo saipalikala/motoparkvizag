@@ -70,9 +70,20 @@ Two properties worth preserving if this is ever refactored: **nothing above the 
 
 **Do not install GSAP** — every allowed effect is one-shot transform/opacity work already covered.
 
-### Phase 5 — WebGL hero is STRICTLY GATED 🔴
+### Phase 5 — WebGL hero: ✅ UNBLOCKED 2026-07-19
+
+**The gate is open.** Read `docs/13 §3f` and `§3g` before starting, and `docs/10` Amendment 1 for what still binds.
+
+Short version: LCP improved 4712 → **3441 ms** through real work; three further experiments (static hero shell, eager home route, `decoding="async"`) then failed to move it at all and were reverted; the evidence showed Load Delay is 0 ms in every run and 46–81% of LCP is main-thread render delay that this stack cannot tune away. The **lab** budget was then deliberately revised to **3500 ms** (owner-authorised, recorded). The **field** budget is unchanged at **2500 ms mobile p75** — the product requirement did not move.
+
+**Headroom is 59 ms.** The gate is met, not comfortably. Do not spend the difference.
+
+**Everything else in Amendment 1 still binds:** desktop-only, post-LCP, decorative, confined to `src/cinematic/`, no content in the canvas, kill-switch intact. The mobile TBT row is the tripwire that proves isolation — mobile must never load the cinematic chunk.
+
+<details><summary>Original gate text (historical)</summary>
 
 Amendment 1 contains this as a written blocking condition. **No WebGL ships until the LCP budget is met.**
+</details>
 
 Current state after the Phase 0 deploy (5 runs, staging, mobile):
 

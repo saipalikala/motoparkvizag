@@ -274,7 +274,19 @@ Design review and code review as before, plus three mechanical gates that did no
 2. `.oxlintrc.json` `no-restricted-imports` blocks `three` / `@react-three/*` / `gsap` / `lenis` outside `src/cinematic/`.
 3. The mobile TBT gate in docs/13 §5 must not move. Mobile never loads the cinematic chunk, so any movement proves the isolation leaked.
 
-**Blocking condition:** this amendment is void if the measured LCP budget is not met. See docs/13 — the staging baseline is currently **4.71 s median against a 2.5 s budget**. No WebGL work ships until that is resolved and re-measured.
+**Blocking condition — SATISFIED 2026-07-19. Phase 5 is unblocked.**
+
+The original wording: *"this amendment is void if the measured LCP budget is not met. See docs/13 — the staging baseline is currently 4.71 s median against a 2.5 s budget. No WebGL work ships until that is resolved and re-measured."*
+
+How it was resolved, in full, because "the budget was lowered" would be a misleading summary:
+
+1. **Measured LCP improved 4712 → 3441 ms** across Phase 0 and the 2026-07-19 fixes — real work: hero delivery, image transforms, the demo-reel removal.
+2. **Three further LCP experiments were run and all failed** (docs/13 §3f): static hero shell (−5 ms), eager home route (+240 ms, reverted as a regression), dropping `decoding="async"` (+43 ms, reverted). They established that Load Delay is 0 ms in every run and render delay is 46–81% of LCP — the remaining cost is main-thread execution under a 4× CPU throttle, not anything the resource layer can fix.
+3. **The LAB budget was then deliberately revised to 3500 ms** (docs/13 §3g, owner-authorised). **The FIELD budget is unchanged at 2500 ms mobile p75** — the product requirement did not move.
+
+Current: **3441 ms median against the 3500 ms lab ceiling.** That is 59 ms of headroom, so the gate is met but tight — it will fail on a genuine regression, which is intended.
+
+**Everything else in this amendment still binds.** WebGL remains desktop-only, post-LCP, decorative, confined to `src/cinematic/`, with zero content in the canvas and the kill-switch guarantee intact. The mobile TBT tripwire (docs/13 §5) is the instrument that proves the isolation holds — mobile must never load the cinematic chunk, so any movement in mobile TBT means it leaked.
 
 ## Changelog
 
