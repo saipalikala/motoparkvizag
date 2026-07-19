@@ -132,11 +132,17 @@ export default function CinematicVideoShowcase() {
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- click-to-pause is an enhancement; the Exit button is the accessible control */}
         <div className={styles.stage} onClick={playing ? stop : undefined}>
           {/* Base layer: the actual video. Poster-first — nothing streams until Play. */}
+          {/* No `poster` attribute on purpose. .posterLayer below is absolutely
+              positioned over this video and only hides once playback starts, so
+              the video's own poster is never visible — but the browser still
+              downloaded it, at the full untransformed size, because a poster
+              attribute cannot be lazy-loaded or run through cloudinaryUrl.
+              Measured on staging: a redundant 254.8 kB raw fetch on every load,
+              alongside the transformed copy the poster layer was already using. */}
           <video
             ref={videoRef}
             className={styles.video}
             src={current.src}
-            poster={current.poster}
             preload="none"
             playsInline
             muted
