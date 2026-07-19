@@ -39,12 +39,18 @@ export default function Hero({ products = [], loading = false }) {
           <source type="image/avif" media="(min-width: 768px)" srcSet="/hero-1600.avif" />
           <source type="image/webp" media="(max-width: 767px)" srcSet="/hero-960.webp" />
           <source type="image/webp" media="(min-width: 768px)" srcSet="/hero-1600.webp" />
+          {/* No `decoding` attribute: this is the LCP element, and decoding="async"
+              explicitly permits the browser to paint a frame WITHOUT it, which is
+              the one thing we don't want here. Measured LCP is 46-81% render
+              delay with Load Delay a flat 0 ms (docs/13 §3f), so the bytes are
+              already present and the remaining cost is getting them painted.
+              The lazy ticker thumbnails below keep decoding="async" — deferring
+              those is exactly right, they are not the LCP element. */}
           <img
             src="/hero-1600.jpg"
             alt=""
             className={styles.photo}
             fetchPriority="high"
-            decoding="async"
             width="1600"
             height="900"
           />
