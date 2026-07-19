@@ -99,11 +99,29 @@ async function main() {
     process.exit(1);
   }
 
+  /* HomePage is EAGER (docs/13 §3f), so it normally has no manifest entry of its
+   * own — it is compiled into the entry chunk and collectStatic() already counts
+   * it. That is a legitimate state, but "no separate chunk" and "not shipped at
+   * all" look identical here, and silently measuring less than the route really
+   * costs is precisely how a budget stops protecting anything. So prove it:
+   * the module must be inside a file we are about to measure. */
   const homeKey = Object.keys(manifest).find((k) => k.includes(HOME_MODULE_MATCH));
   if (!homeKey) {
-    console.warn(
-      `⚠ budgets: no manifest key matching "${HOME_MODULE_MATCH}" — measuring entry only.`,
-    );
+    const entryFile = manifest[entryKey].file;
+    let insideEntry = false;
+    try {
+      const map = JSON.parse(await readFile(join(DIST, '.vite', 'module-map.json'), 'utf8'));
+      insideEntry = (map[entryFile] ?? []).some((m) => m.includes(HOME_MODULE_MATCH));
+    } catch {
+      /* map missing — fall through to the hard failure below */
+    }
+    if (!insideEntry) {
+      console.error(
+        `✗ budgets: "${HOME_MODULE_MATCH}" is neither its own chunk nor inside the entry ` +
+          `(${entryFile}). The "/" route is not being measured — refusing to pass.`,
+      );
+      process.exit(1);
+    }
   }
 
   // The "/" route = entry + its static deps, plus HomePage + its static deps.

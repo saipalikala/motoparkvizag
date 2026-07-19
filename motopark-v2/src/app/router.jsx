@@ -5,8 +5,21 @@ import { Navigate, Routes, Route, useParams } from 'react-router-dom';
  * Route map = locked IA (docs/03 §1–2). Every page is lazy (docs/11 §10) so the
  * first paint ships only the shell + the landed route's chunk; heavy routes
  * (Checkout/Razorpay) load on demand. Chrome (Navbar/Footer) stays eager.
+ *
+ * HOME IS THE ONE EXCEPTION — eager, and deliberately so (docs/13 §3f).
+ *
+ * Lazy-loading the landing page costs a second round trip on the critical path:
+ * the shell painted at ~1330 ms and the hero could not paint until the HomePage
+ * chunk had been fetched and executed on top of that. Measured, LCP was 46-81%
+ * "render delay" — the hero image bytes were already on the device (Load Delay
+ * a flat 0 ms), waiting on the main thread rather than the network.
+ *
+ * Home is also the most-requested route, so its chunk is the one least worth
+ * deferring. Every other route stays lazy; this costs the entry chunk the
+ * homepage's weight and must be watched against the 180 kB route budget.
  */
-const HomePage = lazy(() => import('../pages/home/HomePage.jsx'));
+import HomePage from '../pages/home/HomePage.jsx';
+
 const StorePage = lazy(() => import('../pages/store/StorePage.jsx'));
 const CategoryPage = lazy(() => import('../pages/category/CategoryPage.jsx'));
 const ProductPage = lazy(() => import('../pages/product/ProductPage.jsx'));
