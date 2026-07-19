@@ -546,6 +546,43 @@ Scroll *smoothness* was not visually verified. The automation window runs rAF at
 
 ---
 
+## 5g. Post-merge verification on staging (2026-07-19)
+
+Phase 5 merged to `main` (`3136c3f`) and auto-deployed. Verified on the real deployment.
+
+### Functional: ✅ confirmed in a real browser
+
+Canvas mounts and runs (992 frames, context created, `state: running`), **mounted 1196 ms after `load`**, Lenis loaded, and — the condition that matters most — **the reported LCP element is still `IMG._photo_*`**. Amendment 1 condition 2 holds on the deployed build.
+
+### Measurement: ⚠️ `lh:cinematic` correctly REFUSED the staging capture
+
+The chunk was recorded in only **1 of 5** runs, so the script failed the capture and the summary was discarded rather than committed. **This is the assertion working, not a product defect** — the browser check above proves the layer loads.
+
+The cause is a limitation of the instrument worth knowing: **Lighthouse stops recording network activity before the trace ends.** In the failing runs the last recorded request ended at ~1501 ms while the scene mounts at ~1456 ms — right at the boundary. The one run that caught it recorded to 1988 ms. Staging is *faster* than local (load 256–724 ms vs ~50 ms of headroom locally), which pushes the mount past the recording window.
+
+> **Consequence: `lh:cinematic` is reliable against a local preview and unreliable against staging.** It fails safe — it refuses rather than reporting a wrong number — but the desktop cost figures in §5e/§5f stand on the *local* A/B, and there is currently no validated staging measurement of the canvas's cost. A future fix would assert on the trace or on a DOM probe rather than on the `network-requests` audit.
+
+### Staging metrics (page-level, valid regardless of the above)
+
+| run | LCP | TBT | CLS |
+|---|---|---|---|
+| 1 | 616 ms | 0 | 0.0156 |
+| 2 | 569 ms | 0 | 0.0159 |
+| 3 | 567 ms | 0 | 0.0156 |
+| 4 | 1236 ms | 0 | **0.0702** |
+| 5 | 1437 ms | 0 | 0.0156 |
+| **median** | **616 ms** | **0 ms** | **0.0156** |
+
+TBT is 0 in every run. LCP median 616 ms against the 695 ms ceiling — note this is motion-enabled (Lenis loads), so it is not comparable to the 545 ms reduced-motion baseline; the gap is consistent with the ~75 ms Lenis cost measured in §5d.
+
+### ⚠️ Open: one CLS run at 0.0702, over the 0.05 gate
+
+Pre-Phase-5 staging CLS was **0.015 on all five runs** — perfectly stable. Post-Phase-5 it is 0.0156 on four runs (i.e. unchanged) and **0.0702 on one**. The median passes and four of five match the old baseline almost exactly, so this is **not** a systematic regression from the transform — which is out of flow and excluded from layout-shift scoring in any case.
+
+The outlier landed on the slowest run (LCP 1236 ms), which fits the already-documented hero ticker skeleton→content swap: it is API-latency dependent, `docs/14` records it as "reproducibly 0.035 against a 0.05 gate" with a "thin" margin, and a slow Railway response would widen it. **That is a hypothesis, not a finding — it is not proven and it broke the gate once.** Re-measure on the next staging capture; if it recurs, reserve space for the ticker cards rather than raising the gate.
+
+---
+
 ## 6. Running Lighthouse on Windows — a required workaround
 
 `lhci collect` with `numberOfRuns > 1` **crashes on this machine**:
