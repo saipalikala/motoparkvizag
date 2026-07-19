@@ -271,6 +271,7 @@ Independent PageSpeed Insights measurement on 2026-07-19 recorded **desktop LCP 
 | Budget tripwire | `npm run budgets` (auto in `npm run build`) | Reads `dist/.vite/manifest.json`, resolves the chunks the `/` route pulls **statically**, gzip+brotli them, fails the build over budget. ~2 s, never flakes. |
 | Bundle analyzer | `npm run analyze` | `rollup-plugin-visualizer` treemap → `perf/stats.html`. |
 | Lighthouse CI | `npm run lhci` | `lighthouserc.json`: mobile, 5 runs, against **staging**, asserted against §5. |
+| Lighthouse CI (desktop) | `npm run lhci:desktop` | `lighthouserc.desktop.json`: desktop preset, 5 runs, `/` only. The only instrument that can measure the desktop-only cinematic layer — see §5b. |
 | Field CWV | automatic | `src/lib/webVitals.js` → GA4 `web_vitals` event. |
 | Hero variants | `npm run images` | Regenerate after art changes. Dev-only `sharp`; kept off the Vercel build path. |
 
@@ -296,14 +297,73 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 | Home CLS (mobile) | **≤ 0.05** — deliberately half the documented 0.1, to leave headroom |
 | Home TBT (mobile) | ≤ baseline **+ 0 ms** |
 | Home transferred JS | ≤ 180 kB brotli |
-| Desktop LCP | ≤ baseline + 150 ms |
+| Desktop LCP (median of 5) | ≤ baseline + 150 ms → hard ceiling **695 ms** — collector added 2026-07-19, see §5b |
 | **Desktop CLS** | **≤ 0.05** — added 2026-07-19, see below |
+| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, see §5b |
+
+All Lighthouse rows assert the **median** of the runs. This is set explicitly in both configs; lhci's default (`optimistic`) asserts the best run instead — see §5b.
 
 **Why the desktop CLS row exists.** Every CLS assertion here was mobile-only, and mobile CLS measured a clean 0 — so a **0.112 desktop CLS sat on production unnoticed** until a synthetic audit surfaced it. The cause was viewport-dependent: the route fallback reserved 60vh, which left the footer inside a 940px-tall desktop viewport and off-screen on mobile. A gate that only watches one viewport cannot see a defect that only exists in the other. Measured on staging after the fix: **0.11195 → 0.01481**, the entire remainder being the hero ticker's skeleton→content swap.
 
 **Why the TBT row is the sharpest instrument.** Mobile must never load the cinematic chunk at all (the eligibility chain hard-stops below 1024px). So *any* movement in mobile TBT means the isolation leaked. It is a boolean test of the whole cinematic architecture, and it runs automatically.
 
 `check-budgets.mjs` additionally fails the build outright if a chunk matching `three|react-three|r3f|gsap|lenis|cinematic` appears in the `/` **static** graph, or if any `src/cinematic/` module does.
+
+---
+
+## 5b. The desktop collector and baseline (2026-07-19)
+
+The desktop rows above had **no collector behind them** until now — `lighthouserc.json` collects mobile only, so "Desktop LCP ≤ baseline + 150 ms" had neither a baseline nor a way to measure one. `lighthouserc.desktop.json` + `npm run lhci:desktop` is that collector. This had to exist before Phase 5, because the cinematic layer is **desktop-only**: the mobile config is structurally incapable of measuring the users who actually receive the feature.
+
+### Baseline — `perf/baseline/baseline-2026-07-19-desktop.json`
+
+5 runs, staging, `/` only, desktop preset (1350×940 @1x, 1× CPU, 10 240 kbps).
+
+| metric | median | spread | mobile equivalent |
+|---|---|---|---|
+| **LCP** | **544.9 ms** | 523.8–563.4 ms (**39 ms**) | 3441 ms, ~1000 ms spread |
+| CLS | 0.0148 | 0.0148–0.0148 (**zero**) | 0 |
+| **TBT** | **0 ms** | 0–0 ms (**zero**) | 24 ms |
+| FCP | 390.0 ms | 388.8–402.8 ms | 1920 ms |
+| Performance score | 100 | 100 in all 5 runs | — |
+
+### Why this instrument is much better than the mobile one
+
+**The spread is 7% of the median (39 ms), against mobile's ~29% (~1000 ms).** §3e records that mobile lab noise is "too wide to adjudicate a ±100 ms gate" — that was the honest reason three LCP experiments were hard to read. Desktop does not have that problem, and can resolve the 150 ms allowance comfortably.
+
+**Desktop TBT is 0 ms in all five runs, and desktop CLS is bit-identical across all five.** That makes desktop the sharpest Phase 5 instrument available: after the canvas ships, *any* nonzero desktop TBT is attributable to it and nothing else. The mobile TBT row proves the layer stays **isolated**; the desktop TBT row is the only thing that will measure what it **costs**.
+
+The desktop CLS of 0.0148 independently reproduces the 0.01481 recorded in §5 after the footer fix — two separate measurement sessions agreeing, which is worth more than either alone.
+
+### Threshold provenance — read before treating these as binding
+
+- **LCP 695 ms** = measured baseline 545 + the 150 ms allowance §5 already authorises. Derived, not invented.
+- **CLS 0.05** = the existing §5 desktop row.
+- **TBT 150 ms** — **owner-approved 2026-07-19.** Desktop TBT baselines at exactly 0, so any ceiling is a judgement call; 150 ms sits below the mobile 200 ms ceiling and is deliberately generous against a 0 ms baseline. Rationale on approval: *"150 ms gives us enough room for the shader while ensuring we don't accidentally ship a massive CPU hog."*
+
+### `aggregationMethod` — both gates now assert the median (fixed 2026-07-19)
+
+lhci defaults to `aggregationMethod: "optimistic"`, which for a `maxNumericValue` assertion tests the **best** of the N runs, not the median. Both configs carried that default — so although §3g reasons entirely in medians ("3441 ms against the new 3500 ms ceiling — 59 ms of headroom") and §5 labels the rows "median of 5", **what actually got asserted was the fastest run of 5**, against a mobile spread reaching 4276 ms. The gate was measurably weaker than its own documentation.
+
+**Both `lighthouserc.json` and `lighthouserc.desktop.json` now set `"aggregationMethod": "median"` explicitly**, owner-approved 2026-07-19 on the grounds that the gate "needs to reflect reality and match the documentation". Verified green after the change — see below.
+
+**If you add a third config, set this key explicitly.** The default is not the one this project's documentation assumes, and nothing warns you.
+
+### Running it
+
+Same Windows constraint as §6 — `numberOfRuns > 1` crashes. Runs are also flaky roughly 1-in-5 (one of the five baseline captures failed and was retried), so check the file count before summarising:
+
+```bash
+mkdir -p .lighthouseci/keep
+for i in 1 2 3 4 5; do
+  npx lhci collect --config=lighthouserc.desktop.json --numberOfRuns=1 >/dev/null 2>&1 || true
+  f=$(ls .lighthouseci/lhr-*.json 2>/dev/null | head -1)
+  [ -n "$f" ] && cp "$f" ".lighthouseci/keep/run-$i.json" && rm -f .lighthouseci/lhr-*
+done
+node scripts/summarize-lhr.mjs <label>-desktop .lighthouseci/keep/run-*.json
+```
+
+`summarize-lhr.mjs` no longer hardcodes its `conditions` string as mobile — it reads form factor, throttling and emulation from each report, and **refuses to summarise runs from different form factors under one label**. Without that, a desktop capture would have been written to disk describing itself as mobile, and a desktop-vs-mobile comparison would have looked like a 6× improvement. That is precisely the like-for-like trap in `docs/14 §5`, so it is now enforced by the tool rather than by memory.
 
 ---
 

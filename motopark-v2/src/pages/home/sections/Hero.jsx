@@ -1,9 +1,25 @@
+import { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import { formatINR } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
+import { useCinematicHero } from '@/hooks/useCinematicHero.js';
 import styles from './Hero.module.css';
+
+/**
+ * The decorative WebGL layer (docs/10 Amendment 1). Dynamic import ONLY — a
+ * static one would merge src/cinematic/ into the bundle every shopper downloads
+ * and fail `npm run build` (docs/11 §7b).
+ *
+ * The `.catch` is the kill-switch: a deleted folder or a chunk that fails to
+ * load renders nothing instead of throwing a blank page into the hero. Test it
+ * by literally deleting src/cinematic/ and confirming the storefront still
+ * builds and works.
+ */
+const HeroScene = lazy(() =>
+  import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })),
+);
 
 /**
  * Homepage Hero — Concept C "Cinematic Hybrid" (docs/10 §C-5).
@@ -18,6 +34,8 @@ import styles from './Hero.module.css';
  */
 export default function Hero({ products = [], loading = false }) {
   const ticker = products.slice(0, 3);
+  // false until: eligible AND LCP observed AND the browser went idle.
+  const showScene = useCinematicHero();
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
@@ -49,6 +67,17 @@ export default function Hero({ products = [], loading = false }) {
             height="900"
           />
         </picture>
+        {/* Decorative canvas sits BETWEEN the photo and the scrim. That ordering
+            is a contrast guarantee, not a stacking accident: the scrim is painted
+            over whatever this renders, so the headline's AA contrast holds no
+            matter what the shader eventually does. Do not hoist it above the
+            scrim. `fallback={null}` because the hero must be complete without it
+            (Amendment 1 condition 5) — there is nothing to spin for. */}
+        {showScene && (
+          <Suspense fallback={null}>
+            <HeroScene />
+          </Suspense>
+        )}
         <div className={styles.scrim} />
       </div>
 

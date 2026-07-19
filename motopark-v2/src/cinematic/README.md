@@ -36,9 +36,45 @@ that is *decoration*.
 
 ## Kill switch
 
-Deleting this folder and its lazy mounts must leave the storefront fully
+Deleting this folder **and its lazy mounts** must leave the storefront fully
 functional and visually complete. If that stops being true, the boundary has
 been violated.
+
+### What the kill switch does and does not cover (verified 2026-07-19)
+
+The mount is written as:
+
+```js
+lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))
+```
+
+**The `.catch` covers a RUNTIME chunk failure** — a 404 after a redeploy
+invalidates old hashes, a CDN blip, an offline client. That is the case that
+actually happens in production, and it degrades to a plain hero with no error.
+
+**It does NOT cover deleting the folder from the source tree.** `docs/14 §3b`
+described the test as *"literally deleting `src/cinematic/` and confirming the
+storefront builds"*. That test was run and **the build fails**:
+
+```
+[UNLOADABLE_DEPENDENCY] Could not load src/cinematic/HeroScene.jsx
+[UNLOADABLE_DEPENDENCY] Could not load src/cinematic/smoothScroll.js
+```
+
+A dynamic `import()` with a *static string* is still resolved at build time —
+`.catch` is a runtime handler and cannot run for a module that was never bundled.
+Note the second error: **this has been true since Phase 3's Lenis mount**, so the
+documented test has never passed. It is not a regression introduced by Phase 5.
+
+**This is being left as-is deliberately.** A missing source file *should* fail the
+build loudly rather than silently producing a different application. The doctrine's
+real requirement — that the storefront does not depend on this folder for function —
+holds: delete the folder *and* the two mount sites (three lines in `Hero.jsx` and
+`useSmoothScroll.js`) and everything works. Engineering a virtual-module fallback to
+make the build survive a half-finished deletion would trade a loud, correct failure
+for a quiet, confusing one.
+
+To run the check properly: remove the folder **and** the mounts, then build.
 
 ## How this is enforced (all three fire automatically)
 

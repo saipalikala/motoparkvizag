@@ -128,6 +128,14 @@ Amendment 1 permits "a decorative WebGL layer". It does **not** require a 3D eng
 
 A hand-written **WebGL2 fullscreen fragment shader** costs roughly **3–6 kB with zero dependencies** and covers everything the brief actually describes — grain, a slow light sweep, subtle depth displacement of the hero photograph, drifting dust motes. **Recommended: Option A (raw shader).** Take Option B (`three` + r3f) only if an approved visual direction genuinely needs 3D geometry, and re-run the budget maths first.
 
+> **⚠️ Correction (2026-07-19) — the byte argument above does not actually hold, but the conclusion does.**
+>
+> "230–280 kB against ~52 kB of headroom" compares Three.js to a budget that **structurally does not apply to it**. `check-budgets.mjs` counts the entry chunk and HomePage plus their *static* imports only; its own header says *"Dynamic imports are deliberately NOT counted — that is the whole point."* A correctly lazy `src/cinematic/` chunk never enters that total no matter how large it is. **Three.js would pass every byte gate in this repo cleanly.** Anyone who checks this will find the stated reason for Option A is wrong, and could reasonably conclude Three.js is therefore fine.
+>
+> **It isn't, and here is the argument that survives.** The binding constraint is **desktop main-thread time**, not route bytes. 230–280 kB of JavaScript must still be parsed, compiled and executed on the device — post-LCP, but on the same thread as everything else — and `docs/13 §5b` now measures that: **desktop TBT baselines at exactly 0 ms across all 5 runs.** A raw shader adds a few kB and a compile; an engine adds a quarter-megabyte of module evaluation to a metric whose entire current value is zero. Amendment 1 condition 6 ("self-limiting … unmounts if frame times degrade") points the same way.
+>
+> So: **still Option A**, but for a reason that is now measurable rather than a byte comparison that doesn't apply. If Option B is ever revisited, the test is a desktop TBT/LCP capture against `baseline-2026-07-19-desktop.json` — not `npm run budgets`, which will wave it through.
+
 Option A also makes the degradation ladder trivial: cutting a 5 kB decorative chunk is nothing.
 
 ### Condition-by-condition enforcement
@@ -140,26 +148,89 @@ Option A also makes the degradation ladder trivial: cutting a 5 kB decorative ch
 | 4 | No content in canvas | Enforced by review + the `src/cinematic/` import ban (no `services/`, `contexts/`, `lib/api.js`) |
 | 5 | Additive to a complete hero | Hero renders identically with the canvas absent; kill-switch test below |
 | 6 | **Self-limiting: capped DPR, paused when hidden/scrolled out, unmounts if frame times degrade** | DPR `min(dpr, 1.5)`; `visibilitychange` + IntersectionObserver pause; a rolling frame-time watchdog that unmounts back to the static hero |
-| 7 | reduced-motion / save-data / low-memory / no-WebGL fall back silently | **Gate must be extended — see below** |
+| 7 | reduced-motion / save-data / low-memory / no-WebGL fall back silently | ✅ `isWebGLHeroEligible()` in `src/lib/motionEligibility.js` — built and browser-verified 2026-07-19, see below |
 
-### Two gaps found while reading the amendment
+### Two gaps found while reading the amendment — ✅ BOTH CLOSED 2026-07-19
 
-**A. `motionEligibility.js` is insufficient for Phase 5.** It covers width, pointer and reduced-motion. Condition 7 also requires **save-data** (`navigator.connection.saveData`), **low-memory** (`navigator.deviceMemory`) and **no-WebGL** (a real context-creation probe — support cannot be assumed from UA). These must be added *before* any canvas code, and the WebGL probe must dispose its test context.
+**A. `motionEligibility.js` was insufficient for Phase 5.** ✅ **Extended.** It covered width, pointer and reduced-motion; condition 7 also requires save-data, low-memory and a real WebGL context probe.
 
-**B. Nothing measures the desktop cost.** `lighthouserc.json` collects **mobile only**. The mobile TBT tripwire proves *isolation* (that mobile never loads the chunk) — it is structurally incapable of measuring what the canvas costs the desktop users who actually get it. `docs/13 §5` has a "Desktop LCP ≤ baseline + 150 ms" row with **no collector behind it**.
+Added **additively** — `isCinematicEligible()` is byte-for-byte unchanged, so Phase 3's Lenis behaviour is untouched. Folding the new checks into it would have silently altered shipped, verified code as a side effect of Phase 5 work; Lenis is a scroll easing with no GPU cost, and the two gates are not the same gate.
 
-> **Do this first: add a desktop Lighthouse config and capture a desktop baseline BEFORE writing canvas code.** Otherwise Phase 5's cost is unmeasurable and the §5 desktop row is decorative.
+- `hasConstrainedResources()` — `saveData === true`, or `deviceMemory < 4`. Both APIs are Chromium-only; **absent reads as unconstrained**, because assuming constraint would disable the layer for every Safari and Firefox desktop user on no evidence.
+- `hasWebGL2()` — real `getContext('webgl2', { failIfMajorPerformanceCaveat: true })`. Disposes its test context via `WEBGL_lose_context` (browsers cap ~16 concurrent contexts and evict the oldest — a leaked probe per call would eventually kill the real canvas), and memoises. The memoisation is a deliberate exception to the file's "never cache" rule: GPU capability can't change mid-session, unlike a media query. It answers *"is it worth downloading the chunk"*; the authoritative check remains the real `getContext` in the scene plus the condition-6 watchdog.
+- `isWebGLHeroEligible()` — the composed gate. **Order is load-bearing:** cheap media queries short-circuit first, so a phone never allocates a GL context just to be told it's ineligible on width.
+
+**Verified in a real browser, 12 + 8 assertions, all passing** — memory boundary (4 GB is *not* low), save-data, absent APIs, `null` and *throwing* `getContext`, memoisation of both `true` and `false`, and the two claims that actually mattered: the probe's context reads `isContextLost() === true` afterwards, and 40 consecutive probes still leave a real context obtainable. The in-app pane was adequate here — `docs/14 §5`'s warning is about rAF and IntersectionObserver, and this gate uses neither.
+
+**Costs 0 bytes on `/`** — verified tree-shaken out of the built bundle (nothing calls it yet), and a like-for-like build on a clean tree gives the identical 128.4 kB. *(§4's "127.9 kB" is stale; the current figure is 128.4 kB, unrelated to this change.)*
+
+**B. Nothing measured the desktop cost.** ✅ **Collector built and baseline captured** — `lighthouserc.desktop.json`, `npm run lhci:desktop`, `perf/baseline/baseline-2026-07-19-desktop.json`. Full detail in **`docs/13 §5b`**.
+
+**Desktop LCP 545 ms · CLS 0.0148 · TBT 0 ms · score 100.** The important part is the *precision*: the LCP spread is **39 ms (7%)** against mobile's ~1000 ms (29%), and TBT and CLS are identical across all five runs. §3e records that mobile noise is "too wide to adjudicate a ±100 ms gate" — desktop does not have that problem.
+
+> **This inverts which instrument matters for Phase 5.** Mobile TBT proves the layer stays *isolated*; **desktop TBT is the only thing that measures what it costs**, and it baselines at exactly 0 ms, so any nonzero value afterwards is attributable to the canvas and nothing else.
+
+Two things surfaced while building it, both recorded in `docs/13 §5b`:
+
+- **`summarize-lhr.mjs` hardcoded its `conditions` string as `"mobile · …"`.** Left alone, the desktop baseline would have been committed describing itself as mobile — and desktop LCP is ~6× faster, so the mislabelled file would read as a spectacular improvement to anyone comparing. It now derives conditions from each report and **refuses to summarise mixed form factors under one label** (guard tested in both directions). This is the §5 like-for-like trap, now enforced by the tool instead of by memory.
+- **The gates were weaker than their documentation — ✅ fixed 2026-07-19.** lhci defaults to `aggregationMethod: "optimistic"`, which for `maxNumericValue` asserts the **best** of 5 runs — while §5 labels the rows "median of 5" and §3g reasons entirely in medians. **Both** configs now set `"median"` explicitly (owner-approved). If you ever add a third config, set the key: the default is not what this project's docs assume, and nothing warns you.
 
 ### Proposed sequence
 
-1. Desktop lhci config + desktop baseline captured and committed.
-2. Extend `motionEligibility.js` for save-data / deviceMemory / WebGL probe. Verify each branch.
-3. `HeroScene.jsx` in `src/cinematic/` — inert scaffold, correct lifecycle, no visual effect yet. Prove: post-LCP mount, kill-switch, pause/resume, watchdog unmount.
+1. ~~Desktop lhci config + desktop baseline captured and committed.~~ ✅ **Done** — `docs/13 §5b`.
+2. ~~Extend `motionEligibility.js` for save-data / deviceMemory / WebGL probe. Verify each branch.~~ ✅ **Done** — see A above.
+3. ~~`HeroScene.jsx` — inert scaffold, correct lifecycle, no visual effect yet.~~ ✅ **Done 2026-07-19** — see §3c below.
 4. Re-measure: desktop LCP within +150 ms; **mobile TBT unchanged** (the isolation tripwire); route JS unchanged.
 5. Only then the actual shader/visual work, which needs an approved visual direction.
 6. Amendment 1 **(B)** — capped scroll-linked transform on the hero media — as a separate, later step.
 
-**Kill-switch implementation.** `lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))`. A deleted folder or a failed chunk then renders nothing instead of throwing. Test by literally deleting `src/cinematic/` and confirming the storefront builds and works.
+**Kill-switch implementation.** `lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))`. A failed chunk then renders nothing instead of throwing.
+
+> **⚠️ Corrected 2026-07-19 — the `.catch` does NOT survive deleting the folder, and the test as written here never passed.** A dynamic `import()` with a static string is resolved at *build* time; `.catch` is a runtime handler and cannot run for a module that was never bundled. Deleting `src/cinematic/` and building fails with `UNLOADABLE_DEPENDENCY` for **both** `HeroScene.jsx` and `smoothScroll.js` — the second meaning this has been true since **Phase 3**, not a Phase 5 regression. Left as-is deliberately: a missing source file should fail the build loudly, not silently ship a different app. The real requirement still holds — delete the folder *and* its two mount sites (three lines) and the storefront is complete. Detail in `src/cinematic/README.md`.
+
+---
+
+## 3c. Phase 5 step 3 — the inert scaffold ✅ (2026-07-19)
+
+Three new files, all verified in a **production build** via `vite preview` (see the trap at the end — the dev server cannot prove this):
+
+| File | Role |
+|---|---|
+| `src/hooks/useCinematicHero.js` | Enforces *when* the layer may load. Outside `src/cinematic/` — it decides whether to download that folder. |
+| `src/cinematic/HeroScene.jsx` | The canvas. Real WebGL2 context, real rAF loop, **clears to transparent — no visual effect yet.** |
+| `src/cinematic/sceneDiagnostics.js` | Observable state + watchdog tunables. The layer is invisible, so without this "working" and "silently broken" are indistinguishable. |
+
+`Hero.jsx` mounts it between the photo and the scrim. That ordering is a **contrast guarantee**: the scrim paints over the canvas, so the headline's AA contrast holds regardless of what the shader eventually renders. Chunk: **2.12 kB raw / 1.14 kB gzip**, outside the `/` static graph. Route JS 128.4 → **128.9 kB**.
+
+### Verified behaviour
+
+| Claim | Result |
+|---|---|
+| Mounts after the page settles | mount at **964 ms**, `load` at 54 ms (+910 ms) |
+| Non-interactive | canvas is never the hit-test target; CTA navigates to `/store` |
+| `aria-hidden`, below scrim, DPR capped | all confirmed |
+| Pause off-screen / resume | `paused-offscreen`, frames frozen → `running` |
+| Unmount on route change | canvas removed, state `idle` |
+| **Watchdog retires** | 180 frames = 3 × 60, 3 strikes, `mean frame 100.0ms > 32ms`, canvas removed, **hero fully intact** |
+| **Mobile isolation** | at 390 px: cinematic chunk **never requested**, no Lenis either, hero complete |
+
+### Two design corrections found by measuring
+
+**1. Waiting for an LCP entry is a trap.** The first implementation armed on `PerformanceObserver('largest-contentful-paint')`. Verified in-browser: a load of this homepage produced an **empty `paint` timeline and zero LCP entries**, and the hook sat idle until its 8-second fallback. This is not only a test artifact — Chrome reports no LCP for **bfcache restores, prerendered pages, and tabs opened in the background**. Gating on an entry that may never arrive is a silent stall.
+
+Now the trigger is **`load` AND the last LCP candidate, whichever is later**. `load` always fires, so it is a reliable floor; LCP candidates only ever push the moment later. Amendment 1's intent ("not fetched until LCP observed") is met — arming is never earlier than the final LCP candidate when one exists — and `requestIdleCallback` is the second, independent guarantee, since a thread still working toward a paint is not idle.
+
+**2. The watchdog conflated "slow GPU" with "browser throttling us".** An unfocused window ran at ~5 fps (~200 ms deltas) while rendering perfectly. Retiring is permanent for the life of the mount, so that would have disabled the layer over a condition lasting seconds that is not our cost. Deltas above `outlierMs` (150 ms) are now **discarded, not counted** — discarded rather than clamped, because a clamped outlier still drags the mean toward the budget and retires by attrition.
+
+### Also worth knowing
+
+- **The WebGL probe runs inside the idle callback, not in the early bail-out.** It creates a real GPU context; running it during load would put main-thread work in front of the very LCP it protects. Cheap media queries bail out early; expensive checks only once provably idle.
+- **`sceneDiagnostics` is pinned to `globalThis` via `Symbol.for`.** A module can be instantiated twice (Vite appends a version query to changed modules), which read as "canvas mounted but no context created" — two objects, one never written to.
+- **The dev server cannot verify this.** StrictMode double-mounts; cleanup calls `loseContext()`, and the second mount reuses the *same* canvas element and gets back a dead context. Harmless in production (a real route change destroys the element) but it makes the rAF loop unverifiable in dev. **Verify the scene against `npm run preview` (build first), not `npm run dev`.**
+
+### Not yet done
+
+**Step 4 has not been run: no desktop Lighthouse capture exists with the scaffold in place.** The baseline to beat is `perf/baseline/baseline-2026-07-19-desktop.json` — LCP 545 ms (ceiling 695), CLS 0.0148, **TBT 0 ms** (ceiling 150). Do that before step 5's shader work, or the shader and the scaffold will be measured together and neither will be attributable.
 
 ---
 
@@ -167,7 +238,7 @@ Option A also makes the degradation ladder trivial: cutting a 5 kB decorative ch
 
 ### The 180 kB budget
 
-Route `/` must stay **≤ 180 kB transferred (brotli) JS**. Currently **127.9 kB (71%)** — roughly **30 kB of headroom**.
+Route `/` must stay **≤ 180 kB transferred (brotli) JS**. Currently **128.4 kB (71%)** — roughly **52 kB of headroom**. *(Measured 2026-07-19 via `npm run build`. The earlier "127.9 kB / ~30 kB headroom" reading was a stale Phase 0 figure; the headroom arithmetic against it was also wrong — 180 − 128.4 = 51.6.)*
 
 The cinematic stack costs **230–280 kB gz** (`three` 150–170, `@react-three/fiber` ~30, `drei` 20–50, `gsap` ~28). That is **~8× the headroom**, and it is the single fact that dictates the whole architecture below.
 
@@ -206,6 +277,8 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Never report a lab delta without a like-for-like baseline.** A measured CLS of 0.088 on a feature branch looked like a regression; `main` measured 0.08832 under identical conditions. The change contributed nothing. Two of the three LCP experiments would have been misread the same way without a same-session control.
 - **Distrust a summary number until you look at its distribution.** "50 products updated in 30 days" implied daily inventory work; 46 of those writes landed on a single day (a bulk backfill) with only 5 distinct `updatedAt` values across all 50 rows. That one check cancelled an entire rebuild.
 - **A gate that watches one viewport cannot see a defect that exists only in the other.** Desktop CLS sat at 0.112 on production while the mobile-only assertion read a clean 0.
+- **Verify the cinematic layer against `npm run preview`, never `npm run dev`.** StrictMode double-mounts effects; HeroScene's cleanup calls `WEBGL_lose_context.loseContext()`, and StrictMode's second mount reuses the **same canvas element** and gets back a dead context. The rAF loop then runs exactly one frame and stops, which looks like a broken watchdog but is a dev-only artifact — a real route change destroys the element, so production is fine. Use `npm run build && npm run preview`.
+- **A dynamic `import()` with a static string is still resolved at build time.** The `.catch()` kill-switch protects a runtime chunk failure, not a deleted folder — see §3b's correction.
 - **The in-app browser pane reports `visibilityState: "hidden"`.** That suppresses IntersectionObserver callbacks and freezes `requestAnimationFrame`, so reveals and Lenis motion **cannot be verified there** — screenshots and rAF-based probes just hang. Verify scroll/animation work through the Playwright MCP browser instead; it renders and reports `prefers-reduced-motion: no-preference`.
 
 ---
