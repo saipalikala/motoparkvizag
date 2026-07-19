@@ -19,6 +19,7 @@ dist-ssr
 # retained. Only perf/baseline/<label>.json is committed.
 .lighthouseci/
 perf/lhci/
+perf/lhci-desktop/
 perf/stats.html
 perf/baseline/home-*.json
 

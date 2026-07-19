@@ -10,6 +10,7 @@
     "budgets": "node scripts/check-budgets.mjs",
     "analyze": "cross-env ANALYZE=1 vite build && node scripts/check-budgets.mjs",
     "lhci": "lhci autorun",
+    "lhci:desktop": "lhci autorun --config=lighthouserc.desktop.json",
     "lint": "oxlint",
     "preview": "vite preview",
     "images": "node scripts/generate-hero-images.mjs"

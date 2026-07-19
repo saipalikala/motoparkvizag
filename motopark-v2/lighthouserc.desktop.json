@@ -1,0 +1,64 @@
+{
+  "_comment": [
+    "Desktop performance gate. See docs/13 §5 and docs/14 §3b.",
+    "",
+    "WHY THIS FILE EXISTS: lighthouserc.json collects mobile only. The cinematic",
+    "layer (docs/10 Amendment 1) is DESKTOP-ONLY — it hard-stops below 1024px and",
+    "on pointer:coarse — so the mobile config is structurally incapable of",
+    "measuring what it costs. Mobile TBT proves ISOLATION (that mobile never loads",
+    "the chunk); it says nothing about the users who actually get the feature.",
+    "docs/13 §5 has carried a 'Desktop LCP <= baseline + 150 ms' row with no",
+    "collector behind it. This is the collector.",
+    "",
+    "preset 'desktop' (not 'perf') because desktop is not just a viewport: it also",
+    "swaps throttling from mobileSlow4G/4x-CPU to desktopDense4G/1x-CPU and changes",
+    "the user agent. Setting formFactor alone would emulate a desktop screen while",
+    "still simulating a throttled phone, and the resulting numbers would describe",
+    "no real user. onlyCategories restores the performance-only scope that 'perf'",
+    "gave the mobile config, since Lighthouse allows only one preset.",
+    "",
+    "Home route only: the cinematic layer is home-only, and desktop's one known",
+    "CLS defect (the 100dvh route fallback) is observable there.",
+    "",
+    "Run with the Windows one-at-a-time loop in docs/13 §6 — lhci autorun with",
+    "numberOfRuns > 1 crashes on this machine.",
+    "",
+    "aggregationMethod 'median' is set EXPLICITLY. lhci defaults to 'optimistic',",
+    "which for a maxNumericValue assertion tests the BEST of the 5 runs — not the",
+    "median that docs/13 §5 says these rows are. lighthouserc.json (mobile) still",
+    "carries that default and so is a weaker gate than it is documented to be.",
+    "",
+    "Thresholds: LCP 695 = measured baseline 545 + the 150 ms allowance already in",
+    "docs/13 §5. CLS 0.05 is the §5 desktop row. TBT 150 was a new row, OWNER-",
+    "APPROVED 2026-07-19: desktop TBT baselines at exactly 0 ms across all 5 runs,",
+    "so any nonzero desktop TBT after Phase 5 is attributable to the canvas and",
+    "nothing else — 150 ms leaves room for a shader while catching a CPU hog."
+  ],
+  "ci": {
+    "collect": {
+      "url": ["https://motopark-v2-ebon.vercel.app/"],
+      "numberOfRuns": 5,
+      "settings": {
+        "preset": "desktop",
+        "onlyCategories": ["performance"],
+        "throttlingMethod": "simulate"
+      }
+    },
+    "assert": {
+      "aggregationMethod": "median",
+      "assertions": {
+        "largest-contentful-paint": ["error", { "maxNumericValue": 695 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 150 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
+        "resource-summary:script:size": ["error", { "maxNumericValue": 184320 }],
+        "uses-responsive-images": "warn",
+        "prioritize-lcp-image": "warn",
+        "unused-javascript": "warn"
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": "./perf/lhci-desktop"
+    }
+  }
+}

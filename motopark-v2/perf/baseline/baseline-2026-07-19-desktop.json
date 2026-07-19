@@ -1,0 +1,118 @@
+{
+  "label": "baseline-2026-07-19-desktop",
+  "capturedAt": "2026-07-19T05:54:21.771Z",
+  "lighthouseVersion": "12.6.1",
+  "runCount": 5,
+  "conditions": "desktop · simulate throttling · 1350x940@1x · 1x CPU · 10240 kbps",
+  "medians": {
+    "largest-contentful-paint": 544.947,
+    "first-contentful-paint": 390.014,
+    "cumulative-layout-shift": 0.015,
+    "total-blocking-time": 0,
+    "speed-index": 754.602,
+    "interactive": 545.447
+  },
+  "spread": {
+    "largest-contentful-paint": {
+      "min": 523.849,
+      "max": 563.38
+    },
+    "first-contentful-paint": {
+      "min": 388.849,
+      "max": 402.776
+    },
+    "cumulative-layout-shift": {
+      "min": 0.015,
+      "max": 0.015
+    },
+    "total-blocking-time": {
+      "min": 0,
+      "max": 0
+    },
+    "speed-index": {
+      "min": 725.529,
+      "max": 808.61
+    },
+    "interactive": {
+      "min": 524.349,
+      "max": 563.83
+    }
+  },
+  "runs": [
+    {
+      "url": "https://motopark-v2-ebon.vercel.app/",
+      "fetchTime": "2026-07-19T05:51:57.139Z",
+      "formFactor": "desktop",
+      "score": 100,
+      "scriptTransferBytes": 158322,
+      "metrics": {
+        "largest-contentful-paint": 563.38,
+        "first-contentful-paint": 398.88,
+        "cumulative-layout-shift": 0.015,
+        "total-blocking-time": 0,
+        "speed-index": 725.529,
+        "interactive": 563.83
+      }
+    },
+    {
+      "url": "https://motopark-v2-ebon.vercel.app/",
+      "fetchTime": "2026-07-19T05:52:12.723Z",
+      "formFactor": "desktop",
+      "score": 100,
+      "scriptTransferBytes": 158422,
+      "metrics": {
+        "largest-contentful-paint": 523.849,
+        "first-contentful-paint": 388.849,
+        "cumulative-layout-shift": 0.015,
+        "total-blocking-time": 0,
+        "speed-index": 759.506,
+        "interactive": 524.349
+      }
+    },
+    {
+      "url": "https://motopark-v2-ebon.vercel.app/",
+      "fetchTime": "2026-07-19T05:52:50.192Z",
+      "formFactor": "desktop",
+      "score": 100,
+      "scriptTransferBytes": 158365,
+      "metrics": {
+        "largest-contentful-paint": 524.938,
+        "first-contentful-paint": 389.438,
+        "cumulative-layout-shift": 0.015,
+        "total-blocking-time": 0,
+        "speed-index": 748.115,
+        "interactive": 525.389
+      }
+    },
+    {
+      "url": "https://motopark-v2-ebon.vercel.app/",
+      "fetchTime": "2026-07-19T05:54:03.817Z",
+      "formFactor": "desktop",
+      "score": 100,
+      "scriptTransferBytes": 158372,
+      "metrics": {
+        "largest-contentful-paint": 544.947,
+        "first-contentful-paint": 402.776,
+        "cumulative-layout-shift": 0.015,
+        "total-blocking-time": 0,
+        "speed-index": 808.61,
+        "interactive": 545.447
+      }
+    },
+    {
+      "url": "https://motopark-v2-ebon.vercel.app/",
+      "fetchTime": "2026-07-19T05:53:39.760Z",
+      "formFactor": "desktop",
+      "score": 100,
+      "scriptTransferBytes": 158368,
+      "metrics": {
+        "largest-contentful-paint": 545.014,
+        "first-contentful-paint": 390.014,
+        "cumulative-layout-shift": 0.015,
+        "total-blocking-time": 0,
+        "speed-index": 754.602,
+        "interactive": 545.465
+      }
+    }
+  ]
+}
