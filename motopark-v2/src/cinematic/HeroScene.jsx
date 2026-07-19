@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { sceneDiagnostics, sceneTuning } from './sceneDiagnostics.js';
+import { VERT, buildFrag, MOTE_VERT, MOTE_FRAG, MOTE_COUNT } from './heroShader.js';
 import styles from './HeroScene.module.css';
 
 /**
  * HeroScene — the decorative WebGL layer for the homepage hero.
  *
- * **This is the Phase 5 step-3 scaffold: lifecycle only, NO visual effect.**
- * It creates a real WebGL2 context and runs a real rAF loop, but every frame
- * clears to fully transparent. That is deliberate — the point of this step is to
- * prove the lifecycle (mount timing, pause/resume, watchdog, kill-switch) under
- * measurement *before* any shader exists to confound the numbers. docs/14 §3b
- * step 4 re-measures against `perf/baseline/baseline-2026-07-19-desktop.json`
- * (desktop LCP 545 ms, TBT 0 ms) before step 5 adds the visual work.
+ * Two fullscreen-cheap passes per frame: `heroShader.js`'s grain / light sweep /
+ * depth haze, then ~14 additively-blended dust motes drawn as `GL_POINTS`.
+ * Measured cost against a no-canvas control: **TBT 0 ms, LCP +0.9 ms**
+ * (`docs/13 §5e`). There are no textures, no attribute buffers and no per-frame
+ * allocations — the CPU cost of a frame is two `drawArrays` calls.
+ *
+ * The hero photograph is deliberately NOT sampled or displaced; see the header
+ * of `heroShader.js` for why Amendment 1 condition 2 rules that out.
  *
  * Governed by docs/10 Amendment 1. Conditions implemented here:
  *
@@ -30,6 +32,64 @@ import styles from './HeroScene.module.css';
  *  is looking directly at; 1.5 keeps it crisp on the retina laptops that dominate
  *  this audience without paying for it twice. Amendment 1 condition 6. */
 const MAX_DPR = 1.5;
+
+/**
+ * Which effects are compiled into the fragment program.
+ *
+ * Kept as a single object so the incremental benchmarks in `docs/13 §5e` are
+ * reproducible: each one was captured by flipping a flag here and rebuilding,
+ * with the later effects genuinely absent from the compiled shader rather than
+ * multiplied by zero.
+ */
+const SHADER_FX = { grain: true, sweep: true, haze: true, motes: true };
+
+/**
+ * Compile and link, returning null on any failure.
+ *
+ * Returning null rather than throwing is deliberate: a driver that rejects this
+ * shader must land the user on the static hero, which is exactly what happens
+ * when there is no GPU at all. A throw inside an effect would escape into the
+ * page instead (Amendment 1 condition 5).
+ */
+function buildProgram(gl, vertSrc, fragSrc) {
+  const compile = (type, src) => {
+    const sh = gl.createShader(type);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+      // Surfaced in dev only; in production this silently degrades.
+      if (import.meta.env?.DEV) console.warn('[cinematic]', gl.getShaderInfoLog(sh));
+      gl.deleteShader(sh);
+      return null;
+    }
+    return sh;
+  };
+
+  const vs = compile(gl.VERTEX_SHADER, vertSrc);
+  const fs = vs && compile(gl.FRAGMENT_SHADER, fragSrc);
+  if (!vs || !fs) {
+    if (vs) gl.deleteShader(vs);
+    return null;
+  }
+
+  const program = gl.createProgram();
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  // Shaders are detached and deleted immediately; the linked program keeps
+  // what it needs and the driver can release the sources.
+  gl.detachShader(program, vs);
+  gl.detachShader(program, fs);
+  gl.deleteShader(vs);
+  gl.deleteShader(fs);
+
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    if (import.meta.env?.DEV) console.warn('[cinematic]', gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+    return null;
+  }
+  return program;
+}
 
 export default function HeroScene() {
   const canvasRef = useRef(null);
@@ -63,6 +123,30 @@ export default function HeroScene() {
       return undefined;
     }
 
+    // ── Program ───────────────────────────────────────────────────────────
+    // Compiled once at mount. A shader that fails to compile must degrade to
+    // the static hero exactly like a missing GPU does — never a broken hero.
+    const program = buildProgram(gl, VERT, buildFrag(SHADER_FX));
+    if (!program) {
+      sceneDiagnostics.state = 'failed';
+      sceneDiagnostics.retiredReason = 'shader compile/link failed';
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      setRetired(true);
+      return undefined;
+    }
+    const uRes = gl.getUniformLocation(program, 'u_res');
+    const uTime = gl.getUniformLocation(program, 'u_time');
+    const uIntensity = gl.getUniformLocation(program, 'u_intensity');
+
+    // Motes are a second, tiny points pass. If only this program fails we drop
+    // the motes and keep the rest — a partial degrade beats losing the layer.
+    const moteProgram = SHADER_FX.motes ? buildProgram(gl, MOTE_VERT, MOTE_FRAG) : null;
+    const mRes = moteProgram && gl.getUniformLocation(moteProgram, 'u_res');
+    const mTime = moteProgram && gl.getUniformLocation(moteProgram, 'u_time');
+    const mIntensity = moteProgram && gl.getUniformLocation(moteProgram, 'u_intensity');
+
+    gl.enable(gl.BLEND);
+
     sceneDiagnostics.contextCreated = true;
     sceneDiagnostics.mountedAt = Math.round(performance.now());
     sceneDiagnostics.state = 'running';
@@ -80,6 +164,7 @@ export default function HeroScene() {
     let windowElapsed = 0;
     let windowFrames = 0;
     let strikes = 0;
+    let startedAt = 0;
 
     // Snapshot tunables at mount so a test can set them before the scene starts.
     const tuning = { ...sceneTuning };
@@ -146,7 +231,44 @@ export default function HeroScene() {
       lastFrameAt = now;
 
       resize();
-      gl.clear(gl.COLOR_BUFFER_BIT); // inert: transparent, no shader yet
+
+      // Fade in over ~1.2 s so the layer never "pops" into an already-painted
+      // hero. startedAt is set on first frame, not at mount, so a scene that
+      // mounts while scrolled out still fades in when the user arrives.
+      if (startedAt === 0) startedAt = now;
+      const elapsed = (now - startedAt) / 1000;
+      const intensity = Math.min(1, elapsed / 1.2);
+
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      // Pass 1 — grain / sweep / haze. Straight alpha over the photograph.
+      //
+      // blendFuncSeparate, NOT blendFunc. `blendFunc` applies its source factor
+      // to the ALPHA channel too, so the canvas would accumulate `src.a * src.a`.
+      // Grain sits around a = 0.022; squared that is 0.0005, which rounds to
+      // ZERO in the 8-bit drawing buffer — the entire fullscreen pass rendered
+      // and then quantised itself away, invisible while still costing full GPU
+      // time. Only the motes survived, because their alpha is ~20x higher.
+      // Verified by reading back the drawing buffer, 2026-07-19.
+      gl.useProgram(program);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, elapsed);
+      gl.uniform1f(uIntensity, intensity);
+      // Buffer-less fullscreen triangle — see heroShader.js VERT.
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      // Pass 2 — dust motes, additive so they read as catching the light.
+      if (moteProgram) {
+        gl.useProgram(moteProgram);
+        // Additive colour, accumulating alpha — same reasoning as pass 1.
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);
+        gl.uniform2f(mRes, canvas.width, canvas.height);
+        gl.uniform1f(mTime, elapsed);
+        gl.uniform1f(mIntensity, intensity);
+        gl.drawArrays(gl.POINTS, 0, MOTE_COUNT);
+      }
+
       sceneDiagnostics.frames += 1;
 
       rafId = window.requestAnimationFrame(frame);
@@ -210,6 +332,8 @@ export default function HeroScene() {
       // Release the GPU context explicitly. Browsers cap concurrent contexts and
       // evict the oldest; a context leaked on every home-route mount would
       // eventually start killing other canvases on the page.
+      gl.deleteProgram(program);
+      if (moteProgram) gl.deleteProgram(moteProgram);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       if (sceneDiagnostics.state !== 'retired') sceneDiagnostics.state = 'idle';
     };

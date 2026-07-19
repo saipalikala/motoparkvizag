@@ -181,7 +181,7 @@ Two things surfaced while building it, both recorded in `docs/13 §5b`:
 2. ~~Extend `motionEligibility.js` for save-data / deviceMemory / WebGL probe. Verify each branch.~~ ✅ **Done** — see A above.
 3. ~~`HeroScene.jsx` — inert scaffold, correct lifecycle, no visual effect yet.~~ ✅ **Done 2026-07-19** — see §3c below.
 4. Re-measure: desktop LCP within +150 ms; **mobile TBT unchanged** (the isolation tripwire); route JS unchanged.
-5. Only then the actual shader/visual work, which needs an approved visual direction.
+5. ~~Only then the actual shader/visual work.~~ ✅ **Done 2026-07-19** — see §3d below.
 6. Amendment 1 **(B)** — capped scroll-linked transform on the hero media — as a separate, later step.
 
 **Kill-switch implementation.** `lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))`. A failed chunk then renders nothing instead of throwing.
@@ -267,6 +267,37 @@ All three gates pass, measured for the first time on a page where the canvas ran
 
 ---
 
+## 3d. Phase 5 step 5 — the shader ✅ (2026-07-19)
+
+`src/cinematic/heroShader.js`. Raw WebGL2, no engine. Two passes per frame: grain / light sweep / depth haze as a fullscreen fragment shader, then ~14 dust motes as additively-blended `GL_POINTS`.
+
+**Measured with `npm run lh:cinematic`, canvas loaded in 5/5 runs** — full incremental table in `docs/13 §5e`:
+
+| | control | shader v1 | delta |
+|---|---|---|---|
+| LCP | 808.9 ms | 809.8 ms | **+0.9 ms** |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0.0003 | 0.0003 | 0 |
+| chunk | — | **4070 B** transferred | — |
+
+Built one effect at a time (grain → sweep → haze → motes), each measured before the next, using `#ifdef` so a disabled effect is genuinely absent rather than multiplied by zero. **TBT stayed 0 at every stage.**
+
+### The photograph is not displaced — and cannot be
+
+The brief asked for "subtle depth displacement of the hero photograph". **Amendment 1 condition 2 forbids it**: a WebGL canvas cannot sample the DOM behind it, so displacing the photo means drawing it *inside* the canvas and hiding the real `<img>` — the very element the amendment says "remains the LCP element permanently". Amendment 1 **(B)** (capped scroll-linked CSS transform on the hero media) is the sanctioned route and remains a separate later step. Shipped instead: an atmospheric **depth haze** that reads as depth without touching the LCP element.
+
+### ⚠️ The bug worth remembering
+
+The first working build **rendered the whole fullscreen pass invisibly at full GPU cost.** `gl.blendFunc` applies its source factor to alpha as well as colour, so the canvas accumulated `src.a²` — grain at α 0.022 became 0.0005 and **quantised to 0** in the 8-bit buffer. Only the motes survived (α ~20× higher).
+
+Neither a screenshot nor Lighthouse could catch it: the hero looked plausible, and the numbers were identical because the GPU did the work either way. It was caught by reading back the drawing buffer and finding only 0.3% of sampled pixels carried alpha. Fixed with `blendFuncSeparate`. **Verify a shader by sampling its output, not by looking at it.**
+
+### Lifecycle re-verified with the shader live
+
+Pause off-screen and on tab-hidden (frames frozen both times), resume on both, and the watchdog still retires at shipped thresholds — 180 frames, `mean frame 150.0ms > 32ms`, canvas removed, hero image / headline / CTA intact and the CTA still hit-testable.
+
+---
+
 ## 4. Key Constraints — non-negotiable
 
 ### The 180 kB budget
@@ -311,6 +342,7 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Distrust a summary number until you look at its distribution.** "50 products updated in 30 days" implied daily inventory work; 46 of those writes landed on a single day (a bulk backfill) with only 5 distinct `updatedAt` values across all 50 rows. That one check cancelled an entire rebuild.
 - **A gate that watches one viewport cannot see a defect that exists only in the other.** Desktop CLS sat at 0.112 on production while the mobile-only assertion read a clean 0.
 - **Lighthouse emulates `prefers-reduced-motion: reduce`.** Any feature gated on reduced-motion is therefore invisible to it — Lighthouse measures the fallback and reports clean numbers that say nothing about the feature. Cost 10 Lighthouse runs and an A/B that looked like a pass. Use `npm run lh:cinematic` for anything behind the motion gate, and check the chunk was actually *requested* before believing a "no cost" result.
+- **`gl.blendFunc` applies its source factor to ALPHA as well as colour.** For a low-alpha overlay on a transparent canvas this squares the alpha and can quantise the whole pass to zero in the 8-bit buffer — invisible, at full GPU cost, with identical Lighthouse numbers. Use `blendFuncSeparate`. Verify a shader by reading back the drawing buffer, never by looking at a screenshot.
 - **A "0 ms" result is a claim about the instrument before it is a claim about the code.** Both times TBT read 0 here, the honest next question was "would this number have moved if the feature were expensive?" The first time the answer was no (the chunk never loaded); the second time it was verified by injecting 90 ms/frame and watching TBT hit 7146 ms. Prove sensitivity before reporting a zero.
 - **Verify the cinematic layer against `npm run preview`, never `npm run dev`.** StrictMode double-mounts effects; HeroScene's cleanup calls `WEBGL_lose_context.loseContext()`, and StrictMode's second mount reuses the **same canvas element** and gets back a dead context. The rAF loop then runs exactly one frame and stops, which looks like a broken watchdog but is a dev-only artifact — a real route change destroys the element, so production is fine. Use `npm run build && npm run preview`.
 - **A dynamic `import()` with a static string is still resolved at build time.** The `.catch()` kill-switch protects a runtime chunk failure, not a deleted folder — see §3b's correction.

@@ -468,6 +468,49 @@ With `no-preference`, `isCinematicEligible()` passes, so **Phase 3's Lenis loads
 
 ---
 
+## 5e. The shader — incremental cost (2026-07-19)
+
+Built one effect at a time, each measured before the next was added. Every capture used `npm run lh:cinematic` (so the canvas actually ran) against the same local production preview. Effects were added by `#ifdef`, not by multiplying a term by zero — a zeroed term still costs its ALU work and would have hidden the real increment.
+
+| stage | LCP median | TBT | CLS | chunk (transferred) |
+|---|---|---|---|---|
+| control (no canvas) | 808.9 ms | 0 ms | 0.0003 | — |
+| scaffold (inert) | 808.9 ms | 0 ms | 0.0003 | 1662 B |
+| **+ film grain** | ~813 ms | **0 ms** | 0.0003 | 3467 B |
+| **+ light sweep** | ~816 ms | **0 ms** | 0.0003 | 3466 B |
+| **+ depth haze** | ~779–812 ms | **0 ms** | 0.0003 | 3464 B |
+| **+ dust motes (final)** | **809.8 ms** | **0 ms** | 0.0003 | **4070 B** |
+
+**Final vs control: LCP +0.9 ms, TBT 0 ms, CLS unchanged.** Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅. Chunk loaded in 5/5 runs. LCP spread on the final capture was 726–819 ms, so the +0.9 ms median difference is well inside noise.
+
+### The efficiency decisions that produced those numbers
+
+- **No textures, no attribute buffers, no per-frame allocation.** The fullscreen pass is a buffer-less triangle generated from `gl_VertexID`; a frame costs two `drawArrays` calls on the CPU.
+- **Motes are `GL_POINTS`, not a loop in the fullscreen shader.** This is the single biggest choice in the file. Fourteen motes evaluated per-fragment would multiply ~3.5 M fragments by fourteen distance tests to light a few hundred pixels; as points they shade only the sprites — roughly 22 k fragments.
+- **A triangle rather than a quad**, so GPUs don't shade the diagonal seam twice.
+- **One octave of value noise** for the haze, and `dot()` instead of `length()` in the mote falloff to avoid a `sqrt`.
+- **Grain is quantised to 24 fps** inside the shader. That is an appearance decision (at 60 fps it fizzes like digital noise rather than reading as film) that costs nothing.
+
+### Why the photograph is not displaced
+
+The brief asked for "subtle depth displacement of the hero photograph". **Amendment 1 condition 2 rules it out**: a WebGL canvas cannot sample the DOM behind it, so displacing the photo means uploading it as a texture and drawing it *in* the canvas — which requires hiding the real `<img>`, and that `<img>` is the LCP element the amendment says "remains the LCP element permanently". It would also cost a ~5.8 MB RGBA upload and a second decode.
+
+Amendment 1 already provides the sanctioned route for moving the photograph: **(B) scroll-linked opacity/transform on the hero media layer**, a capped CSS transform on the DOM element, which is a separate later step. What ships instead is an atmospheric **depth haze** — a slow luminance field that adds depth without moving, sampling or touching the LCP element.
+
+### ⚠️ Bug found by reading pixels, not by looking
+
+The first working build **rendered the entire fullscreen pass invisibly** while paying its full GPU cost. Cause: `gl.blendFunc` applies its source factor to the **alpha channel as well as colour**, so the canvas accumulated `src.a * src.a`. Grain sits at α ≈ 0.022; squared that is 0.0005, which **quantises to 0** in the 8-bit drawing buffer. Only the motes survived, their alpha being ~20× higher.
+
+A screenshot could not have caught this — the hero looked plausible either way, and the Lighthouse numbers were *identical* because the GPU work happened regardless. It was found by reading back the drawing buffer and discovering only 0.3% of sampled pixels carried any alpha. Fix: `blendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA)`. After it, coverage is 87–100% of pixels with mean α 3.3–9.7/255 and visibly animating grain.
+
+**Verify a shader by sampling its output, not by looking at it.**
+
+### Lifecycle re-verified with the shader live
+
+Pause off-screen → frames frozen → resume; pause on tab hidden → frames frozen → resume; watchdog retires at the shipped thresholds (180 frames = 3 × 60, `mean frame 150.0ms > 32ms`), canvas removed from the DOM, hero image, headline and CTA all intact and the CTA still hit-testable.
+
+---
+
 ## 6. Running Lighthouse on Windows — a required workaround
 
 `lhci collect` with `numberOfRuns > 1` **crashes on this machine**:
