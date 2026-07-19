@@ -188,6 +188,49 @@ At that point field p75 becomes primary again and the lab numbers revert to what
 
 ---
 
+## 3f. Two LCP experiments, both negative (2026-07-19)
+
+Both were run as controlled A/Bs against staging: 5 Lighthouse runs each, same conditions, baseline captured immediately before the change. **Both failed. Both are reverted. Do not re-try either without new evidence.**
+
+| | LCP median | vs base | TBT | JS |
+|---|---|---|---|---|
+| **Baseline** (`baseline-2026-07-19-main`) | **3441 ms** | — | 24 ms | 158.4 kB |
+| Static hero shell (`after-2026-07-19-hero-shell`) | 3437 ms | **−5 ms** | 27 ms | 158.4 kB |
+| Eager home route (`after-2026-07-19-eager-home`) | 3681 ms | **+240 ms** | **144 ms** | 153.1 kB |
+
+### Experiment 1 — static hero shell: no effect (−5 ms, inside a ~1000 ms spread)
+
+§3d predicted this was "the highest-leverage fix". It isn't. Two reasons, both visible only in the deployed build:
+
+1. **LCP never moved to the shell.** The reported LCP element stayed `img._photo_*` — React's hero. LCP only reassigns to *larger* candidates, and the shell was **675 px** tall (82vh) against the real hero's measured **750 px**. When React's taller hero finally painted, it took the metric back.
+2. **The shell was misaligned anyway.** The real hero starts at `top: 168px`, below the OfferBar and Navbar; the shell was pinned at `top: 0`. Geometry was derived from `Hero.module.css` without ever being checked against the *rendered* box at mobile width.
+
+### Experiment 2 — eager home route: a regression
+
+Merging the route into the entry chunk made LCP **240 ms worse** and TBT **6× worse** (24 → 144 ms, failing the §5 TBT row) — while shipping **5 kB less JavaScript**. Fewer bytes, slower page. One 159.7 kB chunk is one long main-thread task; two chunks let the shell paint while the route is still arriving.
+
+### What both experiments actually proved
+
+The phase breakdown is the same in every run of all three configurations:
+
+| phase | typical |
+|---|---|
+| TTFB | 640–860 ms |
+| **Load Delay** | **0 ms — every single run** |
+| Load Time | 0–880 ms |
+| **Render Delay** | **1503–3695 ms (46–81% of LCP)** |
+
+**Load Delay is a flat zero.** The preload works perfectly; hero bytes are on the device early in every configuration. LCP is dominated by *render delay* — the main thread, not the network and not element discovery.
+
+This retires the §3d hypothesis ("the `<img>` doesn't exist until React boots, so make it exist earlier"). Making the element exist earlier changes nothing when the browser cannot paint until the main thread is free, and **rearranging chunks does not reduce total execution — it only moves it.**
+
+### The two levers that remain
+
+1. **Reduce JavaScript executed before the hero paints.** Not fewer bytes — less *work*. Script eval is ~216 ms and total main-thread ~800–860 ms under 4× CPU throttling. This is the only lever with real headroom left.
+2. **Revise the 2500 ms budget.** Already sanctioned by §3d as a legitimate, recorded decision. TTFB alone is 640–860 ms on simulated slow 4G before a single byte of app code runs; 2.5 s lab LCP is a hard target for any client-rendered SPA, and the number was written aspirationally before anything measured it.
+
+---
+
 ## 4. Tooling
 
 | Tool | Command | Purpose |
