@@ -26,77 +26,55 @@ import styles from './CinematicVideoShowcase.module.css';
  * autoplay, no continuous animation.
  *
  * Data: slides come from GET /api/video-showcase (managed in Admin → Showcase),
- * with each slide's Buy Link surfaced as a "Shop the Gear" CTA. The DEMO reel
- * below is retained ONLY as a graceful fallback when the API returns nothing.
+ * with each slide's Buy Link surfaced as a "Shop the Gear" CTA.
+ *
+ * There is deliberately NO hardcoded fallback reel. This used to seed state with
+ * a demo reel built on Cloudinary's public sample assets, which had two costs:
+ * 212 kB of stock images downloaded on every single page view and then discarded
+ * the moment the API answered, and the risk that a motorcycle storefront would
+ * display Cloudinary's stock sea turtle and elephants if the API ever returned
+ * empty. Nothing renders now until the fetch settles, and an empty result hides
+ * the section rather than inventing content.
  */
-const poster = (name) => `https://res.cloudinary.com/demo/video/upload/so_0/${name}.jpg`;
-const clip = (name) => `https://res.cloudinary.com/demo/video/upload/${name}.mp4`;
-
-const DEMO_VIDEOS = [
-  {
-    id: 'commute',
-    tag: 'Everyday',
-    title: 'The City Commute',
-    description: 'Reliable gear that turns the daily grind into the best part of your day.',
-    src: clip('dog'),
-    poster: poster('dog'),
-    buyLink: '/store',
-    cta: 'Shop the Gear',
-  },
-  {
-    id: 'escape',
-    tag: 'Touring',
-    title: 'Weekend Escape',
-    description: 'Comfort and protection for the roads you chase when the week ends.',
-    src: clip('elephants'),
-    poster: poster('elephants'),
-    buyLink: '/store',
-    cta: 'Shop the Gear',
-  },
-  {
-    id: 'coast',
-    tag: 'Adventure',
-    title: 'Coastal Miles',
-    description: 'Kit built for the long way round, wherever the coast road leads.',
-    src: clip('sea_turtle'),
-    poster: poster('sea_turtle'),
-    buyLink: '/store',
-    cta: 'Shop the Gear',
-  },
-  {
-    id: 'offgrid',
-    tag: 'Trail',
-    title: 'Off the Grid',
-    description: 'Trail-ready protection for when the map runs out.',
-    src: clip('outdoors'),
-    poster: poster('outdoors'),
-    buyLink: '/store',
-    cta: 'Shop the Gear',
-  },
-];
-
 export default function CinematicVideoShowcase() {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef(null);
-  const [slides, setSlides] = useState(DEMO_VIDEOS);
+  const [slides, setSlides] = useState(null); // null = still resolving
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  // Fetch live slides; replace the demo reel only when the API returns some
-  // (empty/error keeps the fallback in place — Deliverable 3).
+  // An empty array is a resolved "nothing to show", distinct from null. Errors
+  // resolve the same way: no slides beats stock footage.
   useEffect(() => {
     let alive = true;
-    getShowcaseSlides().then((live) => {
-      if (alive && live.length) {
-        setSlides(live);
-        setActive(0);
-        setPlaying(false);
-      }
-    });
+    getShowcaseSlides()
+      .then((live) => {
+        if (alive) setSlides(Array.isArray(live) ? live : []);
+      })
+      .catch(() => {
+        if (alive) setSlides([]);
+      });
     return () => {
       alive = false;
     };
   }, []);
+
+  /* Placed after every hook so the hook order never varies.
+   *
+   * While resolving, render the section's shell and nothing else. This is what
+   * keeps CLS at zero: .theater is a fixed 85vh, so the box is identical before
+   * and after the slides arrive — content fills in without moving anything. The
+   * naive version of this fix (render nothing until data lands) would insert
+   * 85vh into the page mid-load and shift everything below it. */
+  if (slides === null) {
+    return <section className={styles.theater} aria-busy="true" aria-label="Loading rider stories" />;
+  }
+
+  /* Resolved but empty: drop the section. This collapses 85vh, which can shift
+   * content below — accepted deliberately, because it only happens when the API
+   * returns nothing or fails, and the alternative is a permanent 85vh of blank
+   * navy on the homepage. */
+  if (slides.length === 0) return null;
 
   const current = slides[active] ?? slides[0];
   const fade = reduceMotion ? 0 : 0.6; // background crossfade duration
