@@ -1,6 +1,6 @@
 # MotoPark V2 — State of the Union
 
-**Written:** 2026-07-18 · **Read this first in a new session.**
+**Written:** 2026-07-18 · **Updated:** 2026-07-19 · **Read this first in a new session.**
 Supersedes `docs/HANDOFF.md` where they disagree (HANDOFF is older and stale in places — see §7).
 
 ---
@@ -60,15 +60,26 @@ The apparent lint conflict (`.oxlintrc.json` blocks `lenis` outside `src/cinemat
 
 Two properties worth preserving if this is ever refactored: **nothing above the fold animates** (already-visible elements are marked revealed synchronously, and Hero is unwrapped because it holds the LCP image), and **content cannot strand at opacity 0** (the hidden state is applied by JS, plus the jump guard in §5).
 
+### 2026-07-19 — security, CLS, image weight, and the LCP endgame ✅
+
+Not a numbered phase; a day of fixes triggered by an external synthetic audit.
+
+- **Security (`4e6033d`)** — removed the hardcoded `"motopark_user_secret"` JWT fallback from four customer paths. With `JWT_SECRET` unset, anyone reading this repo could forge a customer session. The secret now has exactly one reader (`backend/config/jwt.js`) and no default. Verified by performing the attack: a token signed with the old string is rejected as `invalid signature`.
+- **Desktop CLS 0.112 → 0.014 (`599db32`)** — the route Suspense fallback reserved `60vh`, leaving the footer *inside* a 940px viewport; rendering the real page then shoved it off-screen. That single shift was 86% of total CLS. Now `100dvh`. **Every CLS assertion had been mobile-only, where it measured a clean 0** — a desktop CLS row now exists so a viewport-specific defect cannot hide again.
+- **Images 999.7 → 393.8 kB (`599db32`, `127197b`, `d6900e6`)** — showcase posters bypassed `cloudinaryUrl()` (three 1448px originals, 705 kB, two displayed at 166px); the `<video poster>` attribute silently duplicated a 254.8 kB raw fetch behind an always-covering poster layer; and a hardcoded demo reel of **Cloudinary's public sample assets** (dog, elephants, sea turtle) downloaded 211 kB on every view and risked showing stock animals if the API ever returned empty. All three fixed.
+- **A11y (`69f0c77`)** — AccountPage's two form-level errors were bare `<p>` elements: a failed submit was silent to screen readers.
+- **Admin parity audit (`1364ebc`)** — six rebuild candidates cut to zero. See §6.
+- **LCP endgame (`fa7d1b8`, `c3a8911`, `bffdd94`, `284dfd7`)** — three experiments, all reverted; lab budget deliberately revised to 3500 ms; Phase 5 unblocked. See `docs/13 §3f`/`§3g`.
+
 **Deliberately NOT built: Skeleton, Badge, Card.** Usage was surveyed first and the demand wasn't there — the skeleton pattern is already correct, there's one sale badge and one status pill serving different purposes, and only two `.card` blocks are identical. Do not "finish the set" without new evidence.
 
 ---
 
 ## 3. The Current Gate 🚦
 
-**Phases 3 and 4 are DONE (2026-07-18) — see §2. Phase 5 is the only thing left, and it is blocked.**
+**Phases 0–4 are DONE, plus the 2026-07-19 hardening — see §2. Phase 5 is the only thing left, and as of 2026-07-19 it is UNBLOCKED.**
 
-**Do not install GSAP** — every allowed effect is one-shot transform/opacity work already covered.
+**Do not install GSAP** — every allowed effect is one-shot transform/opacity work already covered. See §3b before writing any WebGL: the recommendation is that Three.js probably isn't needed either.
 
 ### Phase 5 — WebGL hero: ✅ UNBLOCKED 2026-07-19
 
@@ -104,6 +115,51 @@ That gap is the **client-render path**. The `<img>` doesn't exist in the DOM unt
 2. If field p75 also misses, options are recorded in `docs/13 §3d`: a **static hero shell** in `index.html` (highest leverage; must not regress CLS from its perfect 0), reducing boot cost, or **deliberately revising** a budget written before anything measured it. Revision is legitimate — 2.5 s simulated-mobile LCP is hard for any CSR SPA — but must be a recorded decision, not quiet drift.
 
 > **The static hero shell is already built and waiting on branch `perf/static-hero-shell` (`ed1609e`, pushed).** Do not merge it while field data is accumulating — changing LCP delivery mid-collection blends two populations into one p75 and destroys the gate decision. Verified there: it paints as the LCP candidate, hands off to Hero.jsx once the real `<img>` is `complete`, leaves no node behind, is removed on non-home routes, and adds no second image request (one hero fetch, 39.1 kB). CLS measured like-for-like against `main` on the same server: **0.08833 vs 0.08832 — the shell adds nothing.** That 0.088 is a dev-only StrictMode artifact (the footer collapsing), not the production 0; **confirm production CLS with `npm run lhci` before merging.** A Vercel preview deployment of the branch is the cheapest way to get that number.
+
+---
+
+## 3b. Phase 5 — proposed architecture (NOT yet approved, no code written)
+
+Amendment 1 lists **seven numbered conditions**. Each maps to a mechanism; nothing here is left to reviewer vigilance.
+
+### The big recommendation: probably no Three.js
+
+Amendment 1 permits "a decorative WebGL layer". It does **not** require a 3D engine. The whole architecture in §4 exists because `three` + `@react-three/fiber` + `drei` cost **230–280 kB gz against ~52 kB of headroom**.
+
+A hand-written **WebGL2 fullscreen fragment shader** costs roughly **3–6 kB with zero dependencies** and covers everything the brief actually describes — grain, a slow light sweep, subtle depth displacement of the hero photograph, drifting dust motes. **Recommended: Option A (raw shader).** Take Option B (`three` + r3f) only if an approved visual direction genuinely needs 3D geometry, and re-run the budget maths first.
+
+Option A also makes the degradation ladder trivial: cutting a 5 kB decorative chunk is nothing.
+
+### Condition-by-condition enforcement
+
+| # | Amendment 1 condition | Mechanism |
+|---|---|---|
+| 1 | Desktop only, hard stop <1024px and on `pointer: coarse` | `isCinematicEligible()` in `src/lib/motionEligibility.js` — already built and proven in Phase 3 |
+| 2 | **Not fetched until LCP observed, then `requestIdleCallback`** | `PerformanceObserver({type:'largest-contentful-paint'})` → `requestIdleCallback` → *then* `import()`. The import is the last step, not the first |
+| 3 | Non-interactive | `pointer-events: none`, `aria-hidden="true"`, z-index strictly below hero content — asserted in a test, not just styled |
+| 4 | No content in canvas | Enforced by review + the `src/cinematic/` import ban (no `services/`, `contexts/`, `lib/api.js`) |
+| 5 | Additive to a complete hero | Hero renders identically with the canvas absent; kill-switch test below |
+| 6 | **Self-limiting: capped DPR, paused when hidden/scrolled out, unmounts if frame times degrade** | DPR `min(dpr, 1.5)`; `visibilitychange` + IntersectionObserver pause; a rolling frame-time watchdog that unmounts back to the static hero |
+| 7 | reduced-motion / save-data / low-memory / no-WebGL fall back silently | **Gate must be extended — see below** |
+
+### Two gaps found while reading the amendment
+
+**A. `motionEligibility.js` is insufficient for Phase 5.** It covers width, pointer and reduced-motion. Condition 7 also requires **save-data** (`navigator.connection.saveData`), **low-memory** (`navigator.deviceMemory`) and **no-WebGL** (a real context-creation probe — support cannot be assumed from UA). These must be added *before* any canvas code, and the WebGL probe must dispose its test context.
+
+**B. Nothing measures the desktop cost.** `lighthouserc.json` collects **mobile only**. The mobile TBT tripwire proves *isolation* (that mobile never loads the chunk) — it is structurally incapable of measuring what the canvas costs the desktop users who actually get it. `docs/13 §5` has a "Desktop LCP ≤ baseline + 150 ms" row with **no collector behind it**.
+
+> **Do this first: add a desktop Lighthouse config and capture a desktop baseline BEFORE writing canvas code.** Otherwise Phase 5's cost is unmeasurable and the §5 desktop row is decorative.
+
+### Proposed sequence
+
+1. Desktop lhci config + desktop baseline captured and committed.
+2. Extend `motionEligibility.js` for save-data / deviceMemory / WebGL probe. Verify each branch.
+3. `HeroScene.jsx` in `src/cinematic/` — inert scaffold, correct lifecycle, no visual effect yet. Prove: post-LCP mount, kill-switch, pause/resume, watchdog unmount.
+4. Re-measure: desktop LCP within +150 ms; **mobile TBT unchanged** (the isolation tripwire); route JS unchanged.
+5. Only then the actual shader/visual work, which needs an approved visual direction.
+6. Amendment 1 **(B)** — capped scroll-linked transform on the hero media — as a separate, later step.
+
+**Kill-switch implementation.** `lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))`. A deleted folder or a failed chunk then renders nothing instead of throwing. Test by literally deleting `src/cinematic/` and confirming the storefront builds and works.
 
 ---
 
@@ -146,6 +202,10 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Never commit raw Lighthouse reports** (~540 kB each). Run them through `scripts/summarize-lhr.mjs`.
 - **Lighthouse cannot measure INP at all**, and cannot produce p75. TBT is a lab proxy, not the same metric.
 - **IntersectionObserver does not fire on a jump.** It fires when a threshold is *crossed*; an instant jump takes a section from ratio 0 below the viewport to ratio 0 above it in one frame, so no callback ever runs. Any reveal built on IO alone leaves jumped-past sections invisible forever — and the homepage triggers this itself via the hero's `#trust` anchor, plus scroll restoration and Ctrl+End. `useReveal.js` carries a debounced sweep for exactly this. Don't "simplify" it away.
+- **Rearranging chunks does not reduce main-thread work — it relocates it.** Making the home route eager to save a round trip shipped **5 kB less JavaScript and was 240 ms slower**, with TBT 6× worse. One big chunk is one long task. Proven, reverted, recorded in `docs/13 §3f`.
+- **Never report a lab delta without a like-for-like baseline.** A measured CLS of 0.088 on a feature branch looked like a regression; `main` measured 0.08832 under identical conditions. The change contributed nothing. Two of the three LCP experiments would have been misread the same way without a same-session control.
+- **Distrust a summary number until you look at its distribution.** "50 products updated in 30 days" implied daily inventory work; 46 of those writes landed on a single day (a bulk backfill) with only 5 distinct `updatedAt` values across all 50 rows. That one check cancelled an entire rebuild.
+- **A gate that watches one viewport cannot see a defect that exists only in the other.** Desktop CLS sat at 0.112 on production while the mobile-only assertion read a clean 0.
 - **The in-app browser pane reports `visibilityState: "hidden"`.** That suppresses IntersectionObserver callbacks and freezes `requestAnimationFrame`, so reveals and Lenis motion **cannot be verified there** — screenshots and rAF-based probes just hang. Verify scroll/animation work through the Playwright MCP browser instead; it renders and reports `prefers-reduced-motion: no-preference`.
 
 ---
@@ -173,7 +233,11 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Abandoned-cart recovery does not exist.** No job, no trigger, no cron — despite being a PRD KPI and sometimes assumed present. Not a cutover blocker; decide separately.
 - **No test framework anywhere.** Four hand-rolled scripts in `backend/scripts/` are good and unwired to CI — especially `testPlaceOrder.js`'s partial-rollback case, which silently destroys inventory if broken.
 - **Admin logout revocation is an in-memory `Map`** (`authMiddleware.js:5`) — breaks on multi-instance deploys. The file says so itself.
-- **In flight:** a background session is aligning card surfaces onto `--card-bg`/`--card-border` (5 files use raw semantic tokens; latent dark-mode divergence, no visual change today).
+- **Offer strip is hardcoded.** `OfferBar.jsx` holds the promo copy, so changing it needs a deploy where V1 allowed an admin edit. Owner accepted this for now; a small V2-native micro-editor is the fix if it starts to chafe. This is the *only* genuine capability regression from the admin audit.
+- **Hero ticker CLS — accepted technical debt.** After the footer fix, the sole remaining shift is the ticker's skeleton→content swap: reproducibly **0.035 against a 0.05 gate**. Under gate, so it was consciously not chased, but the margin is thin. The container's own rect is unchanged across the shift, so the movement is inside the cards.
+- **Hero preload wastes bytes on non-home routes.** `index.html` is shared by every route, so `hero-1600.avif` is preloaded (and warned about as unused) on `/login`, `/store` and everything else. Deferred during the GA4 freeze; the freeze is now lifted, so this is simply open.
+- **The `perf/static-hero-shell` branch still exists on the remote.** It was merged, measured, and reverted. Keep it only as the record of a tested-and-rejected approach — do not resurrect it without reading `docs/13 §3f` first.
+- ~~**In flight:** card surfaces onto `--card-bg`/`--card-border`~~ — that background session **never landed**: no commit exists anywhere and the tree is clean. Lowest-value item on this list (no visual change today, latent dark-mode divergence only); treat as unstarted.
 
 ---
 
