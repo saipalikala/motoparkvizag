@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
@@ -18,6 +19,45 @@ import styles from './Hero.module.css';
  */
 export default function Hero({ products = [], loading = false }) {
   const ticker = products.slice(0, 3);
+  const photoRef = useRef(null);
+
+  /**
+   * Hand off from the static hero shell in index.html (docs/13 §3d).
+   *
+   * The shell paints the hero before React exists; this removes it once React's
+   * own hero is up. Two failure modes are avoided deliberately:
+   *
+   * - Remove too EARLY (on mount, before this <img> has decoded) and the user
+   *   sees the photo disappear and come back. So we wait for `complete`.
+   * - Never remove at all — if the image errors or the event is missed — and the
+   *   shell sits on top of the page forever, covering the real hero. Hence the
+   *   error handler and the timeout backstop.
+   *
+   * useLayoutEffect, not useEffect: it runs before the browser paints, so the
+   * shell and the real hero never both appear in a painted frame.
+   */
+  useLayoutEffect(() => {
+    const shell = document.getElementById('hero-shell');
+    if (!shell) return undefined; // not the initial load, or already handed off
+
+    const remove = () => shell.remove();
+    const img = photoRef.current;
+
+    if (img?.complete) {
+      remove();
+      return undefined;
+    }
+
+    img?.addEventListener('load', remove, { once: true });
+    img?.addEventListener('error', remove, { once: true });
+    const backstop = setTimeout(remove, 3000);
+
+    return () => {
+      clearTimeout(backstop);
+      img?.removeEventListener('load', remove);
+      img?.removeEventListener('error', remove);
+    };
+  }, []);
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
@@ -40,6 +80,7 @@ export default function Hero({ products = [], loading = false }) {
           <source type="image/webp" media="(max-width: 767px)" srcSet="/hero-960.webp" />
           <source type="image/webp" media="(min-width: 768px)" srcSet="/hero-1600.webp" />
           <img
+            ref={photoRef}
             src="/hero-1600.jpg"
             alt=""
             className={styles.photo}
