@@ -22,6 +22,8 @@
       }
     },
     "assert": {
+      "_aggregationMethod": "EXPLICIT, not the lhci default. lhci defaults to 'optimistic', which for a maxNumericValue assertion tests the BEST of the 5 runs — while docs/13 §5 labels these rows 'median of 5' and §3g reasons entirely in medians (3441 ms against a 3500 ms ceiling). The gate was therefore weaker than its own documentation. Set 2026-07-19; see docs/13 §5b.",
+      "aggregationMethod": "median",
       "assertions": {
         "largest-contentful-paint": ["error", { "maxNumericValue": 3500 }],
         "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],

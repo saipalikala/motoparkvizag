@@ -10,6 +10,14 @@
   background: var(--bg-inverse-deep); /* navy-800 base under the photo */
   color: var(--text-inverse);
   overflow: hidden;
+
+  /* Bleed available to the Amendment 1 (B) scroll transform, above AND below
+     the photo. `overflow: hidden` above is what clips it.
+
+     MUST equal PARALLAX_ROOM in src/hooks/useHeroParallax.js. The hook clamps
+     its translate to this number; the number is what guarantees the photo's
+     edge can never enter the frame. Change one, change the other. */
+  --parallax-room: 32px;
 }
 
 /* ── Media layer ───────────────────────────────────────── */
@@ -23,9 +31,18 @@
 .picture {
   display: contents;
 }
+/* Absolutely positioned and over-tall so the parallax transform has somewhere
+   to travel. Out of flow, so it cannot contribute to layout shift; `transform`
+   is excluded from CLS scoring in any case.
+
+   The canvas and scrim are NOT given this bleed — only the photograph moves.
+   The scrim must stay aligned to the headline it guarantees contrast for. */
 .photo {
+  position: absolute;
+  top: calc(-1 * var(--parallax-room));
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% + 2 * var(--parallax-room));
   object-fit: cover;
   object-position: center 30%;
 }

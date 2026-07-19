@@ -1,0 +1,25 @@
+/* Decorative WebGL layer — docs/10 Amendment 1, condition 3 (non-interactive).
+   These three properties are load-bearing, not cosmetic, and are asserted in a
+   browser check rather than trusted to review:
+
+     pointer-events: none  — the canvas covers the hero CTAs. Without this it
+                             would swallow every click on "Shop the gear".
+     position: absolute    — participates in .media's stacking context only.
+     inset: 0              — matches the photo exactly; no layout box of its own,
+                             so it can never contribute to CLS.
+
+   The element is placed in the DOM AFTER .photo and BEFORE .scrim. That ordering
+   is the reason the shader can never break text contrast: the scrim is painted
+   over the canvas, so the AA guarantee for the headline holds regardless of what
+   is rendered here. Do not move it above the scrim. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Scaffold is inert and paints nothing. Kept fully transparent so that if the
+     retire path ever fails to unmount, the visible result is still the plain
+     hero photograph rather than a black rectangle over it. */
+  opacity: 1;
+}

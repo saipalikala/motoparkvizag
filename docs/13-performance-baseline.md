@@ -271,6 +271,8 @@ Independent PageSpeed Insights measurement on 2026-07-19 recorded **desktop LCP 
 | Budget tripwire | `npm run budgets` (auto in `npm run build`) | Reads `dist/.vite/manifest.json`, resolves the chunks the `/` route pulls **statically**, gzip+brotli them, fails the build over budget. ~2 s, never flakes. |
 | Bundle analyzer | `npm run analyze` | `rollup-plugin-visualizer` treemap → `perf/stats.html`. |
 | Lighthouse CI | `npm run lhci` | `lighthouserc.json`: mobile, 5 runs, against **staging**, asserted against §5. |
+| Lighthouse CI (desktop) | `npm run lhci:desktop` | `lighthouserc.desktop.json`: desktop preset, 5 runs, `/` only. Measures the desktop page — but **runs under reduced motion, so it cannot see the cinematic layer** (§5c). |
+| Lighthouse (cinematic) | `npm run lh:cinematic` | `scripts/lh-desktop-cinematic.mjs`: same desktop settings via Puppeteer with `prefers-reduced-motion: no-preference`, so the canvas actually loads. **Asserts the chunk was requested.** The only instrument that can measure shader cost — see §5d. |
 | Field CWV | automatic | `src/lib/webVitals.js` → GA4 `web_vitals` event. |
 | Hero variants | `npm run images` | Regenerate after art changes. Dev-only `sharp`; kept off the Vercel build path. |
 
@@ -296,14 +298,251 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 | Home CLS (mobile) | **≤ 0.05** — deliberately half the documented 0.1, to leave headroom |
 | Home TBT (mobile) | ≤ baseline **+ 0 ms** |
 | Home transferred JS | ≤ 180 kB brotli |
-| Desktop LCP | ≤ baseline + 150 ms |
+| Desktop LCP (median of 5) | ≤ baseline + 150 ms → hard ceiling **695 ms** — collector added 2026-07-19, see §5b |
 | **Desktop CLS** | **≤ 0.05** — added 2026-07-19, see below |
+| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, §5b. **Measure with `npm run lh:cinematic`, not `lhci:desktop`** — §5c/§5d |
+
+All Lighthouse rows assert the **median** of the runs. This is set explicitly in both configs; lhci's default (`optimistic`) asserts the best run instead — see §5b.
 
 **Why the desktop CLS row exists.** Every CLS assertion here was mobile-only, and mobile CLS measured a clean 0 — so a **0.112 desktop CLS sat on production unnoticed** until a synthetic audit surfaced it. The cause was viewport-dependent: the route fallback reserved 60vh, which left the footer inside a 940px-tall desktop viewport and off-screen on mobile. A gate that only watches one viewport cannot see a defect that only exists in the other. Measured on staging after the fix: **0.11195 → 0.01481**, the entire remainder being the hero ticker's skeleton→content swap.
 
 **Why the TBT row is the sharpest instrument.** Mobile must never load the cinematic chunk at all (the eligibility chain hard-stops below 1024px). So *any* movement in mobile TBT means the isolation leaked. It is a boolean test of the whole cinematic architecture, and it runs automatically.
 
 `check-budgets.mjs` additionally fails the build outright if a chunk matching `three|react-three|r3f|gsap|lenis|cinematic` appears in the `/` **static** graph, or if any `src/cinematic/` module does.
+
+---
+
+## 5b. The desktop collector and baseline (2026-07-19)
+
+The desktop rows above had **no collector behind them** until now — `lighthouserc.json` collects mobile only, so "Desktop LCP ≤ baseline + 150 ms" had neither a baseline nor a way to measure one. `lighthouserc.desktop.json` + `npm run lhci:desktop` is that collector. This had to exist before Phase 5, because the cinematic layer is **desktop-only**: the mobile config is structurally incapable of measuring the users who actually receive the feature.
+
+### Baseline — `perf/baseline/baseline-2026-07-19-desktop.json`
+
+5 runs, staging, `/` only, desktop preset (1350×940 @1x, 1× CPU, 10 240 kbps).
+
+| metric | median | spread | mobile equivalent |
+|---|---|---|---|
+| **LCP** | **544.9 ms** | 523.8–563.4 ms (**39 ms**) | 3441 ms, ~1000 ms spread |
+| CLS | 0.0148 | 0.0148–0.0148 (**zero**) | 0 |
+| **TBT** | **0 ms** | 0–0 ms (**zero**) | 24 ms |
+| FCP | 390.0 ms | 388.8–402.8 ms | 1920 ms |
+| Performance score | 100 | 100 in all 5 runs | — |
+
+### Why this instrument is much better than the mobile one
+
+**The spread is 7% of the median (39 ms), against mobile's ~29% (~1000 ms).** §3e records that mobile lab noise is "too wide to adjudicate a ±100 ms gate" — that was the honest reason three LCP experiments were hard to read. Desktop does not have that problem, and can resolve the 150 ms allowance comfortably.
+
+**Desktop TBT is 0 ms in all five runs, and desktop CLS is bit-identical across all five.** That makes desktop the sharpest Phase 5 instrument available: after the canvas ships, *any* nonzero desktop TBT is attributable to it and nothing else. The mobile TBT row proves the layer stays **isolated**; the desktop TBT row is the only thing that will measure what it **costs**.
+
+The desktop CLS of 0.0148 independently reproduces the 0.01481 recorded in §5 after the footer fix — two separate measurement sessions agreeing, which is worth more than either alone.
+
+### Threshold provenance — read before treating these as binding
+
+- **LCP 695 ms** = measured baseline 545 + the 150 ms allowance §5 already authorises. Derived, not invented.
+- **CLS 0.05** = the existing §5 desktop row.
+- **TBT 150 ms** — **owner-approved 2026-07-19.** Desktop TBT baselines at exactly 0, so any ceiling is a judgement call; 150 ms sits below the mobile 200 ms ceiling and is deliberately generous against a 0 ms baseline. Rationale on approval: *"150 ms gives us enough room for the shader while ensuring we don't accidentally ship a massive CPU hog."*
+
+### `aggregationMethod` — both gates now assert the median (fixed 2026-07-19)
+
+lhci defaults to `aggregationMethod: "optimistic"`, which for a `maxNumericValue` assertion tests the **best** of the N runs, not the median. Both configs carried that default — so although §3g reasons entirely in medians ("3441 ms against the new 3500 ms ceiling — 59 ms of headroom") and §5 labels the rows "median of 5", **what actually got asserted was the fastest run of 5**, against a mobile spread reaching 4276 ms. The gate was measurably weaker than its own documentation.
+
+**Both `lighthouserc.json` and `lighthouserc.desktop.json` now set `"aggregationMethod": "median"` explicitly**, owner-approved 2026-07-19 on the grounds that the gate "needs to reflect reality and match the documentation". Verified green after the change — see below.
+
+**If you add a third config, set this key explicitly.** The default is not the one this project's documentation assumes, and nothing warns you.
+
+### Running it
+
+Same Windows constraint as §6 — `numberOfRuns > 1` crashes. Runs are also flaky roughly 1-in-5 (one of the five baseline captures failed and was retried), so check the file count before summarising:
+
+```bash
+mkdir -p .lighthouseci/keep
+for i in 1 2 3 4 5; do
+  npx lhci collect --config=lighthouserc.desktop.json --numberOfRuns=1 >/dev/null 2>&1 || true
+  f=$(ls .lighthouseci/lhr-*.json 2>/dev/null | head -1)
+  [ -n "$f" ] && cp "$f" ".lighthouseci/keep/run-$i.json" && rm -f .lighthouseci/lhr-*
+done
+node scripts/summarize-lhr.mjs <label>-desktop .lighthouseci/keep/run-*.json
+```
+
+`summarize-lhr.mjs` no longer hardcodes its `conditions` string as mobile — it reads form factor, throttling and emulation from each report, and **refuses to summarise runs from different form factors under one label**. Without that, a desktop capture would have been written to disk describing itself as mobile, and a desktop-vs-mobile comparison would have looked like a 6× improvement. That is precisely the like-for-like trap in `docs/14 §5`, so it is now enforced by the tool rather than by memory.
+
+---
+
+## 5c. Step 4 — measuring the scaffold, and why Lighthouse cannot measure the canvas (2026-07-19)
+
+### The A/B
+
+Run against a **local production preview** (`npm run build && npm run preview`), 5 runs each, control and treatment captured back-to-back in one session on one server. The control is `main`'s `Hero.jsx` (mount removed); everything else identical.
+
+| | control | scaffold | delta |
+|---|---|---|---|
+| LCP median | 733.4 ms | 732.5 ms | **−0.8 ms** (spread ~3 ms) |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0 | 0 | 0 |
+| script transfer | 155 868 B | 156 575 B | +707 B |
+| route JS (`npm run budgets`) | 128.4 kB | 128.9 kB | +0.5 kB |
+
+Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅.
+
+**Why local rather than staging.** `lighthouserc.desktop.json` targets staging, which deploys from `main` — running it unchanged would have measured code without the scaffold and reported a meaningless delta. A local control was captured instead so the comparison is like-for-like (docs/14 §5). Local is **not** comparable to the staging baseline in absolute terms: local LCP is 733 ms against staging's 545 ms, and local CLS is 0 against staging's 0.0148 — with the backend unreachable the hero ticker keeps its skeleton and never performs the swap that produces that shift.
+
+### ⚠️ The important finding: Lighthouse never loaded the canvas
+
+**In all 10 runs the `HeroScene` chunk was never requested** — control and treatment issued an identical 32 requests. The trace ran to 3304 ms, far past the ~950 ms the scaffold needs to arm, so this is not a timing artifact.
+
+The cause, captured from inside a Lighthouse run:
+
+```
+GATE {"w":true,"fine":true,"red":true,"mem":16,"save":false,"cheap":false}
+```
+
+**`prefers-reduced-motion` matches `reduce` under Lighthouse.** Condition 7 then correctly refuses to load the layer. Confirmed it is not the WebGL probe: removing `failIfMajorPerformanceCaveat` changes nothing.
+
+**So the table above proves the scaffold costs nothing in the page-load window — which is exactly what Amendment 1 condition 2 demands — but it does NOT prove anything about what the canvas costs while running, because under Lighthouse the canvas never runs.** Read those zeros as "the reduced-motion fallback is clean", not as "the shader is free".
+
+This has a consequence worth stating plainly:
+
+> **The "Desktop TBT ≤ 150 ms" row in §5 is currently unenforceable against the canvas.** Lighthouse will always measure the reduced-motion path. The row still has value — it catches anything the scaffold adds to load — but it cannot be the gate for shader cost.
+
+**This was fixed the same day — see §5d.**
+
+### Direct measurement of the running canvas
+
+Measured in a real browser (Playwright, production preview, desktop viewport), canvas running at ~100 fps for 5 s:
+
+**0 long tasks · 0 ms blocking.**
+
+An inert loop that clears to transparent costing nothing is the expected result, not a surprising one — it is a *floor*, and the number that matters is the same measurement after the shader exists. Note also that a paired control could not be captured cleanly: the automation window re-throttles to ~1 fps when it loses focus, which flattens both sides of the comparison.
+
+---
+
+## 5d. The instrument that can see the canvas (2026-07-19)
+
+`scripts/lh-desktop-cinematic.mjs` · `npm run lh:cinematic -- <url> <runs> [outDir]`
+
+Drives Lighthouse through the Node API with a Puppeteer page whose media features are overridden:
+
+```js
+await page.emulateMediaFeatures([
+  { name: 'prefers-reduced-motion', value: 'no-preference' },
+]);
+const result = await lighthouse(url, { output: 'json' }, config, page);
+```
+
+No new dependency — `puppeteer-core` already ships inside `lighthouse`. Settings are **imported from Lighthouse's own `desktop-config.js`** rather than copied, so captures stay comparable to `lighthouserc.desktop.json` by construction rather than by remembering.
+
+### The assertion is the point
+
+The script **fails the run if the cinematic chunk was not requested**, and prints the chunk names and byte counts for every run. Without that check it would silently decay into the very instrument it replaces — reporting reassuring zeros for a feature that never loaded. `EXPECT_CINEMATIC=0` inverts the assertion for capturing the control half of an A/B, so a control that *accidentally* loads the layer fails just as loudly. **Do not remove either branch.**
+
+### Honest baseline — the scaffold, actually running
+
+5 runs each, local production preview, `motion: no-preference` on both sides. Control = `main`'s `Hero.jsx` with the mount removed.
+
+| | control | canvas active | delta |
+|---|---|---|---|
+| LCP median | 808.9 ms | 808.9 ms | **−0.05 ms** |
+| **TBT** | 0 ms (all 5 runs) | **0 ms (all 5 runs)** | **0** |
+| CLS | 0 | 0 | 0 |
+| FCP | 579.7 ms | 579.5 ms | −0.2 ms |
+| Speed Index | 587.6 ms | 594.9 ms | +7.3 ms |
+
+Chunk loaded in **5/5** runs: `HeroScene.js` 1662 B + `HeroScene.css` 434 B transferred.
+
+Gates: **TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅** — and for the first time these are measured on a page where the canvas actually ran.
+
+### Proof the instrument is sensitive
+
+A gate that reads 0 is what §5c was about, so sensitivity was verified rather than assumed. With 90 ms of artificial blocking work injected into the scene's frame loop:
+
+| | TBT | LCP |
+|---|---|---|
+| normal scaffold | 0 ms | 808.9 ms |
+| **+90 ms/frame busy-wait** | **7146 ms** | 807 ms |
+
+**TBT catches it 47× over budget. LCP does not move at all** — because the canvas loads post-LCP by design. That is the architecture working, and it means **TBT is the only lab gate that can see shader cost**. Do not judge a shader by its LCP.
+
+### Note: this also measured Lenis for the first time
+
+With `no-preference`, `isCinematicEligible()` passes, so **Phase 3's Lenis loads too** — it shares the gate. Every previous desktop capture (including `baseline-2026-07-19-desktop.json`) ran under reduced motion and therefore measured a page with **neither** Lenis nor the canvas. That is why the motion-enabled control sits at 808.9 ms against the reduced-motion local control's 733.4 ms: **~75 ms of that gap is smooth scroll, which had never been measured since it shipped.** Compare motion-enabled captures only against other motion-enabled captures.
+
+---
+
+## 5e. The shader — incremental cost (2026-07-19)
+
+Built one effect at a time, each measured before the next was added. Every capture used `npm run lh:cinematic` (so the canvas actually ran) against the same local production preview. Effects were added by `#ifdef`, not by multiplying a term by zero — a zeroed term still costs its ALU work and would have hidden the real increment.
+
+| stage | LCP median | TBT | CLS | chunk (transferred) |
+|---|---|---|---|---|
+| control (no canvas) | 808.9 ms | 0 ms | 0.0003 | — |
+| scaffold (inert) | 808.9 ms | 0 ms | 0.0003 | 1662 B |
+| **+ film grain** | ~813 ms | **0 ms** | 0.0003 | 3467 B |
+| **+ light sweep** | ~816 ms | **0 ms** | 0.0003 | 3466 B |
+| **+ depth haze** | ~779–812 ms | **0 ms** | 0.0003 | 3464 B |
+| **+ dust motes (final)** | **809.8 ms** | **0 ms** | 0.0003 | **4070 B** |
+
+**Final vs control: LCP +0.9 ms, TBT 0 ms, CLS unchanged.** Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅. Chunk loaded in 5/5 runs. LCP spread on the final capture was 726–819 ms, so the +0.9 ms median difference is well inside noise.
+
+### The efficiency decisions that produced those numbers
+
+- **No textures, no attribute buffers, no per-frame allocation.** The fullscreen pass is a buffer-less triangle generated from `gl_VertexID`; a frame costs two `drawArrays` calls on the CPU.
+- **Motes are `GL_POINTS`, not a loop in the fullscreen shader.** This is the single biggest choice in the file. Fourteen motes evaluated per-fragment would multiply ~3.5 M fragments by fourteen distance tests to light a few hundred pixels; as points they shade only the sprites — roughly 22 k fragments.
+- **A triangle rather than a quad**, so GPUs don't shade the diagonal seam twice.
+- **One octave of value noise** for the haze, and `dot()` instead of `length()` in the mote falloff to avoid a `sqrt`.
+- **Grain is quantised to 24 fps** inside the shader. That is an appearance decision (at 60 fps it fizzes like digital noise rather than reading as film) that costs nothing.
+
+### Why the photograph is not displaced
+
+The brief asked for "subtle depth displacement of the hero photograph". **Amendment 1 condition 2 rules it out**: a WebGL canvas cannot sample the DOM behind it, so displacing the photo means uploading it as a texture and drawing it *in* the canvas — which requires hiding the real `<img>`, and that `<img>` is the LCP element the amendment says "remains the LCP element permanently". It would also cost a ~5.8 MB RGBA upload and a second decode.
+
+Amendment 1 already provides the sanctioned route for moving the photograph: **(B) scroll-linked opacity/transform on the hero media layer**, a capped CSS transform on the DOM element, which is a separate later step. What ships instead is an atmospheric **depth haze** — a slow luminance field that adds depth without moving, sampling or touching the LCP element.
+
+### ⚠️ Bug found by reading pixels, not by looking
+
+The first working build **rendered the entire fullscreen pass invisibly** while paying its full GPU cost. Cause: `gl.blendFunc` applies its source factor to the **alpha channel as well as colour**, so the canvas accumulated `src.a * src.a`. Grain sits at α ≈ 0.022; squared that is 0.0005, which **quantises to 0** in the 8-bit drawing buffer. Only the motes survived, their alpha being ~20× higher.
+
+A screenshot could not have caught this — the hero looked plausible either way, and the Lighthouse numbers were *identical* because the GPU work happened regardless. It was found by reading back the drawing buffer and discovering only 0.3% of sampled pixels carried any alpha. Fix: `blendFuncSeparate(SRC_ALPHA, ONE_MINUS_SRC_ALPHA, ONE, ONE_MINUS_SRC_ALPHA)`. After it, coverage is 87–100% of pixels with mean α 3.3–9.7/255 and visibly animating grain.
+
+**Verify a shader by sampling its output, not by looking at it.**
+
+### Lifecycle re-verified with the shader live
+
+Pause off-screen → frames frozen → resume; pause on tab hidden → frames frozen → resume; watchdog retires at the shipped thresholds (180 frames = 3 × 60, `mean frame 150.0ms > 32ms`), canvas removed from the DOM, hero image, headline and CTA all intact and the CTA still hit-testable.
+
+---
+
+## 5f. Amendment 1 (B) — the hero parallax transform (2026-07-19)
+
+`src/hooks/useHeroParallax.js` + `--parallax-room` in `Hero.module.css`.
+
+| | shader v1 | + parallax | delta |
+|---|---|---|---|
+| LCP median | 809.8 ms | **809.3 ms** | −0.5 ms |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0.0003 | **0.0003** | 0 |
+| route JS | 128.9 kB | 129.2 kB | +0.3 kB |
+
+Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅. Chunk loaded 5/5.
+
+**Scroll cost: 0 long tasks, 0 ms blocking across 60 scroll steps over the hero and back.** The hook writes only `transform`, coalesced to one write per frame, and stops entirely when the hero leaves the viewport.
+
+### Implementation decisions
+
+- **Only the `<img>` moves.** The WebGL canvas and the scrim stay fixed. Grain and motes are *viewport* atmosphere — moving them too would double the motion and make the two effects compete. The scrim staying put also keeps the headline's contrast gradient on the headline.
+- **Room is created in CSS, not by scaling the LCP image.** `--parallax-room: 32px` gives the photo bleed above and below inside `overflow: hidden`; the hook clamps its translate to the same 32 px, so the photo's edge can never enter the frame. Verified at scrollY 0/60/150/213/400/900 — no exposure at any point, and the clamp holds at exactly 32.
+- **No Lenis coupling.** Lenis scrolls the window, so it emits native scroll events; a passive listener works identically with smooth scroll on or off, and the hook contains no reference to Lenis.
+- **Out of flow, so CLS is structurally impossible.** The photo is absolutely positioned inside `.media` (itself absolute), and `transform` is excluded from layout-shift scoring anyway.
+- **Independent of the canvas.** Gated on `isCinematicEligible()`, not the WebGL gate — parallax needs no GPU. Verified: after the watchdog retires the canvas, the parallax still runs correctly with no edge exposure.
+
+### ⚠️ Defect caught in review: the LCP image was being promoted at mount
+
+The first version primed itself with an `onScroll()` call at mount, and `lastShift` started at `-1`, so the very first invocation always wrote — an identity `translate3d(0,0,0)` **plus `will-change: transform`** on the hero photograph before the user had scrolled a single pixel. That promotes the LCP element to its own compositor layer before it has painted, which is a direct risk to the metric Phase 0 spent its entire budget on.
+
+Fixed by returning early while `shift === 0` and nothing has been applied yet. Verified at rest after load: `transform: none`, `will-change: auto` — the element is left exactly as the stylesheet describes it until the user actually scrolls.
+
+### Measurement caveat
+
+Scroll *smoothness* was not visually verified. The automation window runs rAF at **1 fps** when unfocused (docs/14 §5), which makes frame-rate observation meaningless there. What is verified is the main-thread cost of scrolling — 0 long tasks, 0 blocking — which is throttling-independent, plus that the work is compositor-only by construction (`transform` writes and nothing else). Perceived smoothness on real hardware remains unverified by this session.
 
 ---
 
