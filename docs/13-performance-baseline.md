@@ -221,6 +221,9 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 | Home TBT (mobile) | ≤ baseline **+ 0 ms** |
 | Home transferred JS | ≤ 180 kB brotli |
 | Desktop LCP | ≤ baseline + 150 ms |
+| **Desktop CLS** | **≤ 0.05** — added 2026-07-19, see below |
+
+**Why the desktop CLS row exists.** Every CLS assertion here was mobile-only, and mobile CLS measured a clean 0 — so a **0.112 desktop CLS sat on production unnoticed** until a synthetic audit surfaced it. The cause was viewport-dependent: the route fallback reserved 60vh, which left the footer inside a 940px-tall desktop viewport and off-screen on mobile. A gate that only watches one viewport cannot see a defect that only exists in the other. Measured on staging after the fix: **0.11195 → 0.01481**, the entire remainder being the hero ticker's skeleton→content swap.
 
 **Why the TBT row is the sharpest instrument.** Mobile must never load the cinematic chunk at all (the eligibility chain hard-stops below 1024px). So *any* movement in mobile TBT means the isolation leaked. It is a boolean test of the whole cinematic architecture, and it runs automatically.
 
