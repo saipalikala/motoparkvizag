@@ -299,7 +299,7 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 | Home transferred JS | ≤ 180 kB brotli |
 | Desktop LCP (median of 5) | ≤ baseline + 150 ms → hard ceiling **695 ms** — collector added 2026-07-19, see §5b |
 | **Desktop CLS** | **≤ 0.05** — added 2026-07-19, see below |
-| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, see §5b |
+| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, see §5b. ⚠️ **cannot currently see the canvas** — §5c |
 
 All Lighthouse rows assert the **median** of the runs. This is set explicitly in both configs; lhci's default (`optimistic`) asserts the best run instead — see §5b.
 
@@ -364,6 +364,54 @@ node scripts/summarize-lhr.mjs <label>-desktop .lighthouseci/keep/run-*.json
 ```
 
 `summarize-lhr.mjs` no longer hardcodes its `conditions` string as mobile — it reads form factor, throttling and emulation from each report, and **refuses to summarise runs from different form factors under one label**. Without that, a desktop capture would have been written to disk describing itself as mobile, and a desktop-vs-mobile comparison would have looked like a 6× improvement. That is precisely the like-for-like trap in `docs/14 §5`, so it is now enforced by the tool rather than by memory.
+
+---
+
+## 5c. Step 4 — measuring the scaffold, and why Lighthouse cannot measure the canvas (2026-07-19)
+
+### The A/B
+
+Run against a **local production preview** (`npm run build && npm run preview`), 5 runs each, control and treatment captured back-to-back in one session on one server. The control is `main`'s `Hero.jsx` (mount removed); everything else identical.
+
+| | control | scaffold | delta |
+|---|---|---|---|
+| LCP median | 733.4 ms | 732.5 ms | **−0.8 ms** (spread ~3 ms) |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0 | 0 | 0 |
+| script transfer | 155 868 B | 156 575 B | +707 B |
+| route JS (`npm run budgets`) | 128.4 kB | 128.9 kB | +0.5 kB |
+
+Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅.
+
+**Why local rather than staging.** `lighthouserc.desktop.json` targets staging, which deploys from `main` — running it unchanged would have measured code without the scaffold and reported a meaningless delta. A local control was captured instead so the comparison is like-for-like (docs/14 §5). Local is **not** comparable to the staging baseline in absolute terms: local LCP is 733 ms against staging's 545 ms, and local CLS is 0 against staging's 0.0148 — with the backend unreachable the hero ticker keeps its skeleton and never performs the swap that produces that shift.
+
+### ⚠️ The important finding: Lighthouse never loaded the canvas
+
+**In all 10 runs the `HeroScene` chunk was never requested** — control and treatment issued an identical 32 requests. The trace ran to 3304 ms, far past the ~950 ms the scaffold needs to arm, so this is not a timing artifact.
+
+The cause, captured from inside a Lighthouse run:
+
+```
+GATE {"w":true,"fine":true,"red":true,"mem":16,"save":false,"cheap":false}
+```
+
+**`prefers-reduced-motion` matches `reduce` under Lighthouse.** Condition 7 then correctly refuses to load the layer. Confirmed it is not the WebGL probe: removing `failIfMajorPerformanceCaveat` changes nothing.
+
+**So the table above proves the scaffold costs nothing in the page-load window — which is exactly what Amendment 1 condition 2 demands — but it does NOT prove anything about what the canvas costs while running, because under Lighthouse the canvas never runs.** Read those zeros as "the reduced-motion fallback is clean", not as "the shader is free".
+
+This has a consequence worth stating plainly:
+
+> **The "Desktop TBT ≤ 150 ms" row in §5 is currently unenforceable against the canvas.** Lighthouse will always measure the reduced-motion path. The row still has value — it catches anything the scaffold adds to load — but it cannot be the gate for shader cost.
+
+**Before the shader lands, that gate needs a real instrument.** The most promising option is driving Lighthouse through the Node API with a Puppeteer page and `Emulation.setEmulatedMedia({ features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })`, which would let the existing thresholds apply to a page where the canvas actually runs. A frame-budget check is the alternative. **Not yet built.**
+
+### Direct measurement of the running canvas
+
+Measured in a real browser (Playwright, production preview, desktop viewport), canvas running at ~100 fps for 5 s:
+
+**0 long tasks · 0 ms blocking.**
+
+An inert loop that clears to transparent costing nothing is the expected result, not a surprising one — it is a *floor*, and the number that matters is the same measurement after the shader exists. Note also that a paired control could not be captured cleanly: the automation window re-throttles to ~1 fps when it loses focus, which flattens both sides of the comparison.
 
 ---
 

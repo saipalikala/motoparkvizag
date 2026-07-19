@@ -228,9 +228,26 @@ Now the trigger is **`load` AND the last LCP candidate, whichever is later**. `l
 - **`sceneDiagnostics` is pinned to `globalThis` via `Symbol.for`.** A module can be instantiated twice (Vite appends a version query to changed modules), which read as "canvas mounted but no context created" — two objects, one never written to.
 - **The dev server cannot verify this.** StrictMode double-mounts; cleanup calls `loseContext()`, and the second mount reuses the *same* canvas element and gets back a dead context. Harmless in production (a real route change destroys the element) but it makes the rAF loop unverifiable in dev. **Verify the scene against `npm run preview` (build first), not `npm run dev`.**
 
-### Not yet done
+### Step 4 — measured ✅, with one finding that changes the plan
 
-**Step 4 has not been run: no desktop Lighthouse capture exists with the scaffold in place.** The baseline to beat is `perf/baseline/baseline-2026-07-19-desktop.json` — LCP 545 ms (ceiling 695), CLS 0.0148, **TBT 0 ms** (ceiling 150). Do that before step 5's shader work, or the shader and the scaffold will be measured together and neither will be attributable.
+Local like-for-like A/B, 5 runs each, control = `main`'s Hero without the mount (full detail in **`docs/13 §5c`**):
+
+| | control | scaffold | delta |
+|---|---|---|---|
+| LCP | 733.4 ms | 732.5 ms | **−0.8 ms** |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0 | 0 | 0 |
+| route JS | 128.4 kB | 128.9 kB | +0.5 kB |
+
+All three gates pass. Captured locally, not against staging, because staging deploys from `main` — running the config unchanged would have measured code without the scaffold.
+
+> **⚠️ But Lighthouse never loaded the canvas.** In all 10 runs the `HeroScene` chunk was never requested; both sides issued an identical 32 requests. Captured from inside a run: `GATE {"w":true,"fine":true,"red":true,...}` — **`prefers-reduced-motion` matches `reduce` under Lighthouse**, so condition 7 correctly refuses. Not a timing artifact (the trace ran to 3304 ms, the scaffold arms at ~950 ms) and not the WebGL probe (removing `failIfMajorPerformanceCaveat` changes nothing).
+>
+> Those zeros mean **"the scaffold adds nothing to page load"** — exactly what condition 2 demands — and **not** "the canvas is free". **The Desktop TBT ≤ 150 ms row cannot currently gate shader cost at all**, because Lighthouse will always measure the reduced-motion fallback.
+
+Directly measured instead, canvas running at ~100 fps for 5 s in a real browser: **0 long tasks, 0 ms blocking**. Expected for an inert clear-to-transparent loop — a floor, not a result.
+
+**Before step 5's shader lands, build a gate that can actually see the canvas.** Most promising: drive Lighthouse via the Node API with a Puppeteer page and `Emulation.setEmulatedMedia({ features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })`, so the existing thresholds apply to a page where the canvas runs. Not yet built — and without it, the shader's cost is unmeasured no matter what the lab says.
 
 ---
 
@@ -277,6 +294,7 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Never report a lab delta without a like-for-like baseline.** A measured CLS of 0.088 on a feature branch looked like a regression; `main` measured 0.08832 under identical conditions. The change contributed nothing. Two of the three LCP experiments would have been misread the same way without a same-session control.
 - **Distrust a summary number until you look at its distribution.** "50 products updated in 30 days" implied daily inventory work; 46 of those writes landed on a single day (a bulk backfill) with only 5 distinct `updatedAt` values across all 50 rows. That one check cancelled an entire rebuild.
 - **A gate that watches one viewport cannot see a defect that exists only in the other.** Desktop CLS sat at 0.112 on production while the mobile-only assertion read a clean 0.
+- **Lighthouse emulates `prefers-reduced-motion: reduce`.** Any feature gated on reduced-motion is therefore invisible to it — Lighthouse measures the fallback and reports clean numbers that say nothing about the feature. Cost 10 Lighthouse runs and an A/B that looked like a pass. Check that the chunk was actually *requested* (`network-requests` audit) before believing a "no cost" result.
 - **Verify the cinematic layer against `npm run preview`, never `npm run dev`.** StrictMode double-mounts effects; HeroScene's cleanup calls `WEBGL_lose_context.loseContext()`, and StrictMode's second mount reuses the **same canvas element** and gets back a dead context. The rAF loop then runs exactly one frame and stops, which looks like a broken watchdog but is a dev-only artifact — a real route change destroys the element, so production is fine. Use `npm run build && npm run preview`.
 - **A dynamic `import()` with a static string is still resolved at build time.** The `.catch()` kill-switch protects a runtime chunk failure, not a deleted folder — see §3b's correction.
 - **The in-app browser pane reports `visibilityState: "hidden"`.** That suppresses IntersectionObserver callbacks and freezes `requestAnimationFrame`, so reveals and Lenis motion **cannot be verified there** — screenshots and rAF-based probes just hang. Verify scroll/animation work through the Playwright MCP browser instead; it renders and reports `prefers-reduced-motion: no-preference`.
