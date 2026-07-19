@@ -511,6 +511,41 @@ Pause off-screen → frames frozen → resume; pause on tab hidden → frames fr
 
 ---
 
+## 5f. Amendment 1 (B) — the hero parallax transform (2026-07-19)
+
+`src/hooks/useHeroParallax.js` + `--parallax-room` in `Hero.module.css`.
+
+| | shader v1 | + parallax | delta |
+|---|---|---|---|
+| LCP median | 809.8 ms | **809.3 ms** | −0.5 ms |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0.0003 | **0.0003** | 0 |
+| route JS | 128.9 kB | 129.2 kB | +0.3 kB |
+
+Gates: TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅. Chunk loaded 5/5.
+
+**Scroll cost: 0 long tasks, 0 ms blocking across 60 scroll steps over the hero and back.** The hook writes only `transform`, coalesced to one write per frame, and stops entirely when the hero leaves the viewport.
+
+### Implementation decisions
+
+- **Only the `<img>` moves.** The WebGL canvas and the scrim stay fixed. Grain and motes are *viewport* atmosphere — moving them too would double the motion and make the two effects compete. The scrim staying put also keeps the headline's contrast gradient on the headline.
+- **Room is created in CSS, not by scaling the LCP image.** `--parallax-room: 32px` gives the photo bleed above and below inside `overflow: hidden`; the hook clamps its translate to the same 32 px, so the photo's edge can never enter the frame. Verified at scrollY 0/60/150/213/400/900 — no exposure at any point, and the clamp holds at exactly 32.
+- **No Lenis coupling.** Lenis scrolls the window, so it emits native scroll events; a passive listener works identically with smooth scroll on or off, and the hook contains no reference to Lenis.
+- **Out of flow, so CLS is structurally impossible.** The photo is absolutely positioned inside `.media` (itself absolute), and `transform` is excluded from layout-shift scoring anyway.
+- **Independent of the canvas.** Gated on `isCinematicEligible()`, not the WebGL gate — parallax needs no GPU. Verified: after the watchdog retires the canvas, the parallax still runs correctly with no edge exposure.
+
+### ⚠️ Defect caught in review: the LCP image was being promoted at mount
+
+The first version primed itself with an `onScroll()` call at mount, and `lastShift` started at `-1`, so the very first invocation always wrote — an identity `translate3d(0,0,0)` **plus `will-change: transform`** on the hero photograph before the user had scrolled a single pixel. That promotes the LCP element to its own compositor layer before it has painted, which is a direct risk to the metric Phase 0 spent its entire budget on.
+
+Fixed by returning early while `shift === 0` and nothing has been applied yet. Verified at rest after load: `transform: none`, `will-change: auto` — the element is left exactly as the stylesheet describes it until the user actually scrolls.
+
+### Measurement caveat
+
+Scroll *smoothness* was not visually verified. The automation window runs rAF at **1 fps** when unfocused (docs/14 §5), which makes frame-rate observation meaningless there. What is verified is the main-thread cost of scrolling — 0 long tasks, 0 blocking — which is throttling-independent, plus that the work is compositor-only by construction (`transform` writes and nothing else). Perceived smoothness on real hardware remains unverified by this session.
+
+---
+
 ## 6. Running Lighthouse on Windows — a required workaround
 
 `lhci collect` with `numberOfRuns > 1` **crashes on this machine**:

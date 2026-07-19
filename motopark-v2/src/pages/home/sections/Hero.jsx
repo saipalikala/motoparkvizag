@@ -1,10 +1,11 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import { formatINR } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
 import { useCinematicHero } from '@/hooks/useCinematicHero.js';
+import { useHeroParallax } from '@/hooks/useHeroParallax.js';
 import styles from './Hero.module.css';
 
 /**
@@ -36,6 +37,9 @@ export default function Hero({ products = [], loading = false }) {
   const ticker = products.slice(0, 3);
   // false until: eligible AND LCP observed AND the browser went idle.
   const showScene = useCinematicHero();
+  // Amendment 1 (B) — capped scroll transform on the hero photo only.
+  const photoRef = useRef(null);
+  useHeroParallax(photoRef);
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
@@ -60,6 +64,7 @@ export default function Hero({ products = [], loading = false }) {
           <img
             src="/hero-1600.jpg"
             alt=""
+            ref={photoRef}
             className={styles.photo}
             fetchPriority="high"
             decoding="async"

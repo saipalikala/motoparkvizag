@@ -182,7 +182,7 @@ Two things surfaced while building it, both recorded in `docs/13 §5b`:
 3. ~~`HeroScene.jsx` — inert scaffold, correct lifecycle, no visual effect yet.~~ ✅ **Done 2026-07-19** — see §3c below.
 4. Re-measure: desktop LCP within +150 ms; **mobile TBT unchanged** (the isolation tripwire); route JS unchanged.
 5. ~~Only then the actual shader/visual work.~~ ✅ **Done 2026-07-19** — see §3d below.
-6. Amendment 1 **(B)** — capped scroll-linked transform on the hero media — as a separate, later step.
+6. ~~Amendment 1 **(B)** — capped scroll-linked transform on the hero media.~~ ✅ **Done 2026-07-19** — see §3e.
 
 **Kill-switch implementation.** `lazy(() => import('@/cinematic/HeroScene.jsx').catch(() => ({ default: () => null })))`. A failed chunk then renders nothing instead of throwing.
 
@@ -295,6 +295,31 @@ Neither a screenshot nor Lighthouse could catch it: the hero looked plausible, a
 ### Lifecycle re-verified with the shader live
 
 Pause off-screen and on tab-hidden (frames frozen both times), resume on both, and the watchdog still retires at shipped thresholds — 180 frames, `mean frame 150.0ms > 32ms`, canvas removed, hero image / headline / CTA intact and the CTA still hit-testable.
+
+---
+
+## 3e. Amendment 1 (B) — hero parallax ✅ (2026-07-19)
+
+`src/hooks/useHeroParallax.js` + `--parallax-room` in `Hero.module.css`. Detail in **`docs/13 §5f`**.
+
+| | shader v1 | + parallax | delta |
+|---|---|---|---|
+| LCP | 809.8 ms | **809.3 ms** | −0.5 ms |
+| **TBT** | 0 ms | **0 ms** | **0** |
+| CLS | 0.0003 | 0.0003 | 0 |
+| route JS | 128.9 kB | 129.2 kB | +0.3 kB |
+
+**Scroll cost: 0 long tasks, 0 ms blocking over 60 scroll steps.** Watchdog unchanged and still retiring correctly; parallax verified to keep working *after* the canvas retires — the two systems are independent by design (parallax gates on `isCinematicEligible()`, not the WebGL gate, because it needs no GPU).
+
+**Only the photograph moves.** Canvas and scrim stay fixed: grain and motes are viewport atmosphere, and moving them too would double the motion and make the effects compete. The scrim staying put also keeps the contrast gradient on the headline.
+
+**Room comes from CSS, not from scaling the LCP image.** `--parallax-room: 32px` of bleed inside `overflow: hidden`, with the hook clamped to the same 32 px. Verified at six scroll positions: the photo's edge never enters the frame and the clamp holds at exactly 32. Change one number and you must change the other — both files say so.
+
+**No Lenis coupling.** Lenis scrolls the window and therefore emits native scroll events; a passive listener behaves identically with smooth scroll on or off.
+
+> **⚠️ Defect caught in review — the LCP image was being promoted at mount.** The first version primed itself at mount with `lastShift = -1`, so the first call always wrote: an identity transform *plus* `will-change: transform` on the hero photograph before any scroll. That promotes the LCP element to its own compositor layer before it paints. Fixed by returning early while the shift is still 0; at rest the element now reads `transform: none`, `will-change: auto`.
+
+**Caveat: scroll smoothness was not visually verified.** The automation window runs rAF at 1 fps unfocused, so frame-rate observation there is meaningless. Verified instead: main-thread cost during scroll (0 long tasks — throttling-independent) and that the work is compositor-only by construction. Perceived smoothness on real hardware is still unconfirmed.
 
 ---
 
