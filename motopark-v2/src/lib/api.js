@@ -33,10 +33,23 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // Normalize to the DS error envelope shape { code, message }
+    // Normalize to the DS error envelope shape { code, message }.
+    //
+    // Three shapes exist in this backend and all three must be handled:
+    //   { message: "..." }          — most routes
+    //   { error: { message: "..." } } — nested envelope
+    //   { error: "..." }            — the AI routes (ai/aiController.js)
+    //
+    // The third was missing, and it is not a cosmetic gap: a 503 from
+    // /api/ai/chat carries {error: "AI assistant is not configured yet."} —
+    // an exactly-correct, actionable message — and it was being discarded in
+    // favour of "Something went wrong. Please try again." A misconfigured
+    // provider key therefore looked identical to a network failure.
+    const data = err.response?.data;
     const message =
-      err.response?.data?.error?.message ??
-      err.response?.data?.message ??
+      (typeof data?.error === 'string' ? data.error : null) ??
+      data?.error?.message ??
+      data?.message ??
       'Something went wrong. Please try again.';
     return Promise.reject({ code: err.response?.status ?? 0, message, raw: err });
   },

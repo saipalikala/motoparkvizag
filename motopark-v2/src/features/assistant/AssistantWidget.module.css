@@ -26,6 +26,37 @@
   outline-offset: 2px;
 }
 
+/* Custom launcher artwork. Swap the file, not this rule — the path lives in
+   ICON_SRC at the top of AssistantWidget.jsx. Sized inside the 56px button so
+   any square source works without distorting. */
+.launcherIcon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+  /* The button is the click target; the image must never intercept events. */
+  pointer-events: none;
+}
+
+/* ── Mobile: clear the bottom navigation ──────────────────────────────
+   MobileBottomNav is `position: fixed; bottom: 0` and hides at >=1024px, so
+   below that breakpoint the launcher and the panel must both sit above it.
+
+   --nav-height-mobile is the same token MobileBottomNav sizes its rows with,
+   and env(safe-area-inset-bottom) matches the padding it adds for the iOS home
+   indicator — without that term the launcher lands ON the bar on notched
+   iPhones even though it clears it on Android. */
+@media (max-width: 1023px) {
+  .launcher {
+    bottom: calc(var(--space-5) + var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px));
+  }
+  .panel {
+    bottom: calc(
+      var(--space-5) + 68px + var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+
 .panel {
   position: fixed;
   right: var(--space-5);

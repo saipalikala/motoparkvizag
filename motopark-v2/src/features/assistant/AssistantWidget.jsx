@@ -4,6 +4,21 @@ import { api } from '@/lib/api.js';
 import { cloudinaryUrl } from '@/lib/image.js';
 import styles from './AssistantWidget.module.css';
 
+/**
+ * ⇩ CHANGE THIS LINE TO SWAP THE LAUNCHER ICON. ⇩
+ *
+ * Drop your image in `motopark-v2/public/` and reference it with a leading
+ * slash — files in public/ are served from the site root and are NOT processed
+ * by the bundler, so the path is literal and stable across builds.
+ *
+ *   motopark-v2/public/motobuddy-icon.png   →   '/motobuddy-icon.png'
+ *
+ * Square artwork works best (it renders at 30x30 inside a 56px button). PNG or
+ * SVG with transparency sits correctly on the navy launcher. Keep it small —
+ * this loads on every page.
+ */
+const ICON_SRC = '/motobuddy-icon.png';
+
 // V1 stores prices in whole rupees (NOT paise), so format directly.
 const rupees = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 const formatINR = (n) => (n == null ? '' : `₹${rupees.format(n)}`);
@@ -31,6 +46,9 @@ export default function AssistantWidget() {
   const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  // True once ICON_SRC has failed to load. Falls back to the emoji rather than
+  // leaving a broken-image glyph on every page while custom artwork is pending.
+  const [iconFailed, setIconFailed] = useState(false);
   const sessionId = useRef(null);
   const listRef = useRef(null);
   const inputRef = useRef(null);
@@ -95,7 +113,18 @@ export default function AssistantWidget() {
         aria-label={open ? 'Close assistant' : 'Open MotoBuddy assistant'}
         onClick={() => setOpen((o) => !o)}
       >
-        {open ? '✕' : '💬'}
+        {open || iconFailed ? (
+          open ? '✕' : '💬'
+        ) : (
+          <img
+            src={ICON_SRC}
+            alt=""
+            className={styles.launcherIcon}
+            width="30"
+            height="30"
+            onError={() => setIconFailed(true)}
+          />
+        )}
       </button>
 
       {open && (

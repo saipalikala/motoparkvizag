@@ -12,6 +12,16 @@ import axios from 'axios';
  */
 export const ADMIN_TOKEN_KEY = 'adminToken';
 
+/**
+ * Shown when axios reports no response at all. Distinguishing "the server said
+ * no" from "the server was never reached" is the difference between a five
+ * minute fix and an afternoon: a 401 means credentials, no-response means
+ * config — a blocked CORS origin, an unset VITE_API_BASE_URL falling back to
+ * localhost, or the API being down.
+ */
+const NETWORK_HINT =
+  "Couldn't reach the API. Check VITE_API_BASE_URL on the frontend host and that this origin is allowed by the backend's CORS list.";
+
 /** Fired when the backend rejects the admin token (401). AdminAuthContext listens
  *  and drops the session so the route guard bounces to /admin/login. */
 export const ADMIN_UNAUTHORIZED_EVENT = 'admin:unauthorized';
@@ -47,11 +57,17 @@ adminApi.interceptors.response.use(
       }
     }
 
-    // Normalize to { code, message } — backend admin routes emit { message }.
+    // Normalize to { code, message }. Admin routes emit { message }, but handle
+    // the other two envelope shapes too so a real server message is never
+    // replaced by the generic fallback — see the note in lib/api.js.
+    const data = err.response?.data;
     const message =
-      err.response?.data?.message ??
-      err.response?.data?.error?.message ??
-      'Something went wrong. Please try again.';
+      data?.message ??
+      data?.error?.message ??
+      (typeof data?.error === 'string' ? data.error : null) ??
+      // No response body at all means the request never reached the API:
+      // a CORS rejection, a wrong VITE_API_BASE_URL, or the backend being down.
+      (err.response ? 'Something went wrong. Please try again.' : NETWORK_HINT);
     return Promise.reject({ code: status, message, raw: err });
   },
 );
