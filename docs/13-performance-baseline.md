@@ -163,6 +163,31 @@ Phase 0 fixed the resource layer completely. What is left is architectural.
 
 ---
 
+## 3e. Interim standard: synthetic validation (decided 2026-07-19)
+
+**Decision: synthetic (lab) measurement is the primary performance gate for now. Field p75 remains the real standard and resumes as primary once traffic supports it.**
+
+This is the "deliberate, recorded decision" §3d asked for, not quiet drift.
+
+**Why.** The budget in `docs/09 §14` is written as mobile **p75 of real users**. Collecting it needs enough traffic for that percentile to be stable, and MotoPark is early enough that it isn't there yet: CrUX has too little public traffic to publish, and while our own `web-vitals` → GA4 beacon *does* collect events at any volume, a stable p75 could be weeks or months away. Blocking architectural decisions on it indefinitely costs more than the precision is worth at this stage.
+
+**What this does and does not change.**
+
+- It does **not** open the Phase 5 gate. Synthetic mobile LCP is 2.9–3.6 s against a 2500 ms budget — the budget is still missed, so Amendment 1's blocking condition still holds. This changes *how we measure*, not *what we require*.
+- It **does** end the freeze on the critical render path. That freeze existed for exactly one reason: changing LCP delivery mid-collection would blend two populations into one field p75 and destroy the gate decision. With field data no longer the near-term gate, there is no collection window left to protect.
+- CLS in particular loses nothing. Layout shift is fully observable in the lab; the 0.112 desktop regression was found and fixed synthetically.
+
+**Trigger to revert to field-primary.** Resume when **either** holds:
+
+1. GA4 `web_vitals` has **≥ 1,000 mobile LCP samples in a rolling 28-day window** — enough that p75 is not dominated by a handful of sessions; or
+2. **CrUX publishes** for `motoparkvizag.in` (i.e. PageSpeed Insights shows a "Discover what your real users are experiencing" field section rather than lab-only).
+
+At that point field p75 becomes primary again and the lab numbers revert to what they are best at: regression detection between builds. **Check this quarterly** — the failure mode is nobody ever looking, and synthetic-forever quietly becoming the standard.
+
+**Standing caveat.** Lab LCP for a client-rendered SPA is a simulated cold load on a throttled device with an empty cache. It is a good *relative* instrument (build vs build) and a pessimistic *absolute* one. Do not treat a lab pass as proof of a field pass, or vice versa.
+
+---
+
 ## 4. Tooling
 
 | Tool | Command | Purpose |

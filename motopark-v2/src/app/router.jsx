@@ -27,9 +27,22 @@ const CheckoutPage = lazy(() => import('../pages/checkout/CheckoutPage.jsx'));
 const TrackPage = lazy(() => import('../pages/track/TrackPage.jsx'));
 const AccountPage = lazy(() => import('../pages/account/AccountPage.jsx'));
 
-/** Route fallback — reserves height to avoid layout shift while a chunk loads. */
+/**
+ * Route fallback — reserves height so the footer never lands inside the viewport
+ * while a chunk is loading.
+ *
+ * This used to reserve 60vh, which was not enough and made it the single largest
+ * source of CLS on the site. Measured on staging at 1350x940: chrome (~157px) +
+ * 60vh (564px) + main's padding put the footer at y849 — visible — and rendering
+ * the real page then shoved it off screen. That one shift was 0.0968 of a total
+ * 0.112 CLS, i.e. 86% of it, and it broke the ≤0.05 gate on its own.
+ *
+ * 100dvh guarantees chrome + main exceeds the viewport at every size, so the
+ * footer starts below the fold and stays there. It is also a floor rather than a
+ * fixed height, so short pages cannot pull the footer back up into view either.
+ */
 function PageLoader() {
-  return <div style={{ minHeight: '60vh' }} aria-busy="true" aria-label="Loading" />;
+  return <div style={{ minHeight: '100dvh' }} aria-busy="true" aria-label="Loading" />;
 }
 
 /**

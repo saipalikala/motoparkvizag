@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Play, X } from 'lucide-react';
 import { getShowcaseSlides } from '@/services/videoShowcase.js';
+import { cloudinaryUrl } from '@/lib/image.js';
 import styles from './CinematicVideoShowcase.module.css';
 
 /**
@@ -145,10 +146,19 @@ export default function CinematicVideoShowcase() {
           {/* Poster layer: framer crossfades between slides; CSS fades it out on Play to reveal the video. */}
           <div className={`${styles.posterLayer} ${playing ? styles.mediaHidden : ''}`} aria-hidden="true">
             <AnimatePresence initial={false}>
+              {/* Posters were served RAW — no transform at all. Measured on
+                  staging: three 1448px originals at 255/248/202 kB, 705 kB for
+                  one section, two of them displayed at 166px wide. The helper
+                  the rest of the app already uses gives f_auto,q_auto and a real
+                  width. `loading="lazy"` matters as much: this section sits
+                  below the fold, and without it the DEMO fallback posters
+                  download immediately and are then thrown away the moment the
+                  API returns live slides. */}
               <m.img
                 key={current.id}
-                src={current.poster}
+                src={cloudinaryUrl(current.poster, { w: 1440 })}
                 alt=""
+                loading="lazy"
                 className={styles.poster}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -216,7 +226,8 @@ export default function CinematicVideoShowcase() {
                     whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                   >
-                    <img src={v.poster} alt="" className={styles.thumbImg} loading="lazy" />
+                    {/* Rendered at ~166px; was downloading the 1448px original. */}
+                    <img src={cloudinaryUrl(v.poster, { w: 360 })} alt="" className={styles.thumbImg} loading="lazy" />
                     <span className={styles.thumbScrim} aria-hidden="true" />
                     <span className={styles.thumbLabel}>{v.title}</span>
                   </m.button>
