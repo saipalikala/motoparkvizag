@@ -245,9 +245,25 @@ All three gates pass. Captured locally, not against staging, because staging dep
 >
 > Those zeros mean **"the scaffold adds nothing to page load"** — exactly what condition 2 demands — and **not** "the canvas is free". **The Desktop TBT ≤ 150 ms row cannot currently gate shader cost at all**, because Lighthouse will always measure the reduced-motion fallback.
 
-Directly measured instead, canvas running at ~100 fps for 5 s in a real browser: **0 long tasks, 0 ms blocking**. Expected for an inert clear-to-transparent loop — a floor, not a result.
+### The fixed instrument ✅ (`docs/13 §5d`)
 
-**Before step 5's shader lands, build a gate that can actually see the canvas.** Most promising: drive Lighthouse via the Node API with a Puppeteer page and `Emulation.setEmulatedMedia({ features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })`, so the existing thresholds apply to a page where the canvas runs. Not yet built — and without it, the shader's cost is unmeasured no matter what the lab says.
+`scripts/lh-desktop-cinematic.mjs` · **`npm run lh:cinematic`** — Lighthouse driven through a Puppeteer page with `prefers-reduced-motion: no-preference`, so the canvas actually loads. No new dependency (`puppeteer-core` ships inside `lighthouse`), and settings are imported from Lighthouse's own `desktop-config.js` so captures stay comparable by construction.
+
+**It asserts the cinematic chunk was requested and fails the run otherwise** — without that it would decay into the instrument it replaces. `EXPECT_CINEMATIC=0` inverts the assertion for capturing controls.
+
+**Honest baseline, canvas loaded in 5/5 runs** (`HeroScene.js` 1662 B + CSS 434 B):
+
+| | control | canvas active | delta |
+|---|---|---|---|
+| LCP | 808.9 ms | 808.9 ms | −0.05 ms |
+| **TBT** | 0 ms (all 5) | **0 ms (all 5)** | **0** |
+| CLS | 0 | 0 | 0 |
+
+All three gates pass, measured for the first time on a page where the canvas ran.
+
+**Sensitivity proven, not assumed.** With 90 ms/frame of artificial blocking work injected: **TBT 0 → 7146 ms** (47× over budget) while **LCP did not move at all**. The canvas loads post-LCP by design, so **TBT is the only lab gate that can see shader cost — never judge a shader by its LCP.**
+
+**Side effect worth knowing: this measured Lenis for the first time too.** It shares the same gate, so every earlier desktop capture ran under reduced motion with *neither* Lenis nor the canvas. That is the 733 → 809 ms gap between the reduced-motion and motion-enabled controls: **~75 ms of smooth scroll that had never been measured since Phase 3 shipped.** Only compare motion-enabled captures with other motion-enabled captures.
 
 ---
 
@@ -294,7 +310,8 @@ Three gates enforce this automatically. All were verified against a **deliberate
 - **Never report a lab delta without a like-for-like baseline.** A measured CLS of 0.088 on a feature branch looked like a regression; `main` measured 0.08832 under identical conditions. The change contributed nothing. Two of the three LCP experiments would have been misread the same way without a same-session control.
 - **Distrust a summary number until you look at its distribution.** "50 products updated in 30 days" implied daily inventory work; 46 of those writes landed on a single day (a bulk backfill) with only 5 distinct `updatedAt` values across all 50 rows. That one check cancelled an entire rebuild.
 - **A gate that watches one viewport cannot see a defect that exists only in the other.** Desktop CLS sat at 0.112 on production while the mobile-only assertion read a clean 0.
-- **Lighthouse emulates `prefers-reduced-motion: reduce`.** Any feature gated on reduced-motion is therefore invisible to it — Lighthouse measures the fallback and reports clean numbers that say nothing about the feature. Cost 10 Lighthouse runs and an A/B that looked like a pass. Check that the chunk was actually *requested* (`network-requests` audit) before believing a "no cost" result.
+- **Lighthouse emulates `prefers-reduced-motion: reduce`.** Any feature gated on reduced-motion is therefore invisible to it — Lighthouse measures the fallback and reports clean numbers that say nothing about the feature. Cost 10 Lighthouse runs and an A/B that looked like a pass. Use `npm run lh:cinematic` for anything behind the motion gate, and check the chunk was actually *requested* before believing a "no cost" result.
+- **A "0 ms" result is a claim about the instrument before it is a claim about the code.** Both times TBT read 0 here, the honest next question was "would this number have moved if the feature were expensive?" The first time the answer was no (the chunk never loaded); the second time it was verified by injecting 90 ms/frame and watching TBT hit 7146 ms. Prove sensitivity before reporting a zero.
 - **Verify the cinematic layer against `npm run preview`, never `npm run dev`.** StrictMode double-mounts effects; HeroScene's cleanup calls `WEBGL_lose_context.loseContext()`, and StrictMode's second mount reuses the **same canvas element** and gets back a dead context. The rAF loop then runs exactly one frame and stops, which looks like a broken watchdog but is a dev-only artifact — a real route change destroys the element, so production is fine. Use `npm run build && npm run preview`.
 - **A dynamic `import()` with a static string is still resolved at build time.** The `.catch()` kill-switch protects a runtime chunk failure, not a deleted folder — see §3b's correction.
 - **The in-app browser pane reports `visibilityState: "hidden"`.** That suppresses IntersectionObserver callbacks and freezes `requestAnimationFrame`, so reveals and Lenis motion **cannot be verified there** — screenshots and rAF-based probes just hang. Verify scroll/animation work through the Playwright MCP browser instead; it renders and reports `prefers-reduced-motion: no-preference`.

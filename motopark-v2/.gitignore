@@ -20,6 +20,7 @@ dist-ssr
 .lighthouseci/
 perf/lhci/
 perf/lhci-desktop/
+perf/cinematic/
 perf/stats.html
 perf/baseline/home-*.json
 

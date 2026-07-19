@@ -271,7 +271,8 @@ Independent PageSpeed Insights measurement on 2026-07-19 recorded **desktop LCP 
 | Budget tripwire | `npm run budgets` (auto in `npm run build`) | Reads `dist/.vite/manifest.json`, resolves the chunks the `/` route pulls **statically**, gzip+brotli them, fails the build over budget. ~2 s, never flakes. |
 | Bundle analyzer | `npm run analyze` | `rollup-plugin-visualizer` treemap → `perf/stats.html`. |
 | Lighthouse CI | `npm run lhci` | `lighthouserc.json`: mobile, 5 runs, against **staging**, asserted against §5. |
-| Lighthouse CI (desktop) | `npm run lhci:desktop` | `lighthouserc.desktop.json`: desktop preset, 5 runs, `/` only. The only instrument that can measure the desktop-only cinematic layer — see §5b. |
+| Lighthouse CI (desktop) | `npm run lhci:desktop` | `lighthouserc.desktop.json`: desktop preset, 5 runs, `/` only. Measures the desktop page — but **runs under reduced motion, so it cannot see the cinematic layer** (§5c). |
+| Lighthouse (cinematic) | `npm run lh:cinematic` | `scripts/lh-desktop-cinematic.mjs`: same desktop settings via Puppeteer with `prefers-reduced-motion: no-preference`, so the canvas actually loads. **Asserts the chunk was requested.** The only instrument that can measure shader cost — see §5d. |
 | Field CWV | automatic | `src/lib/webVitals.js` → GA4 `web_vitals` event. |
 | Hero variants | `npm run images` | Regenerate after art changes. Dev-only `sharp`; kept off the Vercel build path. |
 
@@ -299,7 +300,7 @@ Every PR touching the storefront must hold these. `check-budgets.mjs` enforces t
 | Home transferred JS | ≤ 180 kB brotli |
 | Desktop LCP (median of 5) | ≤ baseline + 150 ms → hard ceiling **695 ms** — collector added 2026-07-19, see §5b |
 | **Desktop CLS** | **≤ 0.05** — added 2026-07-19, see below |
-| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, see §5b. ⚠️ **cannot currently see the canvas** — §5c |
+| Desktop TBT (median of 5) | ≤ **150 ms** — owner-approved 2026-07-19, §5b. **Measure with `npm run lh:cinematic`, not `lhci:desktop`** — §5c/§5d |
 
 All Lighthouse rows assert the **median** of the runs. This is set explicitly in both configs; lhci's default (`optimistic`) asserts the best run instead — see §5b.
 
@@ -403,7 +404,7 @@ This has a consequence worth stating plainly:
 
 > **The "Desktop TBT ≤ 150 ms" row in §5 is currently unenforceable against the canvas.** Lighthouse will always measure the reduced-motion path. The row still has value — it catches anything the scaffold adds to load — but it cannot be the gate for shader cost.
 
-**Before the shader lands, that gate needs a real instrument.** The most promising option is driving Lighthouse through the Node API with a Puppeteer page and `Emulation.setEmulatedMedia({ features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] })`, which would let the existing thresholds apply to a page where the canvas actually runs. A frame-budget check is the alternative. **Not yet built.**
+**This was fixed the same day — see §5d.**
 
 ### Direct measurement of the running canvas
 
@@ -412,6 +413,58 @@ Measured in a real browser (Playwright, production preview, desktop viewport), c
 **0 long tasks · 0 ms blocking.**
 
 An inert loop that clears to transparent costing nothing is the expected result, not a surprising one — it is a *floor*, and the number that matters is the same measurement after the shader exists. Note also that a paired control could not be captured cleanly: the automation window re-throttles to ~1 fps when it loses focus, which flattens both sides of the comparison.
+
+---
+
+## 5d. The instrument that can see the canvas (2026-07-19)
+
+`scripts/lh-desktop-cinematic.mjs` · `npm run lh:cinematic -- <url> <runs> [outDir]`
+
+Drives Lighthouse through the Node API with a Puppeteer page whose media features are overridden:
+
+```js
+await page.emulateMediaFeatures([
+  { name: 'prefers-reduced-motion', value: 'no-preference' },
+]);
+const result = await lighthouse(url, { output: 'json' }, config, page);
+```
+
+No new dependency — `puppeteer-core` already ships inside `lighthouse`. Settings are **imported from Lighthouse's own `desktop-config.js`** rather than copied, so captures stay comparable to `lighthouserc.desktop.json` by construction rather than by remembering.
+
+### The assertion is the point
+
+The script **fails the run if the cinematic chunk was not requested**, and prints the chunk names and byte counts for every run. Without that check it would silently decay into the very instrument it replaces — reporting reassuring zeros for a feature that never loaded. `EXPECT_CINEMATIC=0` inverts the assertion for capturing the control half of an A/B, so a control that *accidentally* loads the layer fails just as loudly. **Do not remove either branch.**
+
+### Honest baseline — the scaffold, actually running
+
+5 runs each, local production preview, `motion: no-preference` on both sides. Control = `main`'s `Hero.jsx` with the mount removed.
+
+| | control | canvas active | delta |
+|---|---|---|---|
+| LCP median | 808.9 ms | 808.9 ms | **−0.05 ms** |
+| **TBT** | 0 ms (all 5 runs) | **0 ms (all 5 runs)** | **0** |
+| CLS | 0 | 0 | 0 |
+| FCP | 579.7 ms | 579.5 ms | −0.2 ms |
+| Speed Index | 587.6 ms | 594.9 ms | +7.3 ms |
+
+Chunk loaded in **5/5** runs: `HeroScene.js` 1662 B + `HeroScene.css` 434 B transferred.
+
+Gates: **TBT ≤ 150 ms ✅ · LCP ≤ +150 ms ✅ · CLS ≤ 0.05 ✅** — and for the first time these are measured on a page where the canvas actually ran.
+
+### Proof the instrument is sensitive
+
+A gate that reads 0 is what §5c was about, so sensitivity was verified rather than assumed. With 90 ms of artificial blocking work injected into the scene's frame loop:
+
+| | TBT | LCP |
+|---|---|---|
+| normal scaffold | 0 ms | 808.9 ms |
+| **+90 ms/frame busy-wait** | **7146 ms** | 807 ms |
+
+**TBT catches it 47× over budget. LCP does not move at all** — because the canvas loads post-LCP by design. That is the architecture working, and it means **TBT is the only lab gate that can see shader cost**. Do not judge a shader by its LCP.
+
+### Note: this also measured Lenis for the first time
+
+With `no-preference`, `isCinematicEligible()` passes, so **Phase 3's Lenis loads too** — it shares the gate. Every previous desktop capture (including `baseline-2026-07-19-desktop.json`) ran under reduced motion and therefore measured a page with **neither** Lenis nor the canvas. That is why the motion-enabled control sits at 808.9 ms against the reduced-motion local control's 733.4 ms: **~75 ms of that gap is smooth scroll, which had never been measured since it shipped.** Compare motion-enabled captures only against other motion-enabled captures.
 
 ---
 

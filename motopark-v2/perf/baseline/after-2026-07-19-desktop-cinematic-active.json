@@ -1,0 +1,118 @@
+{
+  "label": "after-2026-07-19-desktop-cinematic-active",
+  "capturedAt": "2026-07-19T10:39:51.296Z",
+  "lighthouseVersion": "12.6.1",
+  "runCount": 5,
+  "conditions": "desktop · simulate throttling · 1350x940@1x · 1x CPU · 10240 kbps",
+  "medians": {
+    "largest-contentful-paint": 808.88,
+    "first-contentful-paint": 579.504,
+    "cumulative-layout-shift": 0,
+    "total-blocking-time": 0,
+    "speed-index": 594.914,
+    "interactive": 808.88
+  },
+  "spread": {
+    "largest-contentful-paint": {
+      "min": 765.429,
+      "max": 814.353
+    },
+    "first-contentful-paint": {
+      "min": 578.591,
+      "max": 582.176
+    },
+    "cumulative-layout-shift": {
+      "min": 0,
+      "max": 0
+    },
+    "total-blocking-time": {
+      "min": 0,
+      "max": 0
+    },
+    "speed-index": {
+      "min": 586.997,
+      "max": 632.96
+    },
+    "interactive": {
+      "min": 765.429,
+      "max": 814.353
+    }
+  },
+  "runs": [
+    {
+      "url": "http://localhost:4174/",
+      "fetchTime": "2026-07-19T10:39:09.316Z",
+      "formFactor": "desktop",
+      "score": 99,
+      "scriptTransferBytes": 165029,
+      "metrics": {
+        "largest-contentful-paint": 809.007,
+        "first-contentful-paint": 579.504,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 0,
+        "speed-index": 632.96,
+        "interactive": 809.007
+      }
+    },
+    {
+      "url": "http://localhost:4174/",
+      "fetchTime": "2026-07-19T10:39:17.716Z",
+      "formFactor": "desktop",
+      "score": 99,
+      "scriptTransferBytes": 165029,
+      "metrics": {
+        "largest-contentful-paint": 807.183,
+        "first-contentful-paint": 578.591,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 0,
+        "speed-index": 594.914,
+        "interactive": 807.183
+      }
+    },
+    {
+      "url": "http://localhost:4174/",
+      "fetchTime": "2026-07-19T10:39:25.643Z",
+      "formFactor": "desktop",
+      "score": 99,
+      "scriptTransferBytes": 165029,
+      "metrics": {
+        "largest-contentful-paint": 814.353,
+        "first-contentful-paint": 582.176,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 0,
+        "speed-index": 597.603,
+        "interactive": 814.353
+      }
+    },
+    {
+      "url": "http://localhost:4174/",
+      "fetchTime": "2026-07-19T10:39:33.725Z",
+      "formFactor": "desktop",
+      "score": 99,
+      "scriptTransferBytes": 165029,
+      "metrics": {
+        "largest-contentful-paint": 808.88,
+        "first-contentful-paint": 579.44,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 0,
+        "speed-index": 588.318,
+        "interactive": 808.88
+      }
+    },
+    {
+      "url": "http://localhost:4174/",
+      "fetchTime": "2026-07-19T10:39:41.509Z",
+      "formFactor": "desktop",
+      "score": 99,
+      "scriptTransferBytes": 165029,
+      "metrics": {
+        "largest-contentful-paint": 765.429,
+        "first-contentful-paint": 579.643,
+        "cumulative-layout-shift": 0,
+        "total-blocking-time": 0,
+        "speed-index": 586.997,
+        "interactive": 765.429
+      }
+    }
+  ]
+}
