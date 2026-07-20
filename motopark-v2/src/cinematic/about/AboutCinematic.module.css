@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════════════════
+   AboutCinematic.module.css
+   Scoped to src/cinematic/about/ — no global styles touched.
+   ══════════════════════════════════════════════════════════ */
+
+/* ─── Wrapper (ScrollTrigger pin target) ────────────────── */
+.wrapper {
+  position: relative;
+  height: 100vh;
+  background: #000;
+  overflow: hidden;
+  /* Prevent canvas from causing horizontal scroll on small devices */
+  max-width: 100vw;
+}
+
+/* ─── Canvas ─────────────────────────────────────────────── */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Transition only the initial fade-in from fallback → canvas.
+     On-scroll drawing is driven by GSAP, not CSS. */
+  transition: opacity 0.5s ease;
+  display: block;
+}
+
+/* ─── Fallback image ──────────────────────────────────────── */
+.fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* ─── Scrim — subtle gradient for text legibility ────────── */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.20) 0%,
+      rgba(0, 0, 0, 0.08) 30%,
+      rgba(0, 0, 0, 0.08) 70%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── Overlay container ───────────────────────────────────── */
+.overlayContainer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ─── Individual overlay ──────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  /* GSAP drives opacity and transform — no CSS transition here */
+  will-change: opacity, transform;
+}
+
+.overlayAlign--left {
+  align-items: flex-start;
+  padding-left: clamp(32px, 10vw, 120px);
+}
+
+.overlayAlign--center {
+  align-items: center;
+  text-align: center;
+}
+
+.overlayAlign--right {
+  align-items: flex-end;
+  padding-right: clamp(32px, 10vw, 120px);
+}
+
+/* ─── Overlay text ────────────────────────────────────────── */
+.overlayText {
+  color: #ffffff;
+  font-family: 'Geist Variable', 'Geist', -apple-system, 'Helvetica Neue', sans-serif;
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 32px rgba(0, 0, 0, 0.6);
+}
+
+.overlayText--sm {
+  font-size: clamp(18px, 3vw, 30px);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.45;
+}
+
+.overlayText--md {
+  font-size: clamp(32px, 5vw, 60px);
+  font-weight: 300;
+}
+
+.overlayText--lg {
+  font-size: clamp(48px, 9vw, 108px);
+  font-weight: 200;
+  letter-spacing: -0.045em;
+}
+
+/* Each line of multi-line text on its own block */
+.overlayLine {
+  display: block;
+}
+
+/* ─── Overlay subtitle ────────────────────────────────────── */
+.overlaySub {
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: clamp(14px, 2vw, 20px);
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  margin-top: 16px;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Scroll hint ────────────────────────────────────────── */
+.scrollHint {
+  position: absolute;
+  bottom: 36px;
+  right: 48px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+  pointer-events: none;
+}
+
+.scrollLine {
+  width: 40px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.scrollDot {
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 8px;
+  height: 1px;
+  background: #e8532e;   /* --mp-orange-500 */
+  animation: scrollDotAnim 2.2s ease-in-out infinite;
+}
+
+@keyframes scrollDotAnim {
+  0%   { left: -8px; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .wrapper {
+    height: 65vh;
+    min-height: 340px;
+  }
+
+  .overlay {
+    padding: 24px;
+  }
+
+  .scrollHint {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    height: 55vh;
+    min-height: 280px;
+  }
+}

@@ -49,8 +49,6 @@ export const BIKE_MENU = [
   { label: 'Hero', slug: 'hero' },
 ];
 
-/** Offer bar — single static message (Motion Doctrine: no rotation/looping). */
-export const OFFER_MESSAGE = {
-  text: 'Free shipping on orders above ₹2,000 — Pan-India',
-  href: '/store',
-};
+/** The offer bar (V1 OfferBar) has been replaced by the Campaign Experience System.
+ *  Campaigns are managed at /admin/campaigns — no code changes needed to
+ *  launch, update, or expire a campaign. See src/features/campaigns/. */

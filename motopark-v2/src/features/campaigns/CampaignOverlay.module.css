@@ -1,0 +1,414 @@
+/* ════════════════════════════════════════════════════════════
+   Campaign Experience System — Overlay styles
+   MotoPark V2 design language throughout (DS §2–§8).
+   GPU-only animations: transform + opacity only.
+   Never triggers layout — all positioned via fixed/portal.
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Z-index layer ────────────────────────────────────────── */
+/* Campaign sits above page content, below the navbar (var(--z-navbar) = 300)
+   and below the mobile drawer (var(--z-drawer) = 400). */
+
+/* ── Backdrop ─────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(20 28 41 / 0.45); /* navy-900 tint — same as --overlay but lighter */
+  z-index: var(--z-campaign);
+  animation: backdropIn var(--dur-slow) var(--ease-out) both;
+  will-change: opacity;
+}
+
+.backdropExit {
+  animation: backdropOut var(--dur-fast) var(--ease-inout) both;
+}
+
+@keyframes backdropIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes backdropOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ── Overlay wrapper (positions the card) ─────────────────── */
+.overlay {
+  position: fixed;
+  z-index: calc(var(--z-campaign) + 1);
+  /* GPU acceleration — no paint, no layout */
+  will-change: transform, opacity;
+  /* Initial hidden state — JS adds .entering then .visible */
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Desktop: bottom-right corner ────────────────────────── */
+.overlayDesktop {
+  bottom: var(--space-8);
+  right: var(--space-8);
+  width: clamp(340px, 28vw, 440px);
+}
+
+/* ── Mobile: bottom sheet ─────────────────────────────────── */
+.overlayMobile {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+/* ── Animation phases ─────────────────────────────────────── */
+/* Desktop enter */
+.overlayDesktop.entering {
+  animation: cardEnterDesktop var(--dur-slow) var(--ease-out) both;
+  pointer-events: auto;
+}
+.overlayDesktop.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+.overlayDesktop.exiting {
+  animation: cardExitDesktop var(--dur-fast) var(--ease-inout) both;
+  pointer-events: none;
+}
+
+/* Mobile enter */
+.overlayMobile.entering {
+  animation: cardEnterMobile var(--dur-slow) var(--ease-out) both;
+  pointer-events: auto;
+}
+.overlayMobile.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.overlayMobile.exiting {
+  animation: cardExitMobile var(--dur-fast) var(--ease-inout) both;
+  pointer-events: none;
+}
+
+/* Desktop: rise + scale from bottom-right */
+@keyframes cardEnterDesktop {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes cardExitDesktop {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+}
+
+/* Mobile: slide up from bottom edge */
+@keyframes cardEnterMobile {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cardExitMobile {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+/* ── Card shell ───────────────────────────────────────────── */
+.card {
+  position: relative;
+  background: var(--campaign-bg, var(--bg-inverse-deep)); /* navy-800 default */
+  color: var(--text-inverse);
+  overflow: hidden;
+}
+
+/* Desktop card */
+.cardDesktop {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+/* Mobile bottom sheet */
+.cardMobile {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: 0 -8px 40px rgb(20 28 41 / 0.30);
+  max-height: 88dvh;
+  overflow-y: auto;
+  /* Scrollbar invisible but functional */
+  scrollbar-width: none;
+}
+.cardMobile::-webkit-scrollbar { display: none; }
+
+/* ── Close button ─────────────────────────────────────────── */
+.closeBtn {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  border-radius: var(--radius-full);
+  color: var(--mp-navy-200);
+  cursor: pointer;
+  transition: background var(--dur-instant) var(--ease-out),
+              color    var(--dur-instant) var(--ease-out);
+}
+.closeBtn:hover {
+  background: rgb(255 255 255 / 0.14);
+  color: var(--text-inverse);
+}
+
+/* ── Hero image ───────────────────────────────────────────── */
+.imageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+}
+
+.cardMobile .imageWrap {
+  aspect-ratio: 16 / 6;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Gradient scrim over the image so text below remains readable */
+.imageScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 40%,
+    var(--campaign-bg, var(--bg-inverse-deep)) 100%
+  );
+}
+
+/* ── Content body ─────────────────────────────────────────── */
+.body {
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardMobile .body {
+  padding: var(--space-5) var(--space-5) var(--space-8);
+  gap: var(--space-4);
+}
+
+/* ── Meta row (badge + eyebrow) ───────────────────────────── */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px var(--space-2);
+  background: var(--badge-sale-bg);   /* orange-700 */
+  color: var(--badge-sale-fg);        /* white */
+  font-size: 0.6875rem;               /* 11px */
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.eyebrow {
+  font-size: var(--text-caption);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mp-navy-300);
+}
+
+/* ── Headline (Sakana display) ────────────────────────────── */
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); /* 24–32px — below campaign-only limit */
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--text-inverse);
+  /* Override global h2 sizing — this is a display moment */
+  margin: 0;
+}
+
+.cardMobile .title {
+  font-size: clamp(1.625rem, 4vw, 2rem);
+}
+
+/* ── Subtitle ─────────────────────────────────────────────── */
+.subtitle {
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
+  color: var(--mp-navy-200);
+  margin: 0;
+}
+
+/* ── Coupon chip ──────────────────────────────────────────── */
+.coupon {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgb(255 255 255 / 0.06);
+  border: 1px dashed rgb(255 255 255 / 0.20);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-body-sm);
+  color: var(--text-inverse);
+  transition: background var(--dur-instant) var(--ease-out);
+  align-self: flex-start;
+}
+.coupon:hover {
+  background: rgb(255 255 255 / 0.10);
+}
+
+.couponLabel {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mp-orange-300);
+}
+
+.couponCode {
+  font-family: 'Courier New', 'Consolas', monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--mp-cream-100);
+}
+
+.couponAction {
+  display: grid;
+  place-items: center;
+  color: var(--mp-navy-300);
+  flex-shrink: 0;
+}
+
+/* ── CTAs ─────────────────────────────────────────────────── */
+.ctas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+
+.cardMobile .ctas {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ctaBtn {
+  flex-shrink: 0;
+}
+
+/* Dismiss / "maybe later" — ghost text link style */
+.dismissBtn {
+  background: none;
+  border: none;
+  padding: 0 var(--space-1);
+  font-size: var(--text-body-sm);
+  color: var(--mp-navy-300);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--dur-instant) var(--ease-out);
+}
+.dismissBtn:hover {
+  color: var(--mp-navy-100);
+}
+
+.cardMobile .dismissBtn {
+  text-align: center;
+  padding-block: var(--space-2);
+}
+
+/* ── Expiry line ──────────────────────────────────────────── */
+.expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-caption);
+  color: var(--mp-navy-400);
+  margin-top: var(--space-1);
+}
+
+/* ── Brand accent line (Sunset gradient) ──────────────────── */
+/* The MotoPark signature accent — carried over from the OfferBar into this
+   new premium surface. It lives at the BOTTOM of the card and is the ONE
+   sanctioned use of the orange gradient on a deal surface (Commerce Law 2). */
+.accentLine {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--mp-orange-700),
+    var(--mp-orange-400) 45%,
+    var(--mp-orange-300) 70%,
+    var(--mp-cream-200)
+  );
+}
+
+/* Mobile sheet: handle drag indicator visual hint */
+.cardMobile::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: rgb(255 255 255 / 0.16);
+  border-radius: var(--radius-full);
+  margin: var(--space-3) auto var(--space-1);
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+/* Global base.css already strips all animations for prefers-reduced-motion.
+   Extra safety: ensure the card is immediately visible without transforms. */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .overlayDesktop.entering,
+  .overlayDesktop.exiting,
+  .overlayMobile.entering,
+  .overlayMobile.exiting {
+    animation: none !important;
+    opacity: 1;
+    transform: none !important;
+  }
+  .backdrop,
+  .backdropExit {
+    animation: none !important;
+    opacity: 1;
+  }
+}

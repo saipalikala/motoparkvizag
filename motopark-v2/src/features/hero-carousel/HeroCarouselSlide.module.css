@@ -1,0 +1,34 @@
+/* HeroCarouselSlide.module.css — Phase 3.4: adds the horizontal parallax
+   bleed room, the same technique the retired useHeroParallax.js used
+   vertically (top/height bleed there, left/width bleed here), so a
+   translateX from useEmblaParallax.js can never expose the photo's edge. */
+
+.slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* Reserved for the Embla parallax transform (useEmblaParallax.js).
+     Deliberately larger than that hook's PARALLAX_ROOM clamp (48px) — a
+     small safety margin against rounding, not an exact-equality contract
+     the way the retired vertical version's comment required. Change one,
+     sanity-check the other; they don't have to match to the pixel. */
+  --h-parallax-room: 56px;
+}
+
+/* display:contents so <picture> adds no box of its own, matching the
+   original Hero.jsx technique — the <img> stays the sizing target. */
+.picture {
+  display: contents;
+}
+
+.photo {
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--h-parallax-room));
+  width: calc(100% + 2 * var(--h-parallax-room));
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}

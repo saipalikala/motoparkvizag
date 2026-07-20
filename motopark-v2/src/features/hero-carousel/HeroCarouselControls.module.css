@@ -1,0 +1,37 @@
+/* HeroCarouselControls.module.css — Phase 3.2: functional, minimally styled
+   per "no visual polish beyond what integration requires". */
+
+.controls {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--space-4);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.btn {
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgb(253 251 247 / 0.4);
+  background: rgb(20 28 41 / 0.45);
+  color: var(--mp-cream-50);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.btn:hover:not([aria-disabled='true']) {
+  background: rgb(20 28 41 / 0.65);
+}
+/* aria-disabled, not :disabled — see HeroCarouselControls.jsx for why the
+   native attribute isn't used (keyboard-focus-loss on the boundary
+   transition). Same visual treatment either way. */
+.btn[aria-disabled='true'] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

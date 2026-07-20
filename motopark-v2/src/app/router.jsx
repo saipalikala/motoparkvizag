@@ -27,6 +27,7 @@ const BikeMakePage = lazy(() => import('../pages/bikes/BikeMakePage.jsx'));
 const BikeModelPage = lazy(() => import('../pages/bikes/BikeModelPage.jsx'));
 const CollectionsPage = lazy(() => import('../pages/collections/CollectionsPage.jsx'));
 const CollectionPage = lazy(() => import('../pages/collections/CollectionPage.jsx'));
+const AboutPage  = lazy(() => import('../cinematic/about/AboutPage.jsx'));
 const StaticPage = lazy(() => import('../pages/static/StaticPage.jsx'));
 const NotFoundPage = lazy(() => import('../pages/static/NotFoundPage.jsx'));
 const AuthPage = lazy(() => import('../pages/auth/AuthPage.jsx'));
@@ -128,7 +129,7 @@ export default function AppRouter() {
         <Route path="/register" element={<Navigate to="/login" replace />} />
 
         {/* Static / policy pages (Razorpay + DPDP requirement) */}
-        <Route path="/about" element={<StaticPage page="about" />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<StaticPage page="contact" />} />
         <Route path="/shipping-policy" element={<StaticPage page="shipping-policy" />} />
         <Route path="/returns-policy" element={<StaticPage page="returns-policy" />} />

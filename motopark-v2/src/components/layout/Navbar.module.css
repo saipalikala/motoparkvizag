@@ -1,55 +1,177 @@
-/* MotoPark two-tier header. Cream glass (single sanctioned glass use).
-   Tier 1: brand · search field · utilities. Tier 2: category rail + trust. */
+/* ════════════════════════════════════════════════════════════
+   MotoPark V2 — Premium single-tier Navbar
+   ────────────────────────────────────────────────────────────
+   Three visual scroll states on the home route:
+     1. Transparent  — hero overlay, fully see-through.
+     2. Navy glass   — scrolling through the hero.
+     3. Cream frosted— past the hero / all non-home routes.
 
+   Technique: CSS custom properties (--_fg, --_hover, etc.) are
+   declared on .header and overridden per scroll-state class.
+   All child elements use these locals — zero hard-coded colours,
+   no specificity wars.
+
+   Transition targets: background, backdrop-filter, box-shadow,
+   border-color — all composited properties. Zero layout reflow.
+   ════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════
+   LOCAL COLOUR TOKENS — light (cream glass) defaults
+═══════════════════════════════════════════════════════════ */
+.header {
+  /* Foreground colours */
+  --_fg:        var(--text-primary);           /* navy-700          */
+  --_fg-muted:  var(--text-secondary);          /* navy-400          */
+  /* Interactive surface */
+  --_hover:     var(--mp-cream-200);            /* warm cream hover  */
+  /* Wordmark accent */
+  --_em:        var(--mp-navy-500);             /* PARK in medium navy */
+  /* Cart badge */
+  --_badge:     var(--accent);                  /* orange-500        */
+  /* Underline on nav links */
+  --_underline: var(--text-primary);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   DARK STATES — override locals for States 1 & 2 (on hero)
+═══════════════════════════════════════════════════════════ */
+.isHome:not(.pastHero) {
+  --_fg:        var(--text-inverse);            /* cream-50          */
+  --_fg-muted:  rgb(253 251 247 / 0.58);
+  --_hover:     rgb(253 251 247 / 0.09);
+  --_em:        var(--mp-orange-300);           /* brighter on dark  */
+  --_badge:     var(--mp-orange-400);
+  --_underline: rgb(253 251 247 / 0.50);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   HEADER SHELL — base (all routes, cream-frosted)
+═══════════════════════════════════════════════════════════ */
 .header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid transparent;
+  width: 100%;
+
+  background: var(--nav-bg);                   /* rgb(253 251 247 / 0.92) */
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border-bottom: 1px solid var(--border-default);
+
   transition:
-    border-color var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
+    background      var(--dur-base) var(--ease-out),
+    backdrop-filter var(--dur-base) var(--ease-out),
+    border-color    var(--dur-fast) var(--ease-out),
+    box-shadow      var(--dur-fast) var(--ease-out);
 }
 
-@supports not (backdrop-filter: blur(12px)) {
+/* Progressively enhanced: if blur is unsupported, use solid page bg. */
+@supports not (backdrop-filter: blur(1px)) {
   .header { background: var(--bg-page); }
 }
 
-.scrolled {
-  border-bottom-color: var(--border-default);
-  box-shadow: var(--shadow-xs);
+/* Non-home: slight shadow when the page has scrolled. */
+.header.scrolled:not(.isHome) {
+  box-shadow: var(--shadow-sm);
 }
 
-/* ── Tier 1 ─────────────────────────────────────────────── */
-.tier1 {
+
+/* ═══════════════════════════════════════════════════════════
+   HOME — fixed positioning (overlays the hero)
+═══════════════════════════════════════════════════════════ */
+.isHome {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+
+/* ─── State 1: Transparent (home, at rest) ──────────────── */
+/*
+   A faint gradient top-fade keeps the wordmark readable on any
+   hero photograph without introducing a hard coloured band.
+   backdrop-filter is zero so the hero shows through unblurred.
+*/
+.isHome:not(.scrolled) {
+  background: linear-gradient(
+    to bottom,
+    rgb(20 28 41 / 0.28) 0%,
+    rgb(20 28 41 / 0.04) 100%
+  );
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
+
+/* ─── State 2: Navy glass (home, inside hero) ───────────── */
+/*
+   Dark navy tint + strong blur. Provides contrast for white
+   text while the hero image is still visible behind it.
+   Inset highlight adds a top-edge shimmer, subtle luxury cue.
+*/
+.isHome.scrolled:not(.pastHero) {
+  background: rgb(20 28 41 / 0.58);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border-bottom-color: rgb(253 251 247 / 0.07);
+  box-shadow:
+    0 8px 40px rgb(20 28 41 / 0.30),
+    inset 0 1px 0 rgb(253 251 247 / 0.06);
+}
+
+
+/* ─── State 3: Cream frosted (home, past hero) ──────────── */
+/*
+   Returns to the standard MotoPark cream glass — matching the
+   overall storefront chrome once the hero scrolls away.
+*/
+.isHome.pastHero {
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border-bottom-color: var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   INNER ROW — single horizontal tier
+═══════════════════════════════════════════════════════════ */
+.inner {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  height: var(--nav-height-mobile);
+  gap: var(--space-2);
+  height: var(--nav-height-mobile);            /* 56 px mobile      */
   max-width: var(--container-max);
   margin-inline: auto;
   padding-inline: var(--space-4);
 }
 
 @media (min-width: 1024px) {
-  .tier1 {
-    height: 72px;
+  .inner {
+    height: 68px;
     padding-inline: var(--container-gutter);
-    gap: var(--space-8);
+    gap: var(--space-3);
   }
 }
 
-/* ── Logo lockup ────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════
+   LOGO LOCKUP
+═══════════════════════════════════════════════════════════ */
 .logo {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   text-decoration: none;
-  margin-right: auto;
   flex-shrink: 0;
+  margin-right: auto;                          /* mobile: push utils to right */
 }
 
 @media (min-width: 1024px) {
@@ -57,79 +179,129 @@
 }
 
 .logo img {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
+  /* Soft shadow lifts the badge off both light and dark hero backgrounds */
+  filter: drop-shadow(0 1px 6px rgb(20 28 41 / 0.22));
+  transition: opacity var(--dur-fast) var(--ease-out);
 }
 
 @media (min-width: 1024px) {
-  .logo img { width: 44px; height: 44px; }
+  .logo img { width: 40px; height: 40px; }
 }
 
 .wordmark {
   display: flex;
   flex-direction: column;
   line-height: 1;
-  color: var(--text-primary);
+  color: var(--_fg);
+  transition: color var(--dur-base) var(--ease-out);
 }
 
 .wordmarkName {
-  font-size: 1.1875rem;
+  font-size: 1.125rem;
   font-weight: 800;
-  letter-spacing: 0.045em;
+  letter-spacing: 0.05em;
 }
 
-.wordmarkName em,
-.drawerTitle em {
+/* "PARK" uses a lighter weight for typographic rhythm. */
+.wordmarkName em {
   font-style: normal;
   font-weight: 500;
-  color: var(--mp-navy-500);
+  color: var(--_em);
+  transition: color var(--dur-base) var(--ease-out);
 }
 
 .est {
-  font-size: 0.5625rem;
+  font-size: 0.4875rem;                        /* 7.8 px — metadata only */
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-top: 4px;
+  color: var(--_fg-muted);
+  margin-top: 3px;
+  transition: color var(--dur-base) var(--ease-out);
 }
 
-/* ── Desktop search field (first-class) ─────────────────── */
-.searchBar {
-  flex: 1;
-  max-width: 560px;
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP NAVIGATION LINKS (centre)
+═══════════════════════════════════════════════════════════ */
+.navLinks {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  height: 44px;
-  padding-inline: var(--space-4);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-full);
-  transition: border-color var(--dur-fast) var(--ease-out);
+  gap: 2px;
+  margin-inline: auto;                         /* centre in available space */
 }
 
-.searchBar:hover { border-color: var(--border-strong); }
-.searchBar:focus-within { border-color: var(--input-border-focus); }
+.navItem {
+  position: relative;
+}
 
-.searchBar input {
-  flex: 1;
-  min-width: 0;
-  border: none;
+/*
+   .navBtn is used by both dropdown triggers (button elements)
+   and NavLinks (anchor elements). Both share identical geometry.
+*/
+.navBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 var(--space-3);
+  height: 36px;
   background: none;
-  font-size: var(--text-body-sm);
+  border: none;
+  font-size: 0.8125rem;                        /* 13 px — refined scale */
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: var(--_fg);
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+  transition:
+    background var(--dur-instant) var(--ease-out),
+    color      var(--dur-base)   var(--ease-out);
 }
 
-.searchBar input:focus { outline: none; }
+.navBtn:hover {
+  background: var(--_hover);
+}
 
-.searchIcon { color: var(--text-secondary); flex-shrink: 0; }
+/* Ink underline — transform-only, no layout shift (doctrine). */
+.navBtn::after {
+  content: '';
+  position: absolute;
+  inset-inline: var(--space-3);
+  bottom: 5px;
+  height: 1.5px;
+  background: var(--_underline);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition:
+    transform  var(--dur-fast) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+}
 
-/* ── Utilities ──────────────────────────────────────────── */
+.navBtn:hover::after,
+.navBtn[aria-expanded='true']::after {
+  transform: scaleX(1);
+}
+
+/* Active NavLink — route match → persistent underline. */
+.navBtnActive::after {
+  transform: scaleX(1);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY ICONS (right edge)
+═══════════════════════════════════════════════════════════ */
 .utils {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -137,118 +309,58 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
-  border-radius: var(--radius-full);
-  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  color: var(--_fg);
   cursor: pointer;
-  transition: background var(--dur-instant) var(--ease-out);
+  text-decoration: none;
+  transition:
+    background var(--dur-instant) var(--ease-out),
+    color      var(--dur-base)   var(--ease-out);
 }
 
-.iconBtn:hover { background: var(--mp-cream-200); }
+.iconBtn:hover {
+  background: var(--_hover);
+}
 
 .cartBadge {
   position: absolute;
   top: 4px;
   right: 4px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
   display: grid;
   place-items: center;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1;
   color: var(--text-on-accent);
-  background: var(--accent);
+  background: var(--_badge);
   border-radius: var(--radius-full);
+  transition: background var(--dur-base) var(--ease-out);
 }
 
-/* ── Tier 2: category rail ──────────────────────────────── */
-.rail {
-  align-items: center;
-  justify-content: space-between;
-  height: 44px;
-  max-width: var(--container-max);
-  margin-inline: auto;
-  padding-inline: var(--container-gutter);
-  border-top: 1px solid var(--border-default);
-}
 
-.railNav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.railItem { position: relative; }
-
-.railBtn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 0 var(--space-3);
-  height: 44px;
-  background: none;
-  border: none;
-  font-size: var(--text-body-sm);
-  font-weight: 600;
-  letter-spacing: 0.015em;
-  color: var(--text-primary);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-/* Ink underline — transform-only hover (doctrine) */
-.railBtn::after {
-  content: '';
-  position: absolute;
-  inset-inline: var(--space-3);
-  bottom: 0;
-  height: 2px;
-  background: var(--text-primary);
-  border-radius: 1px;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-
-.railBtn:hover::after,
-.railBtn[aria-expanded='true']::after {
-  transform: scaleX(1);
-}
-
-/* Trust micro-signature (Commerce Law 3 in the chrome) */
-.trustSig {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: var(--text-caption);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--text-secondary);
-}
-
-.trustSig svg { color: var(--success); }
-
-/* ── Mega panel (full-width under rail) ─────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   MEGA PANEL (full-width, below single row)
+═══════════════════════════════════════════════════════════ */
 .mega {
   position: absolute;
   inset-inline: 0;
   top: 100%;
   background: var(--bg-surface);
-  border-block: 1px solid var(--border-default);
-  box-shadow: var(--shadow-md);
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
   animation: megaIn var(--dur-fast) var(--ease-out);
 }
 
 @keyframes megaIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .megaInner {
@@ -299,12 +411,11 @@
 
 .megaAll:hover { color: var(--text-primary); }
 
-/* ── Grouped mega (Shop by Bike): make column → model links ── */
+/* Grouped mega (Shop by Bike): make → model hierarchy. */
 .megaGroups {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-6);
-  margin: 0;
 }
 
 .megaGroup { min-width: 0; }
@@ -325,22 +436,25 @@
   margin: 0;
   padding: 0;
 }
-.megaGroupList .megaLink {
-  color: var(--text-secondary);
-}
+.megaGroupList .megaLink { color: var(--text-secondary); }
 .megaGroupList .megaLink:hover { color: var(--accent-hover); }
 
-/* ── Responsive helpers ─────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE SHOW/HIDE HELPERS
+═══════════════════════════════════════════════════════════ */
 .mobileOnly { display: grid; }
 .desktopOnly { display: none; }
 
 @media (min-width: 1024px) {
   .mobileOnly { display: none; }
   .desktopOnly { display: flex; }
-  .rail.desktopOnly { display: flex; }
 }
 
-/* ── Mobile persistent search ───────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE PERSISTENT SEARCH (below the nav row)
+═══════════════════════════════════════════════════════════ */
 .mobileSearch {
   display: flex;
   align-items: center;
@@ -351,9 +465,21 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-full);
+  transition:
+    background     var(--dur-base) var(--ease-out),
+    border-color   var(--dur-fast) var(--ease-out);
 }
 
-.mobileSearch:focus-within { border-color: var(--input-border-focus); }
+/* Dark states: translucent search bar on the hero. */
+.isHome:not(.pastHero) .mobileSearch {
+  background: rgb(253 251 247 / 0.10);
+  border-color: rgb(253 251 247 / 0.18);
+  color: var(--_fg);
+}
+
+.mobileSearch:focus-within {
+  border-color: var(--input-border-focus);
+}
 
 .mobileSearch input {
   flex: 1;
@@ -361,15 +487,31 @@
   background: none;
   font-size: var(--text-body);
   min-width: 0;
+  color: inherit;
+}
+
+.mobileSearch input::placeholder {
+  color: var(--_fg-muted);
+  transition: color var(--dur-base) var(--ease-out);
 }
 
 .mobileSearch input:focus { outline: none; }
+
+.searchIcon {
+  color: var(--_fg-muted);
+  flex-shrink: 0;
+  transition: color var(--dur-base) var(--ease-out);
+}
 
 @media (min-width: 1024px) {
   .mobileSearch.mobileOnly { display: none; }
 }
 
-/* ── Mobile drawer ──────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE DRAWER (portaled to document.body)
+   Always renders on var(--bg-page) — unaffected by navbar states.
+═══════════════════════════════════════════════════════════ */
 .drawerOverlay {
   position: fixed;
   inset: 0;
@@ -380,7 +522,7 @@
 
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 .drawer {
@@ -396,7 +538,7 @@
 
 @keyframes slideIn {
   from { transform: translateX(-24px); opacity: 0.6; }
-  to { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
 .drawerHead {
@@ -412,15 +554,45 @@
   gap: var(--space-2);
 }
 
-.drawerBrand img { width: 32px; height: 32px; object-fit: contain; }
+.drawerBrand img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
 
 .drawerTitle {
   font-weight: 800;
   font-size: var(--text-h5);
   letter-spacing: 0.045em;
+  color: var(--text-primary);
 }
 
-.accordion { border-bottom: 1px solid var(--border-default); }
+/* Drawer always on cream bg — PARK stays navy here, not orange. */
+.drawerTitle em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--mp-navy-500);
+}
+
+/* Drawer close button — uses page colours, not navbar tokens. */
+.drawerClose {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-instant) var(--ease-out);
+}
+
+.drawerClose:hover { background: var(--mp-cream-200); }
+
+.accordion {
+  border-bottom: 1px solid var(--border-default);
+}
 
 .accordionBtn {
   display: flex;
@@ -437,7 +609,10 @@
   cursor: pointer;
 }
 
-.accordionBtn svg { transition: rotate var(--dur-fast) var(--ease-out); }
+.accordionBtn svg {
+  transition: rotate var(--dur-fast) var(--ease-out);
+}
+
 .chevronOpen { rotate: 180deg; }
 
 .accordionList {
@@ -459,7 +634,7 @@
 
 .accordionLink:hover { background: var(--bg-surface-warm); }
 
-/* Drawer: model links nested under a make (Shop by Bike) */
+/* Shop by Bike: model links indented under make. */
 .accordionSubLink {
   display: block;
   padding: var(--space-1) var(--space-4) var(--space-1) var(--space-6);

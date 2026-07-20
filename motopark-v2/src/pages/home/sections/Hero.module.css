@@ -10,41 +10,40 @@
   background: var(--bg-inverse-deep); /* navy-800 base under the photo */
   color: var(--text-inverse);
   overflow: hidden;
-
-  /* Bleed available to the Amendment 1 (B) scroll transform, above AND below
-     the photo. `overflow: hidden` above is what clips it.
-
-     MUST equal PARALLAX_ROOM in src/hooks/useHeroParallax.js. The hook clamps
-     its translate to this number; the number is what guarantees the photo's
-     edge can never enter the frame. Change one, change the other. */
-  --parallax-room: 32px;
 }
 
 /* ── Media layer ───────────────────────────────────────── */
+/* Phase 3.4 cleanup: .picture, .photo and --parallax-room were removed here
+   — HeroCarousel (Phase 3.2) replaced what they styled, and the parallax
+   bleed-room technique moved to HeroCarouselSlide.module.css's
+   --h-parallax-room, driven by useEmblaParallax.js instead of the retired
+   useHeroParallax.js.
+
+   Final-review fix: this used to carry `z-index: -1`. That was safe when
+   .media held only decoration (photo/HeroScene/scrim) — but it also
+   silently caps EVERYTHING inside it, including HeroCarousel's Controls and
+   Pagination (z-index: 2, several levels deep). A positioned descendant
+   with z-index:auto does not open its own stacking context, so those
+   explicit z-indexes bubble past .wrap/.viewport/HeroCarousel and land in
+   whichever ancestor DOES establish one — which, with .media pinned at -1,
+   was .media itself: Controls/Pagination could never out-rank -1 no matter
+   what number they carried, and on mobile specifically, where the ticker
+   (part of .inner, z-index:auto/0) shares the same bottom-of-hero region as
+   the centered pagination dots, the ticker's opaque cards would win and
+   visually hide them entirely.
+
+   Dropping the explicit z-index here fixes it without touching anything
+   else: `.media` and `.inner` are both position:relative/absolute with
+   z-index:auto, so they still resolve by DOM order at that shared level —
+   `.media` first, `.inner` second — preserving the exact same photo-behind-
+   copy relationship as before. The only thing that changes is that
+   Controls/Pagination's explicit z-index:2 is no longer trapped below -1,
+   so it now correctly escapes all the way to `.hero`'s isolated stacking
+   context (isolation:isolate) and paints above both `.media`'s own content
+   and `.inner`'s. */
 .media {
   position: absolute;
   inset: 0;
-  z-index: -1;
-}
-/* display:contents so <picture> adds no box of its own — the <img> stays a
-   direct layout child of .media and the sizing rules below apply unchanged. */
-.picture {
-  display: contents;
-}
-/* Absolutely positioned and over-tall so the parallax transform has somewhere
-   to travel. Out of flow, so it cannot contribute to layout shift; `transform`
-   is excluded from CLS scoring in any case.
-
-   The canvas and scrim are NOT given this bleed — only the photograph moves.
-   The scrim must stay aligned to the headline it guarantees contrast for. */
-.photo {
-  position: absolute;
-  top: calc(-1 * var(--parallax-room));
-  left: 0;
-  width: 100%;
-  height: calc(100% + 2 * var(--parallax-room));
-  object-fit: cover;
-  object-position: center 30%;
 }
 /* Scrim: darker at the bottom-left where the headline sits (AA), fading up. */
 .scrim {

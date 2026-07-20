@@ -177,6 +177,11 @@
 
   --skeleton-base: var(--mp-neutral-200);
   --skeleton-shine: var(--mp-cream-50);
+
+  /* ── Z-index stack (Campaign < Navbar < Drawer) ──────────── */
+  --z-campaign: 200; /* campaign overlay — above page content */
+  --z-navbar:   300; /* navbar — always above campaign card    */
+  --z-drawer:   400; /* mobile drawer — topmost surface        */
 }
 
 /* ── DARK THEME (token-complete, NOT enabled at launch) ─────

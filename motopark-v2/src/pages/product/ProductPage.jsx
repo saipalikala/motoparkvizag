@@ -3,11 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
+import Reveal from '@/components/ui/Reveal.jsx';
 import { getProduct } from '@/services/products.js';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
 import { formatINR, discountPercent } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
+import SimilarProducts from './SimilarProducts.jsx';
 import styles from './ProductPage.module.css';
 
 const isHex = (v) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v || '');
@@ -365,6 +367,9 @@ export default function ProductPage() {
           )}
         </div>
       </div>
+      <Reveal>
+        <SimilarProducts product={product} />
+      </Reveal>
     </div>
   );
 }

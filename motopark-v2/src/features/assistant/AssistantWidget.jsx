@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { api } from '@/lib/api.js';
 import { cloudinaryUrl } from '@/lib/image.js';
 import styles from './AssistantWidget.module.css';
@@ -52,14 +53,71 @@ export default function AssistantWidget() {
   const sessionId = useRef(null);
   const listRef = useRef(null);
   const inputRef = useRef(null);
+  // Refs for focus management: launcher receives focus on close; panel hosts the focus trap.
+  const launcherRef = useRef(null);
+  const panelRef = useRef(null);
 
+  const { pathname } = useLocation();
+
+  /** Close the panel and return keyboard focus to the launcher button. */
+  function closePanel() {
+    setOpen(false);
+    launcherRef.current?.focus();
+  }
+
+  /**
+   * Focus trap — keeps Tab / Shift+Tab inside the open panel.
+   * DS §12 blocking requirement: every dialog must trap focus.
+   */
+  function handlePanelKeyDown(e) {
+    if (e.key !== 'Tab') return;
+    const focusable = panelRef.current?.querySelectorAll(
+      'a[href], button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable?.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
+
+  // Focus the input whenever the panel opens.
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // Scroll to the latest message / loading indicator.
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Close the panel on route change — matches the Navbar drawer pattern (Navbar.jsx:42–45).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Body scroll-lock — prevents the page scrolling under the open panel (Navbar.jsx:58–64).
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  // Escape key — close the panel and return focus to the launcher (Navbar.jsx:47–56).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closePanel();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  // closePanel is defined in render scope; setOpen + launcherRef are both stable.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   async function send(text) {
     const message = (text ?? input).trim();
@@ -107,11 +165,12 @@ export default function AssistantWidget() {
   return (
     <>
       <button
+        ref={launcherRef}
         type="button"
         className={styles.launcher}
         aria-expanded={open}
         aria-label={open ? 'Close assistant' : 'Open MotoBuddy assistant'}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? closePanel() : setOpen(true))}
       >
         {open || iconFailed ? (
           open ? '✕' : '💬'
@@ -128,13 +187,28 @@ export default function AssistantWidget() {
       </button>
 
       {open && (
-        <section className={styles.panel} role="dialog" aria-label="MotoBuddy shopping assistant">
+        <section
+          ref={panelRef}
+          className={styles.panel}
+          role="dialog"
+          aria-label="MotoBuddy shopping assistant"
+          aria-modal="true"
+          onKeyDown={handlePanelKeyDown}
+        >
           <header className={styles.header}>
             <span className={styles.brandDot} aria-hidden="true" />
             <div>
               <p className={styles.title}>MotoBuddy</p>
               <p className={styles.subtitle}>Grounded in live catalogue &amp; orders</p>
             </div>
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={closePanel}
+              aria-label="Close assistant"
+            >
+              <X size={18} strokeWidth={2} aria-hidden="true" />
+            </button>
           </header>
 
           <div className={styles.messages} ref={listRef}>

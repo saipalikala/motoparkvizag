@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { BadgeCheck, ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
+import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import { useScrolled } from '@/hooks/useScrolled.js';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useNav } from '@/contexts/NavContext.jsx';
@@ -9,13 +9,29 @@ import logoBadge from '@/assets/images/logo-badge.png';
 import styles from './Navbar.module.css';
 
 /**
- * MotoPark two-tier header (Design Lead redesign).
- * Tier 1: brand lockup · always-visible search (Experience Principle #1) · utilities.
- * Tier 2: category rail + trust micro-signature (Commerce Law 3 in the chrome).
- * Mobile: single bar + persistent search + drawer (unchanged structure).
+ * MotoPark single-tier premium navbar.
+ *
+ * Three visual states on the homepage:
+ *   1. Transparent   — at the very top, navbar overlays the hero.
+ *   2. Navy glass    — scrolling through the hero (subtle frosted dark).
+ *   3. Cream frosted — once past the hero (matches the rest of the storefront).
+ *
+ * All non-home routes: position sticky, always cream-frosted glass.
+ *
+ * State is driven by two scroll thresholds (both rAF-throttled via useScrolled):
+ *   - scrolled   : any movement past 8 px → glass activates.
+ *   - pastHero   : past ~80% of the viewport height → cream frosted.
+ *
+ * Structure (single row): Logo · Nav links (desktop) · Utilities
+ * Mobile: Hamburger · Logo · Icons + persistent search bar below.
  */
 export default function Navbar() {
+  // Any scroll beyond 8 px → leave transparent state.
   const scrolled = useScrolled(8);
+  // Past approximately the hero section (80 vh) → switch to cream frosted.
+  // Computed once at mount; acceptable for this purpose (no SSR, no resize events needed).
+  const pastHero = useScrolled(Math.round(window.innerHeight * 0.80));
+
   const { count: cartCount } = useCart();
   const { categories, brands, bikes } = useNav();
   const [openMenu, setOpenMenu] = useState(null);
@@ -23,27 +39,28 @@ export default function Navbar() {
   const [openAccordion, setOpenAccordion] = useState(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const isHome = pathname === '/';
   const navRef = useRef(null);
   const drawerRef = useRef(null);
 
-  // Built from live nav data (NavContext), which seeds from and falls back to
-  // the static config/nav.js lists. Shape is unchanged, so the rail, mega panel,
-  // and mobile accordion below render exactly as before.
+  // Built from live nav data (NavContext), seeded from config/nav.js.
+  // Shape is unchanged — mega panel and mobile accordion render exactly as before.
   const MENUS = useMemo(
     () => [
       { id: 'shop', label: 'Shop', to: '/store', items: categories, base: '/c', eyebrow: 'Gear up by category' },
       { id: 'brands', label: 'Brands', to: null, items: brands, base: '/brand', eyebrow: 'Genuine brands only' },
-      // Bikes use `groups` (make → models) rather than a flat `items` list.
       { id: 'bikes', label: 'Shop by Bike', to: '/bikes', groups: bikes, base: '/bikes', eyebrow: 'Made for your machine' },
     ],
     [categories, brands, bikes],
   );
 
+  // Close menus on route change.
   useEffect(() => {
     setOpenMenu(null);
     setDrawerOpen(false);
   }, [pathname]);
 
+  // Escape key closes open surfaces.
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
@@ -55,6 +72,7 @@ export default function Navbar() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
+  // Trap body scroll while drawer is open; auto-focus first focusable.
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : '';
     if (drawerOpen) drawerRef.current?.querySelector('a,button')?.focus();
@@ -63,6 +81,7 @@ export default function Navbar() {
     };
   }, [drawerOpen]);
 
+  // Close mega panel on outside click.
   useEffect(() => {
     if (!openMenu) return;
     const onClick = (e) => {
@@ -72,13 +91,15 @@ export default function Navbar() {
     return () => document.removeEventListener('pointerdown', onClick);
   }, [openMenu]);
 
+  // Mobile search form submit → navigate to search page.
   const submitSearch = (e) => {
     e.preventDefault();
     const q = new FormData(e.currentTarget).get('q')?.toString().trim();
     if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
   };
 
-  const lockup = (
+  // MOTOPARK wordmark — shared between main bar and mobile drawer.
+  const wordmark = (
     <span className={styles.wordmark}>
       <span className={styles.wordmarkName}>
         MOTO<em>PARK</em>
@@ -87,10 +108,21 @@ export default function Navbar() {
     </span>
   );
 
+  // Compose header class from the three scroll state flags.
+  const headerClass = [
+    styles.header,
+    isHome   && styles.isHome,
+    scrolled && styles.scrolled,
+    pastHero && styles.pastHero,
+  ].filter(Boolean).join(' ');
+
   return (
-    <header ref={navRef} className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
-      {/* ── Tier 1: brand · search · utilities ── */}
-      <div className={styles.tier1}>
+    <header ref={navRef} className={headerClass}>
+
+      {/* ── Single premium row ─────────────────────────────── */}
+      <div className={styles.inner}>
+
+        {/* Mobile only: hamburger menu trigger */}
         <button
           type="button"
           className={`${styles.iconBtn} ${styles.mobileOnly}`}
@@ -101,48 +133,19 @@ export default function Navbar() {
           <Menu size={22} strokeWidth={1.8} aria-hidden="true" />
         </button>
 
+        {/* Brand lockup */}
         <Link to="/" className={styles.logo} aria-label="MotoPark — home">
-          <img src={logoBadge} alt="" width="44" height="44" />
-          {lockup}
+          <img src={logoBadge} alt="" width="40" height="40" />
+          {wordmark}
         </Link>
 
-        {/* Desktop: search is a first-class field, not an icon */}
-        <form className={`${styles.searchBar} ${styles.desktopOnly}`} onSubmit={submitSearch} role="search">
-          <Search size={17} strokeWidth={1.8} aria-hidden="true" className={styles.searchIcon} />
-          <input
-            name="q"
-            type="search"
-            placeholder="Search helmets, jackets, brands, your bike…"
-            aria-label="Search products"
-            autoComplete="off"
-          />
-        </form>
-
-        <div className={styles.utils}>
-          <Link to="/search" className={`${styles.iconBtn} ${styles.mobileOnly}`} aria-label="Search">
-            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <Link to="/wishlist" className={`${styles.iconBtn} ${styles.desktopOnly}`} aria-label="Wishlist">
-            <Heart size={20} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <Link to="/account" className={`${styles.iconBtn} ${styles.desktopOnly}`} aria-label="Account">
-            <User size={20} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <Link to="/cart" className={styles.iconBtn} aria-label={`Cart${cartCount ? ` (${cartCount})` : ''}`}>
-            <ShoppingBag size={20} strokeWidth={1.8} aria-hidden="true" />
-            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount > 9 ? '9+' : cartCount}</span>}
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Tier 2 (desktop): category rail + trust signature ── */}
-      <div className={`${styles.rail} ${styles.desktopOnly}`}>
-        <nav className={styles.railNav} aria-label="Categories">
+        {/* Desktop: category navigation (centre) */}
+        <nav className={`${styles.navLinks} ${styles.desktopOnly}`} aria-label="Main navigation">
           {MENUS.map((menu) => (
-            <div key={menu.id} className={styles.railItem}>
+            <div key={menu.id} className={styles.navItem}>
               <button
                 type="button"
-                className={styles.railBtn}
+                className={styles.navBtn}
                 aria-expanded={openMenu === menu.id}
                 aria-haspopup="true"
                 onMouseEnter={() => setOpenMenu(menu.id)}
@@ -153,25 +156,76 @@ export default function Navbar() {
                 }
               >
                 {menu.label}
-                <ChevronDown size={13} strokeWidth={2} aria-hidden="true" />
+                <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
               </button>
             </div>
           ))}
-          <NavLink to="/collections" className={styles.railBtn}>
+          <NavLink
+            to="/collections"
+            className={({ isActive }) =>
+              `${styles.navBtn} ${isActive ? styles.navBtnActive : ''}`
+            }
+          >
             Collections
           </NavLink>
-          <NavLink to="/store" className={styles.railBtn}>
+          <NavLink
+            to="/store"
+            className={({ isActive }) =>
+              `${styles.navBtn} ${isActive ? styles.navBtnActive : ''}`
+            }
+          >
             All Gear
           </NavLink>
         </nav>
 
-        <p className={styles.trustSig}>
-          <BadgeCheck size={14} strokeWidth={1.8} aria-hidden="true" />
-          Genuine gear · Vizag → Pan-India
-        </p>
+        {/* Utility icons (right edge) */}
+        <div className={styles.utils}>
+          {/* Mobile: search → /search page */}
+          <Link
+            to="/search"
+            className={`${styles.iconBtn} ${styles.mobileOnly}`}
+            aria-label="Search"
+          >
+            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+          {/* Desktop: search icon → /search page */}
+          <Link
+            to="/search"
+            className={`${styles.iconBtn} ${styles.desktopOnly}`}
+            aria-label="Search products"
+          >
+            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+          <Link
+            to="/wishlist"
+            className={`${styles.iconBtn} ${styles.desktopOnly}`}
+            aria-label="Wishlist"
+          >
+            <Heart size={20} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+          <Link
+            to="/account"
+            className={`${styles.iconBtn} ${styles.desktopOnly}`}
+            aria-label="Account"
+          >
+            <User size={20} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+          <Link
+            to="/cart"
+            className={styles.iconBtn}
+            aria-label={`Cart${cartCount ? ` (${cartCount})` : ''}`}
+          >
+            <ShoppingBag size={20} strokeWidth={1.8} aria-hidden="true" />
+            {cartCount > 0 && (
+              <span className={styles.cartBadge}>
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
+        </div>
       </div>
 
-      {/* ── Mega panel (full-width, rail-anchored) ── */}
+      {/* ── Mega panel (full-width, anchored below the single row) ── */}
       {openMenu && (
         <div className={styles.mega} role="menu" onMouseLeave={() => setOpenMenu(null)}>
           {MENUS.filter((m) => m.id === openMenu).map((menu) => (
@@ -211,7 +265,11 @@ export default function Navbar() {
                 <ul className={styles.megaGrid}>
                   {menu.items.map((item) => (
                     <li key={item.slug}>
-                      <Link role="menuitem" to={`${menu.base}/${item.slug}`} className={styles.megaLink}>
+                      <Link
+                        role="menuitem"
+                        to={`${menu.base}/${item.slug}`}
+                        className={styles.megaLink}
+                      >
                         {item.label}
                       </Link>
                     </li>
@@ -229,8 +287,12 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* ── Mobile persistent search ── */}
-      <form className={`${styles.mobileSearch} ${styles.mobileOnly}`} onSubmit={submitSearch} role="search">
+      {/* ── Mobile persistent search bar ─────────────────── */}
+      <form
+        className={`${styles.mobileSearch} ${styles.mobileOnly}`}
+        onSubmit={submitSearch}
+        role="search"
+      >
         <Search size={16} strokeWidth={1.8} aria-hidden="true" className={styles.searchIcon} />
         <input
           name="q"
@@ -241,7 +303,7 @@ export default function Navbar() {
         />
       </form>
 
-      {/* ── Mobile drawer (portaled) ── */}
+      {/* ── Mobile drawer (portaled to document.body, always solid bg) ── */}
       {drawerOpen &&
         createPortal(
           <div className={styles.drawerOverlay} onClick={() => setDrawerOpen(false)}>
@@ -262,7 +324,7 @@ export default function Navbar() {
                 </span>
                 <button
                   type="button"
-                  className={styles.iconBtn}
+                  className={styles.drawerClose}
                   aria-label="Close menu"
                   onClick={() => setDrawerOpen(false)}
                 >
@@ -276,7 +338,9 @@ export default function Navbar() {
                     type="button"
                     className={styles.accordionBtn}
                     aria-expanded={openAccordion === menu.id}
-                    onClick={() => setOpenAccordion(openAccordion === menu.id ? null : menu.id)}
+                    onClick={() =>
+                      setOpenAccordion(openAccordion === menu.id ? null : menu.id)
+                    }
                   >
                     {menu.label}
                     <ChevronDown
@@ -291,7 +355,10 @@ export default function Navbar() {
                       {menu.groups
                         ? menu.groups.map((group) => (
                             <li key={group.makeSlug}>
-                              <Link to={`${menu.base}/${group.makeSlug}`} className={styles.accordionLink}>
+                              <Link
+                                to={`${menu.base}/${group.makeSlug}`}
+                                className={styles.accordionLink}
+                              >
                                 {group.make}
                               </Link>
                               {group.models.map((m) => (
@@ -307,7 +374,10 @@ export default function Navbar() {
                           ))
                         : menu.items.map((item) => (
                             <li key={item.slug}>
-                              <Link to={`${menu.base}/${item.slug}`} className={styles.accordionLink}>
+                              <Link
+                                to={`${menu.base}/${item.slug}`}
+                                className={styles.accordionLink}
+                              >
                                 {item.label}
                               </Link>
                             </li>

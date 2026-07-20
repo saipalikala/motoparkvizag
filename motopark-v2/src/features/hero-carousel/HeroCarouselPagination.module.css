@@ -1,0 +1,30 @@
+/* HeroCarouselPagination.module.css — Phase 3.2: functional, minimal. */
+
+.dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--space-4);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  z-index: 2;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: rgb(253 251 247 / 0.45);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.dot:hover {
+  background: rgb(253 251 247 / 0.7);
+}
+.dotActive {
+  background: var(--mp-cream-50);
+  transform: scale(1.25);
+}

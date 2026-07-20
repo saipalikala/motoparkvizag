@@ -1,0 +1,437 @@
+/* ══════════════════════════════════════════════════════════
+   AboutStory.module.css
+   Scoped to src/cinematic/about/ — no global styles touched.
+   Design language: MotoPark brand (navy + orange + white).
+   ══════════════════════════════════════════════════════════ */
+
+/* ─── Shared tokens (inline — this module owns no globals) ── */
+:root {
+  --about-orange:      #e8532e;
+  --about-orange-soft: rgba(232, 83, 46, 0.1);
+  --about-navy:        #1b2536;
+  --about-navy-deep:   #141c29;
+  --about-white:       #ffffff;
+  --about-off-white:   #f5f5f7;
+  --about-text-muted:  rgba(255, 255, 255, 0.4);
+  --about-max-width:   1100px;
+  --about-pad:         clamp(20px, 5vw, 72px);
+}
+
+/* ─── Story wrapper ─────────────────────────────────────── */
+.story {
+  background: #000;
+  overflow-x: hidden;
+}
+
+/* ─── Reveal animation ──────────────────────────────────── */
+/* Applied to any element with [data-reveal] via IntersectionObserver */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity  0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.revealed {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ─── Shared eyebrow label ──────────────────────────────── */
+.eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--about-orange);
+  margin-bottom: 14px;
+}
+
+.eyebrowLight {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.eyebrowDim {
+  color: var(--about-text-muted);
+}
+
+/* ══ ARRIVAL TITLE SECTION ══════════════════════════════════ */
+.arrivalSection {
+  background: linear-gradient(180deg, #000 0%, var(--about-navy-deep) 100%);
+  padding: clamp(80px, 12vh, 140px) var(--about-pad);
+  display: flex;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.arrivalInner {
+  max-width: var(--about-max-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.arrivalHeading {
+  font-family: 'Geist Variable', 'Geist', -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: clamp(52px, 10vw, 108px);
+  font-weight: 200;
+  color: var(--about-white);
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  margin-bottom: 28px;
+}
+
+.arrivalSub {
+  font-size: clamp(16px, 2vw, 20px);
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+  max-width: 520px;
+}
+
+/* ══ STATS SECTION ══════════════════════════════════════════ */
+.statsSection {
+  background: linear-gradient(135deg, var(--about-navy) 0%, var(--about-navy-deep) 100%);
+  padding: clamp(56px, 8vh, 88px) var(--about-pad);
+}
+
+.statsGrid {
+  max-width: var(--about-max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background 0.25s ease;
+}
+
+.stat:last-child {
+  border-right: none;
+}
+
+.stat:hover {
+  background: rgba(232, 83, 46, 0.06);
+}
+
+.statNum {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: clamp(44px, 5vw, 60px);
+  font-weight: 200;
+  color: var(--about-orange);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.statSuffix {
+  font-size: 0.5em;
+  font-weight: 400;
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* ══ STORY SECTIONS ═════════════════════════════════════════ */
+.storySection {
+  background: var(--about-white);
+  padding: clamp(72px, 10vh, 112px) var(--about-pad);
+}
+
+.storyContainer {
+  max-width: var(--about-max-width);
+  margin: 0 auto;
+}
+
+.storyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: clamp(40px, 8vw, 96px);
+  align-items: start;
+}
+
+.storyLeft {
+  position: sticky;
+  top: 80px;
+}
+
+.storyHeading {
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: clamp(30px, 4vw, 52px);
+  font-weight: 300;
+  color: var(--about-navy);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.storyRight {
+  padding-top: 4px;
+}
+
+.storyPara {
+  font-size: clamp(15px, 1.6vw, 17px);
+  color: #3a4a61;
+  line-height: 1.8;
+  margin-bottom: 20px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.storyPara:last-child {
+  margin-bottom: 0;
+}
+
+.storySeparator {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(11, 29, 58, 0.08) 20%,
+    rgba(11, 29, 58, 0.08) 80%,
+    transparent
+  );
+  margin: 0 var(--about-pad);
+}
+
+/* ══ VALUES SECTION ════════════════════════════════════════ */
+.valuesSection {
+  background: var(--about-off-white);
+  padding: clamp(72px, 10vh, 112px) var(--about-pad);
+}
+
+.valuesContainer {
+  max-width: var(--about-max-width);
+  margin: 0 auto;
+}
+
+.valuesHeader {
+  margin-bottom: 48px;
+}
+
+.valuesHeading {
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 300;
+  color: var(--about-navy);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.valueCard {
+  background: var(--about-white);
+  border: 1px solid rgba(11, 29, 58, 0.07);
+  border-radius: 20px;
+  padding: 32px 26px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform  0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.35s ease,
+    border-color 0.25s ease;
+}
+
+.valueCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--about-orange);
+  border-radius: 20px 20px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.valueCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 48px rgba(11, 29, 58, 0.1);
+  border-color: rgba(232, 83, 46, 0.18);
+}
+
+.valueCard:hover::before {
+  opacity: 1;
+}
+
+.valueIconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--about-orange-soft);
+  color: var(--about-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.valueCard:hover .valueIconWrap {
+  background: var(--about-orange);
+  color: var(--about-white);
+}
+
+.valueTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--about-navy);
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+
+.valueDesc {
+  font-size: 14px;
+  color: #5c6e82;
+  line-height: 1.7;
+}
+
+/* ══ CTA SECTION ═══════════════════════════════════════════ */
+.ctaSection {
+  padding: 0 var(--about-pad) clamp(72px, 10vh, 120px);
+  background: var(--about-off-white);
+}
+
+.ctaInner {
+  position: relative;
+  background: linear-gradient(135deg, var(--about-navy) 0%, var(--about-navy-deep) 100%);
+  border-radius: 24px;
+  padding: clamp(56px, 8vh, 96px) clamp(32px, 6vw, 80px);
+  text-align: center;
+  overflow: hidden;
+}
+
+.ctaBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 70% at 50% 110%,
+    rgba(232, 83, 46, 0.12) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+
+.ctaHeading {
+  position: relative;
+  z-index: 1;
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: clamp(44px, 8vw, 88px);
+  font-weight: 200;
+  color: var(--about-white);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: 20px;
+}
+
+.ctaSub {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(15px, 1.8vw, 18px);
+  color: rgba(255, 255, 255, 0.38);
+  margin-bottom: 36px;
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+.ctaBtn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--about-orange);
+  color: var(--about-white);
+  font-family: 'Geist Variable', 'Geist', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 14px 28px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ctaBtn:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+}
+
+.ctaBtn:active {
+  transform: scale(0.97);
+}
+
+/* ─── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .stat:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .stat:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+  .valuesGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .storyGrid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .storyLeft {
+    position: static;
+  }
+
+  .ctaInner {
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat:nth-child(odd) {
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .stat:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+}

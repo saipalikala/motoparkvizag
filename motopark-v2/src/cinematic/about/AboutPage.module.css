@@ -1,0 +1,17 @@
+/* ══════════════════════════════════════════════════════════
+   AboutPage.module.css — minimal page wrapper.
+   The cinematic and story sections own their own backgrounds.
+   ══════════════════════════════════════════════════════════ */
+
+.page {
+  /* The cinematic starts black and transitions through the brand palette.
+     This background prevents any flash of the global page background color
+     between the route loading and the component painting. */
+  background: #000;
+  overflow-x: hidden;
+
+  /* The app shell has paddingBottom: var(--space-16) on <main>.
+     The About page's CTA section already has generous bottom padding,
+     so we cancel main's padding to prevent double spacing. */
+  margin-bottom: calc(-1 * var(--space-16, 64px));
+}

@@ -27,6 +27,9 @@ const CustomerDetailPage = lazy(() => import('./customers/CustomerDetailPage.jsx
 const StrandedPaymentsPage = lazy(() => import('./reconciliation/StrandedPaymentsPage.jsx'));
 const BikeListPage = lazy(() => import('./bikes/BikeListPage.jsx'));
 const VideoShowcaseListPage = lazy(() => import('./showcase/VideoShowcaseListPage.jsx'));
+const HeroCarouselListPage  = lazy(() => import('./hero-carousel/HeroCarouselListPage.jsx'));
+const HeroCarouselFormPage  = lazy(() => import('./hero-carousel/HeroCarouselFormPage.jsx'));
+const CampaignListPage      = lazy(() => import('./campaigns/CampaignListPage.jsx'));
 const AiAnalyticsPage = lazy(() => import('./analytics/AiAnalyticsPage.jsx'));
 const SettingsPage = lazy(() => import('./settings/SettingsPage.jsx'));
 
@@ -74,6 +77,14 @@ export default function AdminApp() {
 
               {/* Video showcase CMS (Milestone 9) */}
               <Route path="showcase" element={<VideoShowcaseListPage />} />
+
+              {/* Hero Carousel CMS */}
+              <Route path="hero-carousel" element={<HeroCarouselListPage />} />
+              <Route path="hero-carousel/new" element={<HeroCarouselFormPage />} />
+              <Route path="hero-carousel/:id" element={<HeroCarouselFormPage />} />
+
+              {/* Campaign Experience System */}
+              <Route path="campaigns" element={<CampaignListPage />} />
 
               {/* Analytics & Settings (Milestone 6) */}
               <Route path="analytics" element={<AiAnalyticsPage />} />

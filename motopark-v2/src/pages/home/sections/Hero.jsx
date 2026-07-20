@@ -1,11 +1,12 @@
-import { Suspense, lazy, useRef } from 'react';
+import { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import { formatINR } from '@/lib/format.js';
 import { cloudinaryUrl } from '@/lib/image.js';
 import { useCinematicHero } from '@/hooks/useCinematicHero.js';
-import { useHeroParallax } from '@/hooks/useHeroParallax.js';
+import { useHeroSlides } from '@/hooks/useHeroSlides.js';
+import HeroCarousel from '@/features/hero-carousel/HeroCarousel.jsx';
 import styles from './Hero.module.css';
 
 /**
@@ -37,9 +38,15 @@ export default function Hero({ products = [], loading = false }) {
   const ticker = products.slice(0, 3);
   // false until: eligible AND LCP observed AND the browser went idle.
   const showScene = useCinematicHero();
-  // Amendment 1 (B) — capped scroll transform on the hero photo only.
-  const photoRef = useRef(null);
-  useHeroParallax(photoRef);
+  // Phase 3.3: real CMS-driven slides. `slides` is NEVER empty — it starts
+  // as, and on an empty/failed fetch stays as, the bundled fallback slide
+  // (see hooks/useHeroSlides.js for why that also covers the loading state).
+  const { slides } = useHeroSlides();
+  // Phase 3.2 removed useHeroParallax's call site here — it needed a single
+  // photo <img> ref, which stopped existing once the photo became an Embla
+  // carousel of N slides. Phase 3.4 deleted the file itself: its job is now
+  // done per-slide by useEmblaParallax, owned by HeroCarousel.jsx, reacting
+  // to Embla's own scroll instead of window.scrollY.
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
@@ -48,30 +55,20 @@ export default function Hero({ products = [], loading = false }) {
           able to start this fetch from raw HTML, before any bundle executes.
           index.html carries a matching <link rel="preload">. Regenerate the
           variants with `npm run images` (scripts/generate-hero-images.mjs). */}
-      <div className={styles.media} aria-hidden="true">
-        {/* Selection is by MEDIA QUERY, never srcset width-descriptors. With
-            w-descriptors the preload scanner and the layout engine compute the
-            needed width independently and can disagree — measured: scanner took
-            hero-960 at 11ms, the <img> then took hero-1280 at 170ms, i.e. the
-            LCP image downloaded TWICE. A media query is a boolean both evaluate
-            identically, so index.html's preload can never diverge from this.
-            Keep the breakpoints here and in index.html in lockstep. */}
-        <picture className={styles.picture}>
-          <source type="image/avif" media="(max-width: 767px)" srcSet="/hero-960.avif" />
-          <source type="image/avif" media="(min-width: 768px)" srcSet="/hero-1600.avif" />
-          <source type="image/webp" media="(max-width: 767px)" srcSet="/hero-960.webp" />
-          <source type="image/webp" media="(min-width: 768px)" srcSet="/hero-1600.webp" />
-          <img
-            src="/hero-1600.jpg"
-            alt=""
-            ref={photoRef}
-            className={styles.photo}
-            fetchPriority="high"
-            decoding="async"
-            width="1600"
-            height="900"
-          />
-        </picture>
+      {/* No aria-hidden on this wrapper (Phase 3.4 fix) — HeroCarousel now
+          contains real Controls/Pagination alongside the decorative photo
+          track, and a blanket aria-hidden here was hiding those from the
+          accessibility tree too. Each decorative piece hides itself
+          instead: HeroCarousel's own .viewport, HeroScene's own canvas
+          (already self-hiding), and .scrim below. */}
+      <div className={styles.media}>
+        {/* Phase 3.2/3.3: the static <picture> that used to live here is now
+            HeroCarousel, fed real CMS slides (or the bundled fallback) via
+            useHeroSlides — same breakpoints (768px), same media-query-not-
+            srcset technique (see HeroCarouselSlide.jsx for why). Everything
+            else in this media layer — HeroScene, the scrim below — is
+            untouched. */}
+        <HeroCarousel slides={slides} />
         {/* Decorative canvas sits BETWEEN the photo and the scrim. That ordering
             is a contrast guarantee, not a stacking accident: the scrim is painted
             over whatever this renders, so the headline's AA contrast holds no
@@ -83,7 +80,7 @@ export default function Hero({ products = [], loading = false }) {
             <HeroScene />
           </Suspense>
         )}
-        <div className={styles.scrim} />
+        <div className={styles.scrim} aria-hidden="true" />
       </div>
 
       <div className={`container ${styles.inner}`}>
@@ -110,8 +107,16 @@ export default function Hero({ products = [], loading = false }) {
           </div>
         </div>
 
-        {/* Shoppable ticker — the fold's product access */}
-        <div className={styles.ticker} aria-label="Featured products">
+        {/* Shoppable ticker — the fold's product access.
+            Final-review fix: a bare <div> has no role that supports naming,
+            so `aria-label` alone was invalid per WAI-ARIA (confirmed by a
+            real Lighthouse run: "aria-label attribute cannot be used on a
+            div with no valid role attribute") — pre-existing, not
+            introduced by any Hero Carousel phase, but caught while
+            reviewing this section end-to-end. `role="region"` is the
+            minimal fix: it's a landmark role that supports aria-label
+            without requiring child-role changes the way `role="list"` would. */}
+        <div className={styles.ticker} role="region" aria-label="Featured products">
           {loading && ticker.length === 0
             ? Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className={styles.tickCard} aria-hidden="true">
