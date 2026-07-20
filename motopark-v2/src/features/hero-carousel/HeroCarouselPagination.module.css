@@ -4,7 +4,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: var(--space-4);
+  /* Lifted from --space-4 to --space-6: with 100dvh Hero and no arrows,
+     the dots sit more naturally at 24px from the bottom edge. */
+  bottom: var(--space-6);
   display: flex;
   justify-content: center;
   gap: var(--space-2);

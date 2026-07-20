@@ -64,7 +64,7 @@ export default function Hero() {
   const primary = slides[0];
 
   return (
-    <section className={styles.hero} aria-label="Welcome to MotoPark">
+    <section className={`${styles.hero} ${styles.heroOffset}`} aria-label="Welcome to MotoPark">
       {/* Cinematic media layer — navy base + warm photo + scrim for AA text.
           Paths are STATIC (public/), not JS imports: the preload scanner must be
           able to start this fetch from raw HTML, before any bundle executes.

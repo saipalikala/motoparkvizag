@@ -51,9 +51,14 @@
    HEADER SHELL — base (all routes, cream-frosted)
 ═══════════════════════════════════════════════════════════ */
 .header {
-  position: sticky;
+  /* position: fixed — out of normal flow, so the Hero's top edge reaches the
+     viewport top. A sticky header consumed its own height (64px) before the Hero,
+     making full-bleed impossible regardless of the Hero's own min-height value.
+     The --z-navbar token (300) keeps the header above the Hero's stacking context
+     and all Campaign overlays (z-index 200). */
+  position: fixed;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-navbar);
   width: 100%;
 
   background: var(--nav-bg);                   /* rgb(253 251 247 / 0.92) */
@@ -200,9 +205,11 @@
 }
 
 .wordmarkName {
+  /* Sakana display font — already loaded in fonts.css (@font-face),
+     tokenised in tokens.css (--font-display). No new font added. */
+  font-family: var(--font-display);
   font-size: 1.125rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;  /* Sakana has its own optical tracking; 0.05em fought it */
 }
 
 /* "PARK" uses a lighter weight for typographic rhythm. */
@@ -239,8 +246,10 @@
 }
 
 /*
-   .navBtn is used by both dropdown triggers (button elements)
-   and NavLinks (anchor elements). Both share identical geometry.
+   Top-level nav buttons — underline-only interaction model.
+   No background box on hover or active; the orange underline
+   and a font-weight step are the sole visual affordances.
+   This matches premium ecommerce nav conventions (Ducati, Apple, Arc).
 */
 .navBtn {
   position: relative;
@@ -260,38 +269,47 @@
   border-radius: var(--radius-md);
   white-space: nowrap;
   transition:
-    background var(--dur-instant) var(--ease-out),
-    color      var(--dur-base)   var(--ease-out);
+    color        var(--dur-base)    var(--ease-out),
+    font-weight  var(--dur-instant) var(--ease-out);
 }
 
+/* No hover background — underline and weight-step only. */
 .navBtn:hover {
-  background: var(--_hover);
+  font-weight: 700;
 }
 
-/* Ink underline — transform-only, no layout shift (doctrine). */
+/* Orange underline — grows symmetrically from centre (more premium
+   than left-origin). Always orange regardless of navbar dark/light
+   state: var(--accent) is legible on both cream and navy-glass. */
 .navBtn::after {
   content: '';
   position: absolute;
   inset-inline: var(--space-3);
   bottom: 5px;
-  height: 1.5px;
-  background: var(--_underline);
-  border-radius: 1px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
   transform: scaleX(0);
-  transform-origin: left;
+  transform-origin: center;
   transition:
     transform  var(--dur-fast) var(--ease-out),
-    background var(--dur-base) var(--ease-out);
+    opacity    var(--dur-fast) var(--ease-out);
+  opacity: 0;
 }
 
 .navBtn:hover::after,
 .navBtn[aria-expanded='true']::after {
   transform: scaleX(1);
+  opacity: 1;
 }
 
-/* Active NavLink — route match → persistent underline. */
+/* Active NavLink — route match → persistent orange underline + bold weight. */
+.navBtnActive {
+  font-weight: 700;
+}
 .navBtnActive::after {
   transform: scaleX(1);
+  opacity: 1;
 }
 
 
@@ -326,6 +344,13 @@
   background: var(--_hover);
 }
 
+/* Active state (mobile search open) — MotoPark orange, same
+   accent used for the cart badge and nav underline. */
+.iconBtnActive,
+.iconBtnActive:hover {
+  color: var(--accent);
+}
+
 .cartBadge {
   position: absolute;
   top: 4px;
@@ -347,15 +372,43 @@
 
 /* ═══════════════════════════════════════════════════════════
    MEGA PANEL (full-width, below single row)
+
+   Theme-inheriting design — the panel uses the navbar's own
+   CSS custom properties (--_fg, --_fg-muted) so text colour
+   automatically reflects whichever scroll-state class the
+   parent .header carries. No JS, no duplication.
+
+   Background has two rules:
+     · Default (all routes / pastHero): cream glass — matches
+       the navbar's own default/State 3 surface.
+     · .isHome:not(.pastHero): dark navy glass — matches the
+       navbar's State 1 + 2 surface, Hero carousel visible through.
+
+   Hover: typography only. No background, no pill, no box.
 ═══════════════════════════════════════════════════════════ */
 .mega {
   position: absolute;
   inset-inline: 0;
   top: 100%;
-  background: var(--bg-surface);
+  /* Cream glass — matches navbar default / State 3 (pastHero / non-home). */
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
   border-bottom: 1px solid var(--border-default);
   box-shadow: var(--shadow-lg);
   animation: megaIn var(--dur-fast) var(--ease-out);
+}
+
+/* Dark glass — matches navbar State 1 (transparent/at-rest) and
+   State 2 (scrolled inside hero). Hero carousel shows through. */
+.isHome:not(.pastHero) .mega {
+  background: rgb(20 28 41 / 0.72);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border-bottom: 1px solid rgb(253 251 247 / 0.08);
+  box-shadow:
+    0 12px 40px rgb(20 28 41 / 0.40),
+    inset 0 1px 0 rgb(253 251 247 / 0.06);
 }
 
 @keyframes megaIn {
@@ -369,13 +422,16 @@
   padding: var(--space-6) var(--container-gutter) var(--space-8);
 }
 
+/* Inherits --_fg-muted from the parent .header — navy-400 on cream,
+   cream-58% on dark. Correct in both states automatically. */
 .megaEyebrow {
   margin: 0 0 var(--space-4);
   font-size: var(--text-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--_fg-muted);
+  transition: color var(--dur-base) var(--ease-out);
 }
 
 .megaGrid {
@@ -387,29 +443,43 @@
   padding: 0;
 }
 
+/* --_fg = navy-700 on cream navbar, cream-50 on dark navbar.
+   Inherits automatically — no hardcoded colour. */
 .megaLink {
   display: block;
   padding: var(--space-2) 0;
   font-size: var(--text-body-sm);
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--_fg);
   text-decoration: none;
-  border-radius: var(--radius-sm);
-  transition: color var(--dur-instant) var(--ease-out);
+  transition:
+    color       var(--dur-instant) var(--ease-out),
+    font-weight var(--dur-instant) var(--ease-out);
 }
 
-.megaLink:hover { color: var(--accent-hover); }
+/* Typography-only hover: orange text + bold weight. No background,
+   no box, no pill. Exactly how premium ecommerce navs work. */
+.megaLink:hover {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 .megaAll {
   display: inline-block;
   margin-top: var(--space-4);
   font-size: var(--text-body-sm);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--_fg-muted);
   text-decoration: none;
+  transition:
+    color       var(--dur-instant) var(--ease-out),
+    font-weight var(--dur-instant) var(--ease-out);
 }
 
-.megaAll:hover { color: var(--text-primary); }
+.megaAll:hover {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 /* Grouped mega (Shop by Bike): make → model hierarchy. */
 .megaGroups {
@@ -426,18 +496,30 @@
   padding: var(--space-2) 0;
   font-size: var(--text-body-sm);
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--_fg);
   text-decoration: none;
+  transition:
+    color       var(--dur-instant) var(--ease-out),
+    font-weight var(--dur-instant) var(--ease-out);
 }
-.megaGroupTitle:hover { color: var(--accent-hover); }
+.megaGroupTitle:hover {
+  color: var(--accent);
+}
 
 .megaGroupList {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.megaGroupList .megaLink { color: var(--text-secondary); }
-.megaGroupList .megaLink:hover { color: var(--accent-hover); }
+/* Model links: muted relative to make titles in both themes. */
+.megaGroupList .megaLink {
+  color: var(--_fg-muted);
+  font-weight: 500;
+}
+.megaGroupList .megaLink:hover {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -453,8 +535,31 @@
 
 
 /* ═══════════════════════════════════════════════════════════
-   MOBILE PERSISTENT SEARCH (below the nav row)
+   MOBILE TOGGLED SEARCH (hidden by default, revealed on tap)
+
+   Two synced layers, both on --dur-fast (200ms) / --ease-out —
+   the same glide used across the rest of the navbar:
+     - .mobileSearchWrap: grid-template-rows 0fr → 1fr, so the
+       document flow height grows/shrinks in step with the
+       reveal instead of snapping (no layout jump below it).
+     - .mobileSearch (the pill itself): opacity + translateY,
+       the actual "premium reveal" motion.
 ═══════════════════════════════════════════════════════════ */
+.mobileSearchWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-fast) var(--ease-out);
+}
+
+.mobileSearchWrapOpen {
+  grid-template-rows: 1fr;
+}
+
+.mobileSearchInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
 .mobileSearch {
   display: flex;
   align-items: center;
@@ -465,9 +570,18 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-full);
+  opacity: 0;
+  transform: translateY(-8px);
   transition:
+    opacity        var(--dur-fast) var(--ease-out),
+    transform      var(--dur-fast) var(--ease-out),
     background     var(--dur-base) var(--ease-out),
     border-color   var(--dur-fast) var(--ease-out);
+}
+
+.mobileSearchWrapOpen .mobileSearch {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Dark states: translucent search bar on the hero. */
@@ -504,18 +618,23 @@
 }
 
 @media (min-width: 1024px) {
-  .mobileSearch.mobileOnly { display: none; }
+  .mobileSearchWrap.mobileOnly { display: none; }
 }
 
 
 /* ═══════════════════════════════════════════════════════════
    MOBILE DRAWER (portaled to document.body)
    Always renders on var(--bg-page) — unaffected by navbar states.
+
+   Independent overlay: fixed to the viewport at top:0/100dvh with
+   --z-drawer (400), which sits above --z-navbar (300). The navbar
+   was previously hard-coded to 200 here — below the navbar's own
+   300 — so the fixed navbar painted over the drawer's own header.
 ═══════════════════════════════════════════════════════════ */
 .drawerOverlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: var(--z-drawer);
   background: var(--overlay);
   animation: fadeIn var(--dur-fast) var(--ease-out);
 }
@@ -526,14 +645,23 @@
 }
 
 .drawer {
-  position: absolute;
-  inset-block: 0;
+  position: fixed;
+  top: 0;
   left: 0;
+  height: 100dvh;
   width: min(320px, 86vw);
   background: var(--bg-page);
   overflow-y: auto;
   padding: var(--space-4);
   animation: slideIn var(--dur-base) var(--ease-out);
+
+  /* Local tokens matching .header's default (cream/light) state —
+     the drawer sits outside <header> once portaled, so it doesn't
+     inherit --_fg/--_em from there. Reusing {brandLockup} verbatim
+     needs these defined here for identical logo/wordmark colour. */
+  --_fg:       var(--text-primary);
+  --_fg-muted: var(--text-secondary);
+  --_em:       var(--mp-navy-500);
 }
 
 @keyframes slideIn {
@@ -545,33 +673,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
-}
-
-.drawerBrand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.drawerBrand img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-.drawerTitle {
-  font-weight: 800;
-  font-size: var(--text-h5);
-  letter-spacing: 0.045em;
-  color: var(--text-primary);
-}
-
-/* Drawer always on cream bg — PARK stays navy here, not orange. */
-.drawerTitle em {
-  font-style: normal;
-  font-weight: 500;
-  color: var(--mp-navy-500);
 }
 
 /* Drawer close button — uses page colours, not navbar tokens. */
@@ -580,15 +683,21 @@
   place-items: center;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   background: none;
   border: none;
   border-radius: var(--radius-md);
   color: var(--text-primary);
   cursor: pointer;
-  transition: background var(--dur-instant) var(--ease-out);
+  transition:
+    background var(--dur-instant) var(--ease-out),
+    color      var(--dur-instant) var(--ease-out);
 }
 
-.drawerClose:hover { background: var(--mp-cream-200); }
+.drawerClose:hover {
+  background: var(--mp-cream-200);
+  color: var(--accent);
+}
 
 .accordion {
   border-bottom: 1px solid var(--border-default);

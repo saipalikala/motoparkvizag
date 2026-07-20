@@ -6,10 +6,21 @@
   isolation: isolate;
   display: flex;
   align-items: flex-end;
-  min-height: 82dvh;
+  /* 100dvh — true cinematic full viewport fill. The former 82dvh/80dvh values
+     were the primary constraint making the Hero look contained.
+     Combined with position:fixed on the Navbar and the negative margin below,
+     this produces edge-to-edge coverage identical to premium ecommerce homepages. */
+  min-height: 100dvh;
   background: var(--bg-inverse-deep); /* navy-800 base under the photo */
   color: var(--text-inverse);
   overflow: hidden;
+}
+
+/* Cancels <main>'s padding-top (added for fixed-navbar page clearance on all
+   other routes). ONLY apply this to the Hero — it is the one section that
+   intentionally slides behind the fixed navbar to achieve the full-bleed look. */
+.heroOffset {
+  margin-top: calc(-1 * var(--nav-height));
 }
 
 /* ── Media layer ───────────────────────────────────────── */
@@ -89,8 +100,6 @@
   gap: var(--space-3);
 }
 
-@media (min-width: 768px) {
-  .hero {
-    min-height: 80dvh;
-  }
-}
+/* No min-height media override needed — 100dvh is correct at all breakpoints.
+   Previously this reset to 80dvh on desktop, which was the second constraint
+   keeping the Hero from occupying the full viewport. */

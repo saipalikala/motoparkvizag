@@ -23,7 +23,7 @@ import styles from './Navbar.module.css';
  *   - pastHero   : past ~80% of the viewport height → cream frosted.
  *
  * Structure (single row): Logo · Nav links (desktop) · Utilities
- * Mobile: Hamburger · Logo · Icons + persistent search bar below.
+ * Mobile: Hamburger · Logo · Icons; search bar toggles open below on tap.
  */
 export default function Navbar() {
   // Any scroll beyond 8 px → leave transparent state.
@@ -36,12 +36,16 @@ export default function Navbar() {
   const { categories, brands, bikes } = useNav();
   const [openMenu, setOpenMenu] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(null);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isHome = pathname === '/';
   const navRef = useRef(null);
   const drawerRef = useRef(null);
+  const searchBtnRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const closeBtnRef = useRef(null);
 
   // Built from live nav data (NavContext), seeded from config/nav.js.
   // Shape is unchanged — mega panel and mobile accordion render exactly as before.
@@ -58,24 +62,44 @@ export default function Navbar() {
   useEffect(() => {
     setOpenMenu(null);
     setDrawerOpen(false);
+    setSearchOpen(false);
   }, [pathname]);
 
-  // Escape key closes open surfaces.
+  // Escape key closes open surfaces; return focus to the search
+  // trigger so keyboard users don't lose their place.
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setOpenMenu(null);
         setDrawerOpen(false);
+        if (searchOpen) {
+          setSearchOpen(false);
+          searchBtnRef.current?.focus();
+        }
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, []);
+  }, [searchOpen]);
 
-  // Trap body scroll while drawer is open; auto-focus first focusable.
+  // Autofocus the input whenever the mobile search bar opens.
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  // Mobile search toggle — only one of {drawer, search} open at a time.
+  const toggleSearch = () => {
+    setSearchOpen((open) => {
+      const next = !open;
+      if (next) setDrawerOpen(false);
+      return next;
+    });
+  };
+
+  // Trap body scroll while drawer is open; auto-focus the close button.
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : '';
-    if (drawerOpen) drawerRef.current?.querySelector('a,button')?.focus();
+    if (drawerOpen) closeBtnRef.current?.focus();
     return () => {
       document.body.style.overflow = '';
     };
@@ -108,6 +132,15 @@ export default function Navbar() {
     </span>
   );
 
+  // Full brand lockup (logo badge + wordmark) — the exact same markup
+  // is reused verbatim in the mobile drawer header, not recreated.
+  const brandLockup = (
+    <Link to="/" className={styles.logo} aria-label="MotoPark — home">
+      <img src={logoBadge} alt="" width="40" height="40" />
+      {wordmark}
+    </Link>
+  );
+
   // Compose header class from the three scroll state flags.
   const headerClass = [
     styles.header,
@@ -128,16 +161,16 @@ export default function Navbar() {
           className={`${styles.iconBtn} ${styles.mobileOnly}`}
           aria-label="Open menu"
           aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen(true)}
+          onClick={() => {
+            setDrawerOpen(true);
+            setSearchOpen(false);
+          }}
         >
           <Menu size={22} strokeWidth={1.8} aria-hidden="true" />
         </button>
 
         {/* Brand lockup */}
-        <Link to="/" className={styles.logo} aria-label="MotoPark — home">
-          <img src={logoBadge} alt="" width="40" height="40" />
-          {wordmark}
-        </Link>
+        {brandLockup}
 
         {/* Desktop: category navigation (centre) */}
         <nav className={`${styles.navLinks} ${styles.desktopOnly}`} aria-label="Main navigation">
@@ -180,14 +213,22 @@ export default function Navbar() {
 
         {/* Utility icons (right edge) */}
         <div className={styles.utils}>
-          {/* Mobile: search → /search page */}
-          <Link
-            to="/search"
-            className={`${styles.iconBtn} ${styles.mobileOnly}`}
-            aria-label="Search"
+          {/* Mobile: toggles the inline search bar (no navigation) */}
+          <button
+            ref={searchBtnRef}
+            type="button"
+            className={`${styles.iconBtn} ${styles.mobileOnly} ${searchOpen ? styles.iconBtnActive : ''}`}
+            aria-label={searchOpen ? 'Close search' : 'Search'}
+            aria-expanded={searchOpen}
+            aria-controls="mobile-search-panel"
+            onClick={toggleSearch}
           >
-            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
+            {searchOpen ? (
+              <X size={20} strokeWidth={1.8} aria-hidden="true" />
+            ) : (
+              <Search size={20} strokeWidth={1.8} aria-hidden="true" />
+            )}
+          </button>
           {/* Desktop: search icon → /search page */}
           <Link
             to="/search"
@@ -287,21 +328,31 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* ── Mobile persistent search bar ─────────────────── */}
-      <form
-        className={`${styles.mobileSearch} ${styles.mobileOnly}`}
-        onSubmit={submitSearch}
-        role="search"
+      {/* ── Mobile search bar — hidden by default, revealed on tap ── */}
+      <div
+        id="mobile-search-panel"
+        className={`${styles.mobileSearchWrap} ${styles.mobileOnly} ${searchOpen ? styles.mobileSearchWrapOpen : ''}`}
       >
-        <Search size={16} strokeWidth={1.8} aria-hidden="true" className={styles.searchIcon} />
-        <input
-          name="q"
-          type="search"
-          placeholder="Search helmets, jackets, brands…"
-          aria-label="Search products"
-          autoComplete="off"
-        />
-      </form>
+        <div className={styles.mobileSearchInner}>
+          <form
+            className={styles.mobileSearch}
+            onSubmit={submitSearch}
+            role="search"
+            aria-hidden={!searchOpen}
+          >
+            <Search size={16} strokeWidth={1.8} aria-hidden="true" className={styles.searchIcon} />
+            <input
+              ref={searchInputRef}
+              name="q"
+              type="search"
+              placeholder="Search helmets, jackets, brands…"
+              aria-label="Search products"
+              autoComplete="off"
+              tabIndex={searchOpen ? 0 : -1}
+            />
+          </form>
+        </div>
+      </div>
 
       {/* ── Mobile drawer (portaled to document.body, always solid bg) ── */}
       {drawerOpen &&
@@ -316,13 +367,9 @@ export default function Navbar() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.drawerHead}>
-                <span className={styles.drawerBrand}>
-                  <img src={logoBadge} alt="" width="32" height="32" />
-                  <span className={styles.drawerTitle}>
-                    MOTO<em>PARK</em>
-                  </span>
-                </span>
+                {brandLockup}
                 <button
+                  ref={closeBtnRef}
                   type="button"
                   className={styles.drawerClose}
                   aria-label="Close menu"

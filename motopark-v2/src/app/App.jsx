@@ -55,7 +55,7 @@ export default function App() {
             Skip to content
           </a>
           <Navbar />
-          <main id="main" style={{ paddingBottom: 'var(--space-16)' }}>
+          <main id="main" style={{ paddingTop: 'var(--nav-height)', paddingBottom: 'var(--space-16)' }}>
             <ErrorBoundary>
               <AppRouter />
             </ErrorBoundary>

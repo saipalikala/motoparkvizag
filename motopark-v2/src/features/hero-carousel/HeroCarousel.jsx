@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import { useHeroCarouselEngine } from './hooks/useHeroCarouselEngine.js';
 import { useEmblaParallax } from './hooks/useEmblaParallax.js';
 import HeroCarouselSlide from './HeroCarouselSlide.jsx';
-import HeroCarouselControls from './HeroCarouselControls.jsx';
 import HeroCarouselPagination from './HeroCarouselPagination.jsx';
 import styles from './HeroCarousel.module.css';
 
@@ -27,15 +26,13 @@ import styles from './HeroCarousel.module.css';
  * HeroScene itself (verified its layering still holds, see Phase 3.4 report).
  */
 export default function HeroCarousel({ slides = [] }) {
+  // canScrollPrev/Next, scrollPrev/Next removed — no arrow Controls.
+  // Pagination (dots) is the only navigation UI; drag/swipe via Embla handles the rest.
   const {
     emblaRef,
     emblaApi,
     selectedIndex,
     scrollSnaps,
-    canScrollPrev,
-    canScrollNext,
-    scrollPrev,
-    scrollNext,
     scrollTo,
   } = useHeroCarouselEngine();
 
@@ -68,20 +65,14 @@ export default function HeroCarousel({ slides = [] }) {
         </div>
       </div>
 
+      {/* Navigation: pagination dots only — arrows removed per visual refinement.
+          Drag/swipe (Embla) and dot taps are the sole navigation mechanisms. */}
       {slides.length > 1 && (
-        <>
-          <HeroCarouselControls
-            onPrev={scrollPrev}
-            onNext={scrollNext}
-            canPrev={canScrollPrev}
-            canNext={canScrollNext}
-          />
-          <HeroCarouselPagination
-            count={scrollSnaps.length}
-            selectedIndex={selectedIndex}
-            onSelect={scrollTo}
-          />
-        </>
+        <HeroCarouselPagination
+          count={scrollSnaps.length}
+          selectedIndex={selectedIndex}
+          onSelect={scrollTo}
+        />
       )}
     </div>
   );
