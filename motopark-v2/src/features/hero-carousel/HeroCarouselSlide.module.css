@@ -28,6 +28,16 @@
   top: 0;
   left: calc(-1 * var(--h-parallax-room));
   width: calc(100% + 2 * var(--h-parallax-room));
+  /* Root cause of the reported "gap on the right side": src/styles/base.css
+     applies `img { max-width: 100% }` globally (a standard responsive-image
+     reset). The original single-image Hero never exceeded 100% width (its
+     bleed was vertical-only, on height), so that reset was always a no-op
+     for it. This slide's HORIZONTAL bleed genuinely needs to exceed 100% —
+     the global reset was silently clamping it back down, leaving the image
+     56px short of the right edge (exactly the bleed-room value) while
+     `left: -56px` still applied, since max-width doesn't affect left/position.
+     Overriding it here is scoped to this one class, not a global change. */
+  max-width: none;
   height: 100%;
   object-fit: cover;
   object-position: center 30%;

@@ -6,41 +6,22 @@
   isolation: isolate;
   display: flex;
   align-items: flex-end;
-  min-height: 82vh;
+  min-height: 82dvh;
   background: var(--bg-inverse-deep); /* navy-800 base under the photo */
   color: var(--text-inverse);
   overflow: hidden;
 }
 
 /* ── Media layer ───────────────────────────────────────── */
-/* Phase 3.4 cleanup: .picture, .photo and --parallax-room were removed here
-   — HeroCarousel (Phase 3.2) replaced what they styled, and the parallax
-   bleed-room technique moved to HeroCarouselSlide.module.css's
-   --h-parallax-room, driven by useEmblaParallax.js instead of the retired
-   useHeroParallax.js.
-
-   Final-review fix: this used to carry `z-index: -1`. That was safe when
-   .media held only decoration (photo/HeroScene/scrim) — but it also
-   silently caps EVERYTHING inside it, including HeroCarousel's Controls and
-   Pagination (z-index: 2, several levels deep). A positioned descendant
-   with z-index:auto does not open its own stacking context, so those
-   explicit z-indexes bubble past .wrap/.viewport/HeroCarousel and land in
-   whichever ancestor DOES establish one — which, with .media pinned at -1,
-   was .media itself: Controls/Pagination could never out-rank -1 no matter
-   what number they carried, and on mobile specifically, where the ticker
-   (part of .inner, z-index:auto/0) shares the same bottom-of-hero region as
-   the centered pagination dots, the ticker's opaque cards would win and
-   visually hide them entirely.
-
-   Dropping the explicit z-index here fixes it without touching anything
-   else: `.media` and `.inner` are both position:relative/absolute with
-   z-index:auto, so they still resolve by DOM order at that shared level —
-   `.media` first, `.inner` second — preserving the exact same photo-behind-
-   copy relationship as before. The only thing that changes is that
-   Controls/Pagination's explicit z-index:2 is no longer trapped below -1,
-   so it now correctly escapes all the way to `.hero`'s isolated stacking
-   context (isolation:isolate) and paints above both `.media`'s own content
-   and `.inner`'s. */
+/* No z-index here, deliberately — HeroCarousel's Controls/Pagination
+   (z-index: 2, nested inside) escape to `.hero`'s isolated stacking context
+   and paint above both `.media`'s own content and `.inner`'s, but ONLY
+   because `.media` itself has no explicit z-index of its own. Adding one
+   back (e.g. `-1`) caps this entire subtree below it again, regardless of
+   what z-index its descendants carry — that silently made Controls/
+   Pagination invisible behind `.inner`'s content once before. DOM order
+   (`.media` first, `.inner` second) is what keeps the photo behind the copy;
+   it doesn't need z-index for that. */
 .media {
   position: absolute;
   inset: 0;
@@ -61,12 +42,14 @@
 }
 
 /* ── Inner layout ──────────────────────────────────────── */
+/* Final-review: the ticker that used to share this grid with .copy is gone
+   (Campaigns own promotional content now) — .copy is the only child, so the
+   two-column split this used to need is gone too. .copy's own max-width:40rem
+   is what actually constrains its reading width; nothing here needs to. */
 .inner {
   position: relative;
   width: 100%;
   padding-block: var(--space-10) var(--space-12);
-  display: grid;
-  gap: var(--block-gap);
 }
 
 .copy {
@@ -106,110 +89,8 @@
   gap: var(--space-3);
 }
 
-/* ── Shoppable ticker ──────────────────────────────────── */
-.ticker {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-3);
-}
-
-.tickCard {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: rgb(253 251 247 / 0.94); /* cream glass card on navy */
-  border: 1px solid rgb(253 251 247 / 0.5);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  text-decoration: none;
-  backdrop-filter: blur(6px);
-  transition:
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-.tickCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.tickThumb {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 60px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: var(--mp-cream-200);
-}
-.tickThumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.tickFallback {
-  font-weight: 700;
-  font-size: var(--text-caption);
-  color: var(--mp-navy-400);
-}
-
-.tickBody {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.tickBrand {
-  font-size: var(--text-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-.tickName {
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tickPrice {
-  font-size: var(--text-body-sm);
-}
-
-/* Skeleton lines inside a ticker card */
-.tickLine {
-  height: 12px;
-  width: 70%;
-  border-radius: var(--radius-sm);
-}
-.tickLineSm {
-  height: 9px;
-  width: 45%;
-  border-radius: var(--radius-sm);
-}
-
-/* ── Desktop: copy left, ticker anchored bottom-right ──── */
 @media (min-width: 768px) {
   .hero {
-    min-height: 80vh;
-  }
-  .inner {
-    grid-template-columns: 1.4fr 1fr;
-    align-items: end;
-    gap: var(--space-10);
-  }
-  .ticker {
-    grid-template-columns: 1fr;
-    align-self: end;
-    max-width: 22rem;
-    justify-self: end;
-  }
-  .tickThumb {
-    width: 56px;
-    height: 70px;
+    min-height: 80dvh;
   }
 }

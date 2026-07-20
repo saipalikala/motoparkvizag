@@ -33,15 +33,23 @@ function isActive(slide) {
   return true;
 }
 
-/** Normalise a raw backend doc into the shape HeroCarouselSlide renders.
- *  mobileImage falls back to desktopImage when absent — resolved here, not
- *  stored, same reasoning carouselRoutes.js's normalise() already used. */
+/** Normalise a raw backend doc into the shape Hero.jsx/HeroCarouselSlide
+ *  render. mobileImage falls back to desktopImage when absent — resolved
+ *  here, not stored, same reasoning carouselRoutes.js's normalise() already
+ *  used. headline/subtitle/CTAs are passed through as-is (absent → undefined
+ *  → Hero.jsx's own conditional rendering correctly renders nothing for
+ *  them) — this normalizer's job is shaping the data, not deciding what's
+ *  shown. */
 function toSlide(raw) {
   return {
     id: String(raw._id ?? raw.id ?? ''),
     desktopImage: raw.desktopImage ?? '',
     mobileImage: raw.mobileImage || raw.desktopImage || '',
     imageAlt: raw.imageAlt ?? '',
+    headline: raw.headline ?? '',
+    subtitle: raw.subtitle ?? '',
+    primaryCta: raw.primaryCta ?? null,
+    secondaryCta: raw.secondaryCta ?? null,
     order: typeof raw.order === 'number' ? raw.order : 0,
     enabled: Boolean(raw.enabled),
     publishAt: raw.publishAt ?? null,

@@ -41,9 +41,6 @@ export default function HomePage() {
     };
   }, []);
 
-  // Ticker: prefer curated featured, fall back to trending.
-  const featured = data?.featured?.length ? data.featured : data?.trending ?? [];
-
   return (
     <>
       <Helmet>
@@ -58,8 +55,11 @@ export default function HomePage() {
       {/* Hero is deliberately NOT wrapped: it holds the LCP image, and an
           opacity transition on the LCP element delays the metric it is judged
           by. Sections already on screen at first paint self-disable inside
-          useReveal, so the reveal only ever applies below the fold. */}
-      <Hero products={featured} loading={loading} />
+          useReveal, so the reveal only ever applies below the fold.
+          No products/loading props anymore — the product ticker that used to
+          live here was removed (Campaigns now own promotional content); Hero
+          fetches its own CMS slide data internally via useHeroSlides(). */}
+      <Hero />
       <Reveal>
         <CategoryGrid categories={categories} loading={loading} />
       </Reveal>

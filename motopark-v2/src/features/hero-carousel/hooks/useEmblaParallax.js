@@ -2,14 +2,41 @@ import { useEffect, useRef } from 'react';
 import { MOTION_QUERIES, isCinematicEligible } from '@/lib/motionEligibility.js';
 
 /**
- * useEmblaParallax — Phase 3.4: the official Embla Parallax technique
- * (per-slide diffToTarget from Embla's own scrollProgress, tweened through a
- * factor, applied as an imperative transform on the image layer only — never
- * on the slide container Embla itself may transform). Adapted to this
- * codebase's px-based bleed-room convention (matching the retired
+ * useEmblaParallax — the official Embla Parallax technique (per-slide
+ * diffToTarget from Embla's own scrollProgress, tweened through a factor,
+ * applied as an imperative transform on the image layer only — never on the
+ * slide container Embla itself may transform). Adapted to this codebase's
+ * px-based bleed-room convention (matching the retired page-scroll
  * useHeroParallax.js's --parallax-room) rather than the reference's
  * percentage output — same algorithm, same unit convention this project
  * already uses.
+ *
+ * Final-review correction: an earlier version of this hook added a
+ * sub-pixel-change skip guard and deferred `will-change` promotion to the
+ * first actual move — neither exists in the official reference, and re-
+ * auditing against it directly (not just against memory of it) surfaced
+ * both as the cause of the reported jerkiness, not a smoothing measure:
+ *
+ *   - The skip guard discarded ticks whose delta was under 0.5px. During a
+ *     slow, precise drag, several consecutive ticks can legitimately have
+ *     sub-pixel deltas — skipping them let Embla's own slide-position
+ *     transform (untouched, always smooth) drift visibly ahead of this
+ *     hook's image transform, which would then "catch up" in a small jump
+ *     once the accumulated delta finally cleared the threshold.
+ *   - Deferring `will-change: transform` to the first non-zero write meant
+ *     the ONE-TIME cost of promoting the image to its own compositor layer
+ *     landed at the exact moment a user started dragging — the worst
+ *     possible time for a hitch. That deferral pattern is correct on the
+ *     retired page-scroll hook, where the first transform could fire during
+ *     initial page load and compete with the LCP measurement. It buys
+ *     nothing here: this hook's first transform can only ever fire once a
+ *     user is actively dragging the carousel, which is necessarily well
+ *     after LCP has already been recorded.
+ *
+ * Both removed. The transform is now written unconditionally every tick,
+ * matching the reference exactly; `will-change` is promoted eagerly, once,
+ * the moment the hook becomes eligible (and again on `reInit`, so slides
+ * added later — e.g. the fallback-to-real-CMS swap — are promoted too).
  *
  * Gated by isCinematicEligible() — the SAME gate every other motion feature
  * here reads (Lenis, HeroScene, the retired useHeroParallax). Below that line
@@ -29,7 +56,6 @@ const PARALLAX_ROOM = 48;
 
 export function useEmblaParallax(emblaApi, slideRefs) {
   const enabledRef = useRef(false);
-  const slideStateRef = useRef({}); // index -> { lastTranslate, promoted }
 
   useEffect(() => {
     if (!emblaApi) return undefined;
@@ -40,47 +66,24 @@ export function useEmblaParallax(emblaApi, slideRefs) {
       tweenFactor = PARALLAX_ROOM * emblaApi.scrollSnapList().length;
     };
 
-    /** Writes (or skips) one slide's transform. Mirrors useHeroParallax's
-     *  exact safety properties: a slide at rest is left completely alone —
-     *  no transform, no will-change, no compositor promotion, because
-     *  promoting the LCP image before it has painted is a real risk to the
-     *  metric this hero is measured on. will-change is added on FIRST
-     *  ACTUAL move, never at mount. Sub-pixel changes are skipped — they're
-     *  invisible and still cost a compositor commit. */
-    const applyTranslate = (index, translate) => {
-      const node = slideRefs.current[index];
-      if (!node) return;
-
-      const state = (slideStateRef.current[index] ??= { lastTranslate: null, promoted: false });
-
-      if (!state.promoted && translate === 0) {
-        state.lastTranslate = 0;
-        return;
-      }
-      if (state.lastTranslate !== null && Math.abs(translate - state.lastTranslate) < 0.5) return;
-      state.lastTranslate = translate;
-
-      if (!state.promoted) {
-        node.style.willChange = 'transform';
-        state.promoted = true;
-      }
-      node.style.transform = `translate3d(${translate.toFixed(2)}px, 0, 0)`;
-    };
-
-    const clearAll = () => {
-      slideRefs.current.forEach((node, index) => {
-        if (!node) return;
-        node.style.transform = '';
-        node.style.willChange = '';
-        slideStateRef.current[index] = { lastTranslate: null, promoted: false };
+    const promoteAll = () => {
+      slideRefs.current.forEach((node) => {
+        if (node) node.style.willChange = 'transform';
       });
     };
 
-    /** Per Embla's own reference tween: only slides currently in view get
+    const clearAll = () => {
+      slideRefs.current.forEach((node) => {
+        if (!node) return;
+        node.style.transform = '';
+        node.style.willChange = '';
+      });
+    };
+
+    /** Per the official reference: only slides currently in view get
      *  recomputed on a 'scroll' tick — off-screen slides are skipped and
-     *  only updated on 'reInit', matching the official technique's
-     *  in-view-only optimisation (and this project's own "don't do
-     *  compositor work off-screen" convention from HeroScene). */
+     *  only updated on 'reInit'. Every in-view slide's transform is written
+     *  unconditionally, no skip, matching the reference exactly. */
     const tweenParallax = (_api, evt) => {
       if (!enabledRef.current) return;
 
@@ -91,11 +94,23 @@ export function useEmblaParallax(emblaApi, slideRefs) {
       emblaApi.scrollSnapList().forEach((scrollSnap, index) => {
         if (isScrollEvent && !slidesInView.includes(index)) return;
 
+        const node = slideRefs.current[index];
+        if (!node) return;
+
         const diffToTarget = scrollSnap - scrollProgress;
         const raw = diffToTarget * tweenFactor * -1;
         const translate = Math.max(-PARALLAX_ROOM, Math.min(PARALLAX_ROOM, raw));
-        applyTranslate(index, translate);
+        node.style.transform = `translate3d(${translate.toFixed(2)}px, 0, 0)`;
       });
+    };
+
+    /** One combined reInit handler (not three separate subscriptions) —
+     *  recompute the scale factor, re-promote any newly-added slide nodes,
+     *  then resync every slide's resting position. */
+    const onReInit = () => {
+      setTweenFactor();
+      if (enabledRef.current) promoteAll();
+      tweenParallax(emblaApi);
     };
 
     /** Eligibility can flip mid-session — resize, docking a tablet, toggling
@@ -107,6 +122,7 @@ export function useEmblaParallax(emblaApi, slideRefs) {
       enabledRef.current = next;
       if (next) {
         setTweenFactor();
+        promoteAll();
         tweenParallax(emblaApi);
       } else {
         clearAll();
@@ -116,16 +132,14 @@ export function useEmblaParallax(emblaApi, slideRefs) {
     setTweenFactor();
     sync();
 
-    emblaApi.on('reInit', setTweenFactor);
-    emblaApi.on('reInit', tweenParallax);
+    emblaApi.on('reInit', onReInit);
     emblaApi.on('scroll', tweenParallax);
 
     const queries = MOTION_QUERIES.map((q) => window.matchMedia(q));
     queries.forEach((q) => q.addEventListener('change', sync));
 
     return () => {
-      emblaApi.off('reInit', setTweenFactor);
-      emblaApi.off('reInit', tweenParallax);
+      emblaApi.off('reInit', onReInit);
       emblaApi.off('scroll', tweenParallax);
       queries.forEach((q) => q.removeEventListener('change', sync));
       clearAll();

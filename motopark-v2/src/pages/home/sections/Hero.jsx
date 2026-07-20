@@ -2,8 +2,6 @@ import { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
-import { formatINR } from '@/lib/format.js';
-import { cloudinaryUrl } from '@/lib/image.js';
 import { useCinematicHero } from '@/hooks/useCinematicHero.js';
 import { useHeroSlides } from '@/hooks/useHeroSlides.js';
 import HeroCarousel from '@/features/hero-carousel/HeroCarousel.jsx';
@@ -24,29 +22,46 @@ const HeroScene = lazy(() =>
 );
 
 /**
- * Homepage Hero — Concept C "Cinematic Hybrid" (docs/10 §C-5).
- * Navy-800 cinematic frame over a warm-lit photograph, headline bottom-left,
- * dual CTA, and a slim SHOPPABLE product ticker peeking into the fold (3 cards
- * = products reachable in viewport #1, Commerce Law 1). Static image only — no
- * hero video in this pass (Motion Doctrine: video is a later, guarded add).
- *
- * Props:
- *   products — up to 3 UI-ready cards ({ id, name, brand, priceINR, image, url })
- *   loading  — show skeleton ticker while home-data resolves
+ * CMS CTA URLs can be an in-page anchor (`#trust` — only ever produced by the
+ * bundled fallback's own copy, preserved from before this migration), an
+ * internal route (`/store`), or in principle an external URL. Each needs a
+ * different link mechanism — react-router's `Link` doesn't reliably drive a
+ * same-page anchor scroll, and `#`/`/`-prefixed values aren't real routes to
+ * navigate to. Kept as a small standalone helper rather than inlined twice
+ * (once per CTA slot).
  */
-export default function Hero({ products = [], loading = false }) {
-  const ticker = products.slice(0, 3);
+function ctaLinkProps(url) {
+  if (url.startsWith('#')) return { as: 'a', href: url };
+  if (url.startsWith('/')) return { as: Link, to: url };
+  return { as: 'a', href: url, target: '_blank', rel: 'noopener noreferrer' };
+}
+
+/**
+ * Homepage Hero — Concept C "Cinematic Hybrid" (docs/10 §C-5).
+ * Navy-800 cinematic frame over a warm-lit photograph carousel, headline
+ * bottom-left, dual CTA. The product ticker that used to live here was
+ * removed — Campaigns now own promotional content on the homepage, and the
+ * Hero no longer renders product cards.
+ *
+ * Headline/subtitle/CTAs are CMS-driven from the carousel's first/primary
+ * slide (the same slide the LCP/eager-image treatment already targets) —
+ * not per-slide-synced to whichever slide the carousel is currently showing
+ * (that would be a real feature addition, not an implementation fix, and
+ * wasn't asked for). A field that's absent on that slide renders nothing;
+ * there is no hardcoded fallback copy anymore. In practice `headline` and
+ * `primaryCta` are enforced as required at both the admin form and the
+ * backend schema, so the "render nothing" branches for those two are a
+ * defensive backstop, not something that fires in normal operation — the
+ * bundled bundled fallback slide (fallbackSlide.js) carries the ORIGINAL
+ * hardcoded copy as real data now, precisely so the hero never goes
+ * text-empty while still honoring "no placeholder text" for real CMS slides
+ * that a slide genuinely lacks.
+ */
+export default function Hero() {
   // false until: eligible AND LCP observed AND the browser went idle.
   const showScene = useCinematicHero();
-  // Phase 3.3: real CMS-driven slides. `slides` is NEVER empty — it starts
-  // as, and on an empty/failed fetch stays as, the bundled fallback slide
-  // (see hooks/useHeroSlides.js for why that also covers the loading state).
   const { slides } = useHeroSlides();
-  // Phase 3.2 removed useHeroParallax's call site here — it needed a single
-  // photo <img> ref, which stopped existing once the photo became an Embla
-  // carousel of N slides. Phase 3.4 deleted the file itself: its job is now
-  // done per-slide by useEmblaParallax, owned by HeroCarousel.jsx, reacting
-  // to Embla's own scroll instead of window.scrollY.
+  const primary = slides[0];
 
   return (
     <section className={styles.hero} aria-label="Welcome to MotoPark">
@@ -55,19 +70,13 @@ export default function Hero({ products = [], loading = false }) {
           able to start this fetch from raw HTML, before any bundle executes.
           index.html carries a matching <link rel="preload">. Regenerate the
           variants with `npm run images` (scripts/generate-hero-images.mjs). */}
-      {/* No aria-hidden on this wrapper (Phase 3.4 fix) — HeroCarousel now
-          contains real Controls/Pagination alongside the decorative photo
-          track, and a blanket aria-hidden here was hiding those from the
-          accessibility tree too. Each decorative piece hides itself
-          instead: HeroCarousel's own .viewport, HeroScene's own canvas
-          (already self-hiding), and .scrim below. */}
+      {/* No aria-hidden on this wrapper — HeroCarousel contains real
+          Controls/Pagination alongside the decorative photo track, and a
+          blanket aria-hidden here would hide those from the accessibility
+          tree too. Each decorative piece hides itself instead: HeroCarousel's
+          own .viewport, HeroScene's own canvas (already self-hiding), and
+          .scrim below. */}
       <div className={styles.media}>
-        {/* Phase 3.2/3.3: the static <picture> that used to live here is now
-            HeroCarousel, fed real CMS slides (or the bundled fallback) via
-            useHeroSlides — same breakpoints (768px), same media-query-not-
-            srcset technique (see HeroCarouselSlide.jsx for why). Everything
-            else in this media layer — HeroScene, the scrim below — is
-            untouched. */}
         <HeroCarousel slides={slides} />
         {/* Decorative canvas sits BETWEEN the photo and the scrim. That ordering
             is a contrast guarantee, not a stacking accident: the scrim is painted
@@ -89,72 +98,26 @@ export default function Hero({ products = [], loading = false }) {
             <ShieldCheck size={15} strokeWidth={2} aria-hidden="true" />
             Genuine gear · Est. 2020 · Vizag → Pan-India
           </p>
-          <h1 className={`display ${styles.headline}`}>
-            Gear for every ride.
-          </h1>
-          <p className={styles.subline}>
-            Helmets, riding gear, protection and parts — genuine brands only,
-            picked by riders and shipped from Vizag across India.
-          </p>
-          <div className={styles.ctas}>
-            <Button as={Link} to="/store" variant="primary" size="lg">
-              Shop the gear
-              <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
-            </Button>
-            <Button as="a" href="#trust" variant="outline" size="lg" onDark>
-              Why riders choose us
-            </Button>
-          </div>
-        </div>
-
-        {/* Shoppable ticker — the fold's product access.
-            Final-review fix: a bare <div> has no role that supports naming,
-            so `aria-label` alone was invalid per WAI-ARIA (confirmed by a
-            real Lighthouse run: "aria-label attribute cannot be used on a
-            div with no valid role attribute") — pre-existing, not
-            introduced by any Hero Carousel phase, but caught while
-            reviewing this section end-to-end. `role="region"` is the
-            minimal fix: it's a landmark role that supports aria-label
-            without requiring child-role changes the way `role="list"` would. */}
-        <div className={styles.ticker} role="region" aria-label="Featured products">
-          {loading && ticker.length === 0
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className={styles.tickCard} aria-hidden="true">
-                  <div className={`skeleton ${styles.tickThumb}`} />
-                  <div className={styles.tickBody}>
-                    <div className={`skeleton ${styles.tickLineSm}`} />
-                    <div className={`skeleton ${styles.tickLine}`} />
-                    <div className={`skeleton ${styles.tickLineSm}`} />
-                  </div>
-                </div>
-              ))
-            : ticker.map((p) => (
-                <Link key={p.id} to={p.url} className={styles.tickCard}>
-                  <div className={styles.tickThumb}>
-                    {p.image ? (
-                      <img
-                        src={cloudinaryUrl(p.image, { w: 160 })}
-                        alt={p.name}
-                        loading="lazy"
-                        decoding="async"
-                        width="72"
-                        height="90"
-                      />
-                    ) : (
-                      <span className={styles.tickFallback} aria-hidden="true">
-                        MP
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.tickBody}>
-                    {p.brand && <span className={styles.tickBrand}>{p.brand}</span>}
-                    <span className={styles.tickName}>{p.name}</span>
-                    <span className={`price ${styles.tickPrice}`}>
-                      {formatINR(p.priceINR)}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+          {primary?.headline && (
+            <h1 className={`display ${styles.headline}`}>{primary.headline}</h1>
+          )}
+          {primary?.subtitle && <p className={styles.subline}>{primary.subtitle}</p>}
+          {(primary?.primaryCta?.label && primary?.primaryCta?.url) ||
+          (primary?.secondaryCta?.label && primary?.secondaryCta?.url) ? (
+            <div className={styles.ctas}>
+              {primary?.primaryCta?.label && primary?.primaryCta?.url && (
+                <Button {...ctaLinkProps(primary.primaryCta.url)} variant="primary" size="lg">
+                  {primary.primaryCta.label}
+                  <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
+                </Button>
+              )}
+              {primary?.secondaryCta?.label && primary?.secondaryCta?.url && (
+                <Button {...ctaLinkProps(primary.secondaryCta.url)} variant="outline" size="lg" onDark>
+                  {primary.secondaryCta.label}
+                </Button>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
