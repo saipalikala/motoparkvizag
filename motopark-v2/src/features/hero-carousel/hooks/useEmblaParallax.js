@@ -11,42 +11,30 @@ import { MOTION_QUERIES, isCinematicEligible } from '@/lib/motionEligibility.js'
  * percentage output — same algorithm, same unit convention this project
  * already uses.
  *
- * Final-review correction: an earlier version of this hook added a
- * sub-pixel-change skip guard and deferred `will-change` promotion to the
- * first actual move — neither exists in the official reference, and re-
- * auditing against it directly (not just against memory of it) surfaced
- * both as the cause of the reported jerkiness, not a smoothing measure:
+ * Phase 3.5 correction — slideRefs snapshot stability:
  *
- *   - The skip guard discarded ticks whose delta was under 0.5px. During a
- *     slow, precise drag, several consecutive ticks can legitimately have
- *     sub-pixel deltas — skipping them let Embla's own slide-position
- *     transform (untouched, always smooth) drift visibly ahead of this
- *     hook's image transform, which would then "catch up" in a small jump
- *     once the accumulated delta finally cleared the threshold.
- *   - Deferring `will-change: transform` to the first non-zero write meant
- *     the ONE-TIME cost of promoting the image to its own compositor layer
- *     landed at the exact moment a user started dragging — the worst
- *     possible time for a hitch. That deferral pattern is correct on the
- *     retired page-scroll hook, where the first transform could fire during
- *     initial page load and compete with the LCP measurement. It buys
- *     nothing here: this hook's first transform can only ever fire once a
- *     user is actively dragging the carousel, which is necessarily well
- *     after LCP has already been recorded.
+ * `HeroCarousel.jsx` resets `slideRefs.current = []` on every render
+ * (the standard React pattern for a variable-length callback-ref list) and
+ * then re-populates it during the same render's JSX evaluation via the
+ * `photoRef` callback on each <img>. In React 19's concurrent renderer,
+ * a render can be interrupted and restarted, and an Embla 'scroll' event
+ * can fire on the main thread BETWEEN the `slideRefs.current = []` line and
+ * the callback-refs re-populating it. During that interstitial, every entry
+ * in `slideRefs.current` is undefined — the parallax handler writes nothing,
+ * and the images snap back to their CSS default (translateX: 0) for one
+ * frame before the next write corrects them, producing a visible flash.
  *
- * Both removed. The transform is now written unconditionally every tick,
- * matching the reference exactly; `will-change` is promoted eagerly, once,
- * the moment the hook becomes eligible (and again on `reInit`, so slides
- * added later — e.g. the fallback-to-real-CMS swap — are promoted too).
+ * Fix: inside the effect, capture the current array into a local `nodes`
+ * variable at effect-setup time (after Embla mounts / reInits, which is
+ * also after the DOM has settled). The scroll handler and all other inner
+ * functions reference `nodes` (stable for the lifetime of this effect run),
+ * not `slideRefs.current` (which can be [] mid-render). When the carousel
+ * reInits (slides added/removed), the effect re-runs (emblaApi changes) and
+ * re-snapshots. This eliminates the interstitial race without changing the
+ * parallax algorithm or the callback-ref pattern in HeroCarousel.jsx.
  *
- * Gated by isCinematicEligible() — the SAME gate every other motion feature
- * here reads (Lenis, HeroScene, the retired useHeroParallax). Below that line
- * (touch, narrow viewport, prefers-reduced-motion), this hook attaches its
- * listeners but never writes a transform — Embla's own drag-to-navigate is
- * NEVER gated by this, only the decorative parallax riding on top of it.
- *
- * `slideRefs` is a ref to a plain array of the per-slide photo <img> nodes,
- * owned and populated by the caller (HeroCarousel.jsx) via callback refs —
- * this hook only reads it, never allocates or owns the array itself.
+ * All other Phase 3.4 behaviour (eligibility gate, tweenFactor, PARALLAX_ROOM
+ * clamp, will-change promotion, unconditional per-tick write) is unchanged.
  */
 
 /** Max px the photo may shift either direction. MUST be <= the bleed room
@@ -62,18 +50,24 @@ export function useEmblaParallax(emblaApi, slideRefs) {
 
     let tweenFactor = 0;
 
+    // ── Snapshot the node list at effect-setup time (Phase 3.5) ───────────
+    // Re-captured on every effect run (i.e., whenever emblaApi changes,
+    // which includes reInit). By the time this effect runs, the DOM is
+    // committed and `slideRefs.current` is fully populated — safe to capture.
+    let nodes = slideRefs.current.slice();
+
     const setTweenFactor = () => {
       tweenFactor = PARALLAX_ROOM * emblaApi.scrollSnapList().length;
     };
 
     const promoteAll = () => {
-      slideRefs.current.forEach((node) => {
+      nodes.forEach((node) => {
         if (node) node.style.willChange = 'transform';
       });
     };
 
     const clearAll = () => {
-      slideRefs.current.forEach((node) => {
+      nodes.forEach((node) => {
         if (!node) return;
         node.style.transform = '';
         node.style.willChange = '';
@@ -83,7 +77,8 @@ export function useEmblaParallax(emblaApi, slideRefs) {
     /** Per the official reference: only slides currently in view get
      *  recomputed on a 'scroll' tick — off-screen slides are skipped and
      *  only updated on 'reInit'. Every in-view slide's transform is written
-     *  unconditionally, no skip, matching the reference exactly. */
+     *  unconditionally, no skip, matching the reference exactly.
+     *  Reads `nodes` (stable snapshot), not `slideRefs.current` (volatile). */
     const tweenParallax = (_api, evt) => {
       if (!enabledRef.current) return;
 
@@ -94,7 +89,7 @@ export function useEmblaParallax(emblaApi, slideRefs) {
       emblaApi.scrollSnapList().forEach((scrollSnap, index) => {
         if (isScrollEvent && !slidesInView.includes(index)) return;
 
-        const node = slideRefs.current[index];
+        const node = nodes[index];
         if (!node) return;
 
         const diffToTarget = scrollSnap - scrollProgress;
@@ -104,10 +99,11 @@ export function useEmblaParallax(emblaApi, slideRefs) {
       });
     };
 
-    /** One combined reInit handler (not three separate subscriptions) —
-     *  recompute the scale factor, re-promote any newly-added slide nodes,
-     *  then resync every slide's resting position. */
+    /** One combined reInit handler — recompute scale factor, re-snapshot
+     *  the node list (new slides may have been added), re-promote, resync. */
     const onReInit = () => {
+      // Re-snapshot after reInit because the DOM has new/updated slide nodes.
+      nodes = slideRefs.current.slice();
       setTweenFactor();
       if (enabledRef.current) promoteAll();
       tweenParallax(emblaApi);

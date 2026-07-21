@@ -13,11 +13,24 @@ import useEmblaCarousel from 'embla-carousel-react';
  * `'reInit'`); the installed package's own type definitions are the one
  * source that cannot be stale. `'reInit'` (capital I) is the real event name.
  *
- * `loop: false` — same reasoning as Phase 3.1: no wrap-around discontinuity
- * to handle at this slide count, keeps this phase's scope to mechanics.
+ * `loop: true` — changed from `false` for two reasons:
+ *   1. Seamless infinite autoplay: with loop:false, scrollNext() on the last
+ *      slide is a no-op, silently stalling the autoplay timer.
+ *   2. Premium drag feel: loop:false creates rubber-band resistance at the
+ *      first and last slides, which feels cheap on a full-bleed hero carousel.
+ *
+ * `slideCount` — new parameter (Phase 3.5). Embla measures the DOM once at
+ * mount time and does NOT automatically re-initialise when React adds or
+ * removes slide nodes inside its container. The fallback→CMS swap in
+ * useHeroSlides.js changes the DOM from 1 slideFrame to N after the initial
+ * fetch resolves, so without an explicit reInit() call, Embla's internal
+ * scrollSnapList stays at length 1 — the root cause of the "single slide"
+ * bug. Receiving slideCount as a parameter lets this hook trigger reInit()
+ * in a useEffect keyed to that value, exactly once per change, without
+ * HeroCarousel needing to touch emblaApi directly.
  */
-export function useHeroCarouselEngine(options = {}) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false, ...options });
+export function useHeroCarouselEngine(slideCount = 0, options = {}) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, ...options });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -29,6 +42,7 @@ export function useHeroCarouselEngine(options = {}) {
     setCanScrollNext(api.canScrollNext());
   }, []);
 
+  // Primary lifecycle: read snap list and wire select/reInit listeners.
   useEffect(() => {
     if (!emblaApi) return undefined;
 
@@ -43,6 +57,16 @@ export function useHeroCarouselEngine(options = {}) {
       emblaApi.off('reInit', onSelect);
     };
   }, [emblaApi, onSelect]);
+
+  // Slide-count watcher: whenever the number of slides in the DOM changes,
+  // tell Embla to re-measure. This fires once on mount (slideCount goes from
+  // 0 → N at the first render), and again if slides are added/removed later
+  // (fallback→CMS swap). Reading scrollSnapList() after reInit() is handled
+  // by the 'reInit' listener already wired above — no duplicate read needed.
+  useEffect(() => {
+    if (!emblaApi || slideCount === 0) return;
+    emblaApi.reInit();
+  }, [emblaApi, slideCount]);
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);

@@ -57,7 +57,30 @@ import styles from './AboutCinematic.module.css';
  * prevent inter-frame stepping from GSAP's own tick granularity.
  */
 
-const LERP_ALPHA = 0.20; // ← tune this: lower = more cinematic lag
+/**
+ * Ease-in-out cubic applied to the raw GSAP progress before storing it in
+ * targetProgressRef. The animation now accelerates naturally at the start of
+ * the sequence and decelerates naturally at the end, rather than playing at
+ * a constant speed throughout.
+ *
+ * CSS equivalent: cubic-bezier(0.65, 0, 0.35, 1)
+ *   t < 0.5 : 4t³
+ *   t ≥ 0.5 : 1 − (−2t+2)³ / 2
+ */
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+/**
+ * LERP_ALPHA — how aggressively the display progress chases the target per tick.
+ *
+ * OLD: 0.20 → catches up 20%/frame at 60fps → deceleration tail ~250ms (UI feel)
+ * NEW: 0.07 → catches up  7%/frame at 60fps → deceleration tail ~750ms (cinematic)
+ *
+ * Frame-rate independence formula (unchanged):
+ *   factor = 1 − (1 − LERP_ALPHA)^(deltaTime / 16.67)
+ */
+const LERP_ALPHA = 0.07;
 
 export default function AboutCinematic() {
   // ── Refs ───────────────────────────────────────────────────────────────────
@@ -106,7 +129,10 @@ export default function AboutCinematic() {
   //    Drawing is entirely decoupled to the ticker below.
 
   const handleProgress = useCallback((p) => {
-    targetProgressRef.current = p;
+    // Apply ease-in-out cubic before storing — the animation ramps up at the
+    // start of the sequence and slows at the end. The ticker lerp chases this
+    // eased value, so its deceleration always targets the correct position.
+    targetProgressRef.current = easeInOutCubic(p);
   }, []);
 
   useScrollSequence({
@@ -157,13 +183,27 @@ export default function AboutCinematic() {
 
       // ── Early-exit if nothing meaningful changed ───────────────────────────
       const fracIdx = next * (frames.length - 1);
-      if (Math.abs(fracIdx - lastFracIdxRef.current) < 0.005) return;
-      lastFracIdxRef.current = fracIdx;
+      const lastIdx = lastFracIdxRef.current;
+      if (Math.abs(fracIdx - lastIdx) < 0.005) return;
 
-      // ── Frame selection ────────────────────────────────────────────────────
+      // ── Intermediate-frame fill guard ──────────────────────────────────────
+      // With LERP_ALPHA=0.07 the per-tick advance is small, but during a fast
+      // scroll burst the display can still jump more than one full frame. When
+      // that happens, draw the midpoint frame first so there is no blank gap if
+      // the skipped frame hasn't yet been fetched into the bitmap cache.
+      // Cost: one extra drawImage blit (~0.1ms) on fast scroll — negligible.
       const ctx = getCtx();
       if (!ctx) return;
 
+      if (lastIdx >= 0 && Math.abs(fracIdx - lastIdx) > 1.5) {
+        const midIdx  = Math.max(0, Math.min(Math.round((fracIdx + lastIdx) / 2), frames.length - 1));
+        const midFrame = frames[midIdx];
+        if (midFrame) drawImageCover(ctx, midFrame, { clear: true });
+      }
+
+      lastFracIdxRef.current = fracIdx;
+
+      // ── Frame selection ────────────────────────────────────────────────────
       const loIdx = Math.floor(fracIdx);
       const hiIdx = Math.min(loIdx + 1, frames.length - 1);
       const blend = fracIdx - loIdx; // fractional part [0, 1)

@@ -52,10 +52,33 @@ export const SEQUENCE_CONFIG = {
 // ─── Scroll engine ─────────────────────────────────────────────────────────────
 
 export const SCROLL_CONFIG = {
-  /** How much scroll distance the canvas pin occupies. More = slower playback feel. */
-  scrollHeight: '400vh',
-  /** GSAP scrub: 0 = instant 1:1, 1 = 1-second lag, 0.8 = smooth Apple-style. */
-  scrub: 0.8,
+  /**
+   * How much scroll distance the canvas pin occupies.
+   *
+   * 400vh (old) → 192 frames over 3 600 px ≈ 18.75 px/frame at 900 px viewport.
+   * A single trackpad flick (~300 px) skipped 16 frames — felt rushed.
+   *
+   * 700vh (new) → 192 frames over 6 300 px ≈ 32.8 px/frame at 900 px viewport.
+   * Each frame now requires nearly twice as much physical movement — the
+   * sequence takes ~7 full viewport heights to traverse, comparable to Apple
+   * product page scroll sequences.
+   */
+  scrollHeight: '700vh',
+
+  /**
+   * GSAP scrub value.
+   *
+   * OLD: scrub: 0.8 — GSAP added its own 0.8-second lag BEFORE the ticker
+   * lerp added further lag. Two independent lag layers in series produce a
+   * double-deceleration: the motion changes character mid-stop (GSAP finishes
+   * its lag, then the lerp's lag kicks in) which reads as jitter or a "bump".
+   *
+   * NEW: scrub: true — GSAP maps scroll position to progress with no added lag.
+   * Lenis (lerp: 0.12) provides the primary scroll smoothing; the ticker lerp
+   * (LERP_ALPHA: 0.07 in AboutCinematic.jsx) provides the cinematic deceleration
+   * tail. One source of smoothing per layer — no competing lags, no seam.
+   */
+  scrub: true,
   start: 'top top',
 };
 

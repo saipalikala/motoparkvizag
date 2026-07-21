@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import AboutCinematic from './AboutCinematic.jsx';
 import AboutStory from './AboutStory.jsx';
+import { useSmoothScroll } from '@/hooks/useSmoothScroll.js';
 import styles from './AboutPage.module.css';
 
 /**
@@ -25,6 +26,14 @@ import styles from './AboutPage.module.css';
  * About cinematic bundle — including GSAP — out of every other route's chunk.
  */
 export default function AboutPage() {
+  // Mount Lenis smooth scroll for the About cinematic sequence.
+  // This also activates the Lenis→GSAP ScrollTrigger synchronisation in
+  // smoothScroll.js, so the cinematic animation tracks the Lenis-smoothed
+  // scroll position rather than raw browser scroll. Without this, GSAP
+  // ScrollTrigger reads native scrollY directly, which diverges from the
+  // visual scroll during deceleration and produces animation jitter.
+  useSmoothScroll();
+
   return (
     <>
       <Helmet>

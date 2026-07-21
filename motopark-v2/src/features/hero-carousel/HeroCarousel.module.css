@@ -1,7 +1,8 @@
-/* HeroCarousel.module.css — Phase 3.2. Fills whatever parent sizes it
-   (Hero.jsx's `.media`, which is position:absolute;inset:0 against `.hero`).
-   `.wrap` is the positioning context for the absolutely-positioned Controls/
-   Pagination overlays; `.viewport`/`.container`/`.slideFrame` are the
+/* HeroCarousel.module.css — Phase 3.5: performance + mobile interaction
+   polish on top of Phase 3.2 layout structure. Fills whatever parent
+   sizes it (Hero.jsx's `.media`, which is position:absolute;inset:0).
+   `.wrap` is the positioning context for the absolutely-positioned
+   Pagination overlay; `.viewport`/`.container`/`.slideFrame` are the
    structure Embla itself requires. */
 
 .wrap {
@@ -15,11 +16,28 @@
   position: relative;
   width: 100%;
   height: 100%;
+
+  /* Phase 3.5: tell the browser this element handles horizontal swipes.
+     Without this, the browser holds the pointer for ~100 ms to classify
+     whether a gesture is a scroll or a drag (touch disambiguation). By
+     declaring pan-y (vertical scrolls still pass through to the page) and
+     pinch-zoom, horizontal drags are handed to Embla immediately — the
+     source of the "sticky start" jank on mobile. */
+  touch-action: pan-y pinch-zoom;
 }
 
 .container {
   display: flex;
   height: 100%;
+
+  /* Phase 3.5: promote Embla's own translation target to a compositor
+     layer before the first user interaction. Embla translates `.container`
+     (the flex parent of all slideFrames) when scrolling/dragging. Without
+     eager promotion, the browser creates the layer on the first drag frame —
+     exactly the worst time for a one-time GPU upload cost. `will-change:
+     transform` is scoped here rather than on `.slideFrame` because it is
+     `.container` that Embla actually transforms. */
+  will-change: transform;
 }
 
 .slideFrame {
