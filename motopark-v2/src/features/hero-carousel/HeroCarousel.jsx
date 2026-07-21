@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useHeroCarouselEngine } from './hooks/useHeroCarouselEngine.js';
 import { useEmblaParallax } from './hooks/useEmblaParallax.js';
 import { useEmblaAutoplay } from './hooks/useEmblaAutoplay.js';
@@ -61,6 +61,24 @@ export default function HeroCarousel({ slides = [] }) {
   useEmblaParallax(emblaApi, slideRefs);
   useEmblaAutoplay(emblaApi, viewportRef, slides.length);
 
+  // Guard against rapid multi-clicks using Embla's public event API ('select' / 'settle').
+  const isAnimatingRef = useRef(false);
+  useEffect(() => {
+    if (!emblaApi) return undefined;
+    const onSelect = () => {
+      isAnimatingRef.current = true;
+    };
+    const onSettle = () => {
+      isAnimatingRef.current = false;
+    };
+    emblaApi.on('select', onSelect);
+    emblaApi.on('settle', onSettle);
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('settle', onSettle);
+    };
+  }, [emblaApi]);
+
   if (!slides.length) return null;
 
   // Combine Embla's callback ref with our stable viewportRef. Both need to
@@ -74,6 +92,7 @@ export default function HeroCarousel({ slides = [] }) {
   const onClick = (e) => {
     if (!emblaApi || !emblaApi.clickAllowed()) return;
     if (e.target.closest('button, a')) return;
+    if (isAnimatingRef.current) return;
     emblaApi.scrollNext();
   };
 

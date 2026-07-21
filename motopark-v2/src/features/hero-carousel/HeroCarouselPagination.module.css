@@ -1,32 +1,59 @@
-/* HeroCarouselPagination.module.css — Phase 3.2: functional, minimal. */
+/* HeroCarouselPagination.module.css — Luxury floating glass pagination. */
 
 .dots {
   position: absolute;
   left: 0;
   right: 0;
-  /* Lifted from --space-4 to --space-6: with 100dvh Hero and no arrows,
-     the dots sit more naturally at 24px from the bottom edge. */
-  bottom: var(--space-6);
+  /* Safe-area aware positioning */
+  bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
   display: flex;
   justify-content: center;
-  gap: var(--space-2);
   z-index: 2;
+  pointer-events: none; /* Container passes clicks through; track captures them */
+}
+
+/* Floating backdrop-blurred glass pill container */
+.glassTrack {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  /* Navy 800 overlay context matching --overlay */
+  background: rgb(20 28 41 / 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  /* Dark-theme cream border matching StoryBand and TrustBand pattern */
+  border: 1px solid rgb(251 243 231 / 0.15);
+  pointer-events: auto;
+  box-shadow: var(--shadow-sm);
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   border-radius: var(--radius-full);
   border: none;
-  background: rgb(253 251 247 / 0.45);
+  background: rgb(251 243 231 / 0.4);
   cursor: pointer;
   padding: 0;
-  transition: background-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  transition:
+    width var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
 }
+
 .dot:hover {
-  background: rgb(253 251 247 / 0.7);
+  background: rgb(251 243 231 / 0.7);
 }
+
+.dot:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Active capsule expansion: 8px -> 24px in MotoPark orange */
 .dotActive {
-  background: var(--mp-cream-50);
-  transform: scale(1.25);
+  width: var(--space-6);
+  background: var(--accent);
 }

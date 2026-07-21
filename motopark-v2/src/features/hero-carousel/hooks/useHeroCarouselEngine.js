@@ -30,7 +30,7 @@ import useEmblaCarousel from 'embla-carousel-react';
  * HeroCarousel needing to touch emblaApi directly.
  */
 export function useHeroCarouselEngine(slideCount = 0, options = {}) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, ...options });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 35, ...options });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState([]);
   const [canScrollPrev, setCanScrollPrev] = useState(false);

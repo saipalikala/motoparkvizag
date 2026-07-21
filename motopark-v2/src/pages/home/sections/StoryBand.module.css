@@ -1,19 +1,34 @@
-/* Story band — navy cinematic moment (the 40%). Cream on navy-800 (~10:1 AA). */
+/* StoryBand.module.css — Monumental Editorial Storytelling Chapter.
+   Single art-directed canvas on Navy 800 (--bg-inverse-deep). */
 
 .band {
   background: var(--bg-inverse-deep);
   color: var(--text-inverse);
-  padding-block: 0 var(--section-gap);
+  padding-block: var(--section-gap);
+  position: relative;
+  overflow: hidden;
 }
 
 .inner {
-  display: grid;
-  gap: var(--block-gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
 }
 
-.head {
-  max-width: 46rem;
+/* ── Stage 1: Monumental Hero Stage (Art-Directed Canvas) ── */
+.heroStage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: center;
 }
+
+.heroContent {
+  z-index: 2;
+  max-width: 48rem;
+}
+
 .eyebrow {
   font-size: var(--text-body-sm);
   font-weight: 600;
@@ -22,70 +37,191 @@
   color: var(--mp-orange-300);
   margin-bottom: var(--space-3);
 }
+
 .title {
   font-size: var(--text-h1);
   color: var(--text-inverse);
-  text-wrap: balance;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-4);
+  text-wrap: balance;
 }
+
 .lede {
   font-size: var(--text-body-lg);
   color: var(--mp-cream-200);
-  max-width: 40ch;
+  max-width: 44ch;
+  line-height: 1.6;
 }
 
-.rides {
-  list-style: none;
+/* Monumental Hero Frame */
+.heroFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  background: var(--mp-navy-700);
+
+  /* Architectural stepped notch clipPath */
+  clip-path: url(#heroArchitecturalNotch);
+  -webkit-clip-path: url(#heroArchitecturalNotch);
+}
+
+.frameBorder {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.heroFrame:hover .photo {
+  transform: scale(1.02);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(20 28 41 / 0.75) 0%,
+    rgb(20 28 41 / 0.25) 60%,
+    transparent 100%
+  );
+}
+
+/* ── Stage 2: Light Supporting Journeys (Editorial Highlights) ─────── */
+.journeysSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgb(251 243 231 / 0.12);
+}
+
+.journeysHeader {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-cream-200);
+}
+
+.journeysGrid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
-.ride {
-  padding-top: var(--space-5);
-  border-top: 1px solid rgb(251 243 231 / 0.18);
+
+.journeyItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
-.iconWrap {
-  display: inline-flex;
+
+.journeyMeta {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: rgb(251 243 231 / 0.1);
+  gap: var(--space-3);
+}
+
+.journeyNumber {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--mp-orange-300);
+  letter-spacing: 0.06em;
+}
+
+.journeyTagline {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--mp-cream-100);
-  margin-bottom: var(--space-3);
 }
-.rideTitle {
-  font-size: var(--text-h4);
+
+.journeyTitle {
+  font-size: var(--text-h3);
+  font-weight: 700;
   color: var(--text-inverse);
-  margin-bottom: var(--space-2);
 }
-.rideCopy {
+
+.journeyCopy {
   font-size: var(--text-body-sm);
   color: var(--mp-cream-200);
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 36ch;
 }
 
-.cta {
-  display: inline-flex;
+/* ── Stage 3: Closing Brand Statement & Primary CTA ────────────────── */
+.closingAction {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  justify-self: start;
-  font-weight: 600;
-  color: var(--text-inverse);
-  text-decoration: none;
-  padding-bottom: 2px;
-  border-bottom: 1px solid rgb(251 243 231 / 0.4);
-  transition: border-color var(--dur-fast) var(--ease-out);
-}
-.cta:hover {
-  border-bottom-color: var(--text-inverse);
+  text-align: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-12);
+  border-top: 1px solid rgb(251 243 231 / 0.12);
 }
 
-/* Desktop: 3-up vignettes */
+.closingEyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-cream-200);
+}
+
+.closingTitle {
+  font-size: var(--text-display);
+  color: var(--text-inverse);
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin-bottom: var(--space-2);
+}
+
+/* ── Responsive Breakpoints ──────────────────────────────── */
 @media (min-width: 768px) {
-  .rides {
+  .journeysGrid {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-8);
+  }
+}
+
+/* Desktop: Art-directed overlapping hero composition */
+@media (min-width: 1024px) {
+  .heroStage {
+    grid-template-columns: repeat(12, 1fr);
+  }
+
+  .heroContent {
+    grid-column: 1 / 8;
+    grid-row: 1;
+    z-index: 3;
+    /* Typography intentionally overlaps the monumental hero photo stage */
+    margin-right: -var(--space-12);
+  }
+
+  .heroFrame {
+    grid-column: 5 / 13;
+    grid-row: 1;
+    z-index: 1;
+    aspect-ratio: 16 / 9;
+    height: 480px;
+  }
+
+  .title {
+    font-size: var(--text-display);
   }
 }

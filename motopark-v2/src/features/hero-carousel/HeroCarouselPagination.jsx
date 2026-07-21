@@ -13,16 +13,18 @@ export default function HeroCarouselPagination({ count, selectedIndex, onSelect 
 
   return (
     <div className={styles.dots} role="group" aria-label="Hero slide pagination">
-      {Array.from({ length: count }).map((_, i) => (
-        <button
-          key={i}
-          type="button"
-          className={`${styles.dot} ${i === selectedIndex ? styles.dotActive : ''}`}
-          aria-current={i === selectedIndex ? 'true' : undefined}
-          aria-label={`Go to slide ${i + 1} of ${count}`}
-          onClick={() => onSelect(i)}
-        />
-      ))}
+      <div className={styles.glassTrack}>
+        {Array.from({ length: count }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`${styles.dot} ${i === selectedIndex ? styles.dotActive : ''}`}
+            aria-current={i === selectedIndex ? 'true' : undefined}
+            aria-label={`Go to slide ${i + 1} of ${count}`}
+            onClick={() => onSelect(i)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
