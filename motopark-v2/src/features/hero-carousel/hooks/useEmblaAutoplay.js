@@ -49,7 +49,7 @@ import { useEffect, useRef } from 'react';
  * the element is replaced.
  */
 
-const DELAY_MS = 3000;
+const DELAY_MS = 5000;
 
 export function useEmblaAutoplay(emblaApi, viewportRef, slideCount) {
   // Stable refs — none of these changing should re-run the effect.

@@ -58,20 +58,6 @@ import styles from './AboutCinematic.module.css';
  */
 
 /**
- * Ease-in-out cubic applied to the raw GSAP progress before storing it in
- * targetProgressRef. The animation now accelerates naturally at the start of
- * the sequence and decelerates naturally at the end, rather than playing at
- * a constant speed throughout.
- *
- * CSS equivalent: cubic-bezier(0.65, 0, 0.35, 1)
- *   t < 0.5 : 4t³
- *   t ≥ 0.5 : 1 − (−2t+2)³ / 2
- */
-function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
-/**
  * LERP_ALPHA — how aggressively the display progress chases the target per tick.
  *
  * OLD: 0.20 → catches up 20%/frame at 60fps → deceleration tail ~250ms (UI feel)
@@ -80,7 +66,7 @@ function easeInOutCubic(t) {
  * Frame-rate independence formula (unchanged):
  *   factor = 1 − (1 − LERP_ALPHA)^(deltaTime / 16.67)
  */
-const LERP_ALPHA = 0.07;
+const LERP_ALPHA = 0.12;
 
 export default function AboutCinematic() {
   // ── Refs ───────────────────────────────────────────────────────────────────
@@ -129,10 +115,7 @@ export default function AboutCinematic() {
   //    Drawing is entirely decoupled to the ticker below.
 
   const handleProgress = useCallback((p) => {
-    // Apply ease-in-out cubic before storing — the animation ramps up at the
-    // start of the sequence and slows at the end. The ticker lerp chases this
-    // eased value, so its deceleration always targets the correct position.
-    targetProgressRef.current = easeInOutCubic(p);
+    targetProgressRef.current = p;
   }, []);
 
   useScrollSequence({

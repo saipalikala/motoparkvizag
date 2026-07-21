@@ -3,7 +3,7 @@
 .band {
   background: var(--bg-inverse-deep);
   color: var(--text-inverse);
-  padding-block: var(--section-gap);
+  padding-block: 0 var(--section-gap);
 }
 
 .inner {

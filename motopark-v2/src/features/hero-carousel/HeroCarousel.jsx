@@ -71,9 +71,15 @@ export default function HeroCarousel({ slides = [] }) {
     emblaRef(node);
   };
 
+  const onClick = (e) => {
+    if (!emblaApi || !emblaApi.clickAllowed()) return;
+    if (e.target.closest('button, a')) return;
+    emblaApi.scrollNext();
+  };
+
   return (
     <div className={styles.wrap}>
-      <div className={styles.viewport} ref={setViewportRef} aria-hidden="true">
+      <div className={styles.viewport} ref={setViewportRef} aria-hidden="true" onClick={onClick}>
         <div className={styles.container}>
           {slides.map((slide, i) => (
             <div className={styles.slideFrame} key={slide.id ?? i}>

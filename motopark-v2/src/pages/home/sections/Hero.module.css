@@ -6,11 +6,11 @@
   isolation: isolate;
   display: flex;
   align-items: flex-end;
-  /* 100dvh — true cinematic full viewport fill. The former 82dvh/80dvh values
-     were the primary constraint making the Hero look contained.
-     Combined with position:fixed on the Navbar and the negative margin below,
-     this produces edge-to-edge coverage identical to premium ecommerce homepages. */
-  min-height: 100dvh;
+  /* 100svh (Small Viewport Height) locks the height to the viewport dimensions
+     with the mobile address bar visible, and critically, never recalculates on
+     scroll. This completely prevents the `object-fit: cover` image from scaling
+     or jumping when the user scrolls. */
+  min-height: 100svh;
   background: var(--bg-inverse-deep); /* navy-800 base under the photo */
   color: var(--text-inverse);
   overflow: hidden;

@@ -99,13 +99,35 @@ export default function AssistantWidget() {
     setOpen(false);
   }, [pathname]);
 
-  // Body scroll-lock — prevents the page scrolling under the open panel (Navbar.jsx:58–64).
+  // Body scroll-lock — prevents the page scrolling under the open panel on mobile.
+  // On desktop, the panel is a floating widget, so locking scroll causes a layout shift.
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open) return;
+    const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+    }
     return () => {
       document.body.style.overflow = '';
     };
   }, [open]);
+
+  // Swipe-down dismissal on mobile
+  const touchStartY = useRef(null);
+  const onTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const onTouchMove = (e) => {
+    // Left empty: Could add transform updates here in the future
+  };
+  const onTouchEnd = (e) => {
+    if (touchStartY.current === null) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (deltaY > 50) {
+      closePanel();
+    }
+    touchStartY.current = null;
+  };
 
   // Escape key — close the panel and return focus to the launcher (Navbar.jsx:47–56).
   useEffect(() => {
@@ -187,29 +209,39 @@ export default function AssistantWidget() {
       </button>
 
       {open && (
-        <section
-          ref={panelRef}
-          className={styles.panel}
-          role="dialog"
-          aria-label="MotoBuddy shopping assistant"
-          aria-modal="true"
-          onKeyDown={handlePanelKeyDown}
-        >
-          <header className={styles.header}>
-            <span className={styles.brandDot} aria-hidden="true" />
-            <div>
-              <p className={styles.title}>MotoBuddy</p>
-              <p className={styles.subtitle}>Grounded in live catalogue &amp; orders</p>
-            </div>
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={closePanel}
-              aria-label="Close assistant"
+        <>
+          <div className={styles.backdrop} onClick={closePanel} aria-hidden="true" />
+          <section
+            ref={panelRef}
+            className={styles.panel}
+            role="dialog"
+            aria-label="MotoBuddy shopping assistant"
+            aria-modal="true"
+            onKeyDown={handlePanelKeyDown}
+          >
+            <header 
+              className={styles.header}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              <X size={18} strokeWidth={2} aria-hidden="true" />
-            </button>
-          </header>
+              <div className={styles.dragHandle} aria-hidden="true" />
+              <div className={styles.headerContent}>
+                <span className={styles.brandDot} aria-hidden="true" />
+                <div>
+                  <p className={styles.title}>MotoBuddy</p>
+                  <p className={styles.subtitle}>Grounded in live catalogue &amp; orders</p>
+                </div>
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={closePanel}
+                  aria-label="Close assistant"
+                >
+                  <X size={18} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </div>
+            </header>
 
           <div className={styles.messages} ref={listRef}>
             {messages.map((m, i) => (
@@ -296,7 +328,8 @@ export default function AssistantWidget() {
               ↑
             </button>
           </div>
-        </section>
+          </section>
+        </>
       )}
     </>
   );

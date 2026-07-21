@@ -10,11 +10,10 @@
   overflow: hidden;
 
   /* Reserved for the Embla parallax transform (useEmblaParallax.js).
-     Deliberately larger than that hook's PARALLAX_ROOM clamp (48px) — a
-     small safety margin against rounding, not an exact-equality contract
-     the way the retired vertical version's comment required. Change one,
-     sanity-check the other; they don't have to match to the pixel. */
-  --h-parallax-room: 56px;
+     Uses an adaptive clamp to ensure a deep, premium parallax feel on mobile
+     (~72-90px) without forcing desktop to upscale the 1600px image beyond
+     its native resolution to cover a massive bleed (capped at 160px). */
+  --h-parallax-room: clamp(72px, 18vw, 160px);
 }
 
 /* display:contents so <picture> adds no box of its own, matching the

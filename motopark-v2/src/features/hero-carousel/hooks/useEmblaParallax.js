@@ -37,12 +37,8 @@ import { MOTION_QUERIES, isCinematicEligible } from '@/lib/motionEligibility.js'
  * clamp, will-change promotion, unconditional per-tick write) is unchanged.
  */
 
-/** Max px the photo may shift either direction. MUST be <= the bleed room
- *  reserved in HeroCarouselSlide.module.css's --h-parallax-room (56px there,
- *  a small safety margin over this clamp, not an exact-equality contract). */
-const PARALLAX_ROOM = 48;
-
 export function useEmblaParallax(emblaApi, slideRefs) {
+  const parallaxRoomPx = useRef(0);
   const enabledRef = useRef(false);
 
   useEffect(() => {
@@ -57,7 +53,18 @@ export function useEmblaParallax(emblaApi, slideRefs) {
     let nodes = slideRefs.current.slice();
 
     const setTweenFactor = () => {
-      tweenFactor = PARALLAX_ROOM * emblaApi.scrollSnapList().length;
+      // Single Source of Truth: Read the exact computed pixel bleed from the
+      // browser's CSS engine by inspecting the 'left' property of the photo.
+      // This allows CSS to use `clamp()` adaptively while JS just reads the result.
+      const firstNode = nodes[0];
+      let bleedPx = 72; // safe fallback
+      if (firstNode) {
+        const computedLeft = window.getComputedStyle(firstNode).left;
+        bleedPx = Math.abs(parseFloat(computedLeft)) || 72;
+      }
+      
+      tweenFactor = bleedPx * emblaApi.scrollSnapList().length;
+      parallaxRoomPx.current = bleedPx;
     };
 
     const promoteAll = () => {
@@ -94,7 +101,8 @@ export function useEmblaParallax(emblaApi, slideRefs) {
 
         const diffToTarget = scrollSnap - scrollProgress;
         const raw = diffToTarget * tweenFactor * -1;
-        const translate = Math.max(-PARALLAX_ROOM, Math.min(PARALLAX_ROOM, raw));
+        const room = parallaxRoomPx.current;
+        const translate = Math.max(-room, Math.min(room, raw));
         node.style.transform = `translate3d(${translate.toFixed(2)}px, 0, 0)`;
       });
     };

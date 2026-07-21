@@ -37,15 +37,16 @@ export default function CategoryGrid({ categories = [], loading = false }) {
   const items = categories.slice(0, 7); // 7 + "All gear" = balanced grid
 
   return (
-    <section className={`container section ${styles.wrap}`} aria-labelledby="cat-title">
-      <header className={styles.head}>
-        <p className={styles.eyebrow}>Shop by category</p>
-        <h2 id="cat-title" className={styles.title}>
-          Find your gear fast
-        </h2>
-      </header>
+    <section className={styles.surface} aria-labelledby="cat-title">
+      <div className={`container section ${styles.wrap}`}>
+        <header className={styles.head}>
+          <p className={styles.eyebrow}>Shop by category</p>
+          <h2 id="cat-title" className={styles.title}>
+            Find your gear fast
+          </h2>
+        </header>
 
-      <div className={styles.grid}>
+        <div className={styles.grid}>
         {loading && items.length === 0
           ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className={`skeleton ${styles.skel}`} aria-hidden="true" />
@@ -71,6 +72,7 @@ export default function CategoryGrid({ categories = [], loading = false }) {
             <span className={styles.tileName}>All gear</span>
           </Link>
         )}
+      </div>
       </div>
     </section>
   );

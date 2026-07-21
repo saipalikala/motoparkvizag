@@ -1,7 +1,13 @@
-/* Brand row — wordmark strip (no logo assets yet). Tokens only. */
+/* Brand row — Premium ambient marquee and typography cards */
 
 .wrap {
   text-align: center;
+  /* Add subtle background contrast to ground the section if desired */
+  /* background-color: var(--surface-sunken); */
+}
+
+.header {
+  margin-bottom: var(--space-8);
 }
 
 .eyebrow {
@@ -12,33 +18,153 @@
   color: var(--accent);
   margin-bottom: var(--space-2);
 }
+
 .title {
   font-size: var(--text-h3);
-  margin-bottom: var(--block-gap);
 }
 
-.row {
-  list-style: none;
+/* ─── RAIL & MARQUEE (Desktop) ─── */
+.railContainer {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: var(--space-2) 0; /* Padding allows hover box-shadows to breathe without clipping */
+}
+
+/* Fades for cinematic depth */
+.fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12vw;
+  max-width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+.fadeLeft {
+  left: 0;
+  background: linear-gradient(to right, var(--surface-default) 0%, transparent 100%);
+}
+.fadeRight {
+  right: 0;
+  background: linear-gradient(to left, var(--surface-default) 0%, transparent 100%);
+}
+
+.railTrack {
   display: flex;
-  flex-wrap: wrap;
+  width: max-content;
+  /* Ambient motion: extremely slow and subtle */
+  animation: marquee 60s linear infinite;
+}
+
+/* Interaction Priority: Pause immediately on interaction */
+.railContainer:hover .railTrack,
+.railContainer:focus-within .railTrack,
+.railContainer:active .railTrack {
+  animation-play-state: paused;
+}
+
+.list {
+  display: flex;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  /* Exact gap applied to the end of the list ensures seamless duplication alignment */
+  padding-right: var(--space-4); 
+}
+
+/* ─── PREMIUM TYPOGRAPHY CARDS ─── */
+.brand {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4) var(--space-8);
-}
-
-.brand {
-  display: inline-block;
+  padding: var(--space-4) var(--space-8);
+  
+  /* Minimalist borders and shapes */
+  background: var(--surface-default);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  
+  /* Typography */
   font-size: var(--text-h4);
   font-weight: 700;
   letter-spacing: 0.01em;
-  color: var(--mp-navy-400);
+  color: var(--text-secondary);
   text-decoration: none;
-  opacity: 0.75;
-  transition:
-    color var(--dur-fast) var(--ease-out),
-    opacity var(--dur-fast) var(--ease-out);
+  white-space: nowrap;
+  
+  /* High-quality physics (Apple/Rivian feel) */
+  transition: 
+    transform 400ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 400ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 400ms cubic-bezier(0.2, 0, 0, 1),
+    color 400ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 400ms cubic-bezier(0.2, 0, 0, 1);
 }
-.brand:hover {
+
+/* Hover & Focus Interaction */
+.brand:hover,
+.brand:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
   color: var(--text-primary);
-  opacity: 1;
+  outline: none;
+}
+
+/* Hardware accelerated transform */
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Accessibility: Pause animation for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .railTrack {
+    animation-play-state: paused !important;
+  }
+}
+
+/* ─── MOBILE (Native Scroll Snap) ─── */
+@media (max-width: 1023px) {
+  .railTrack {
+    /* Kill the ambient marquee completely on mobile */
+    animation: none !important;
+    width: 100%;
+    
+    /* Enable native momentum swipe */
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Add padding so first/last items aren't flush to screen edge */
+    padding: var(--space-2) var(--space-4);
+    
+    /* Hide scrollbar for a cleaner look */
+    scrollbar-width: none; 
+  }
+  .railTrack::-webkit-scrollbar {
+    display: none; 
+  }
+  
+  .list {
+    padding-right: 0;
+  }
+  
+  /* Remove duplicate on mobile so the scroll isn't artificially long */
+  .list[data-duplicate="true"] {
+    display: none;
+  }
+  
+  .brand {
+    /* Snap items to the start or center */
+    scroll-snap-align: center;
+    scroll-margin: var(--space-4);
+  }
+  
+  /* Fades look awkward when scrolling manually */
+  .fade {
+    display: none;
+  }
 }

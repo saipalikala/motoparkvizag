@@ -1,9 +1,9 @@
 /* Trust band — warm cream surface, 4 pillars + showroom strip. Tokens only. */
 
 .band {
-  background: var(--bg-surface-warm);
-  border-block: 1px solid var(--border-default);
-  padding-block: var(--section-gap);
+  background: var(--bg-inverse-deep);
+  color: var(--text-inverse);
+  padding-block: var(--section-gap) 0;
 }
 
 .pillars {
@@ -27,20 +27,20 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--bg-surface);
-  color: var(--accent);
-  border: 1px solid var(--border-default);
+  background: rgb(251 243 231 / 0.1);
+  color: var(--mp-cream-100);
+  border: none;
 }
 
 .pTitle {
   font-size: var(--text-body);
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-inverse);
   margin-bottom: 2px;
 }
 .pCopy {
   font-size: var(--text-body-sm);
-  color: var(--text-secondary);
+  color: var(--mp-cream-200);
   line-height: 1.4;
 }
 
@@ -51,9 +51,12 @@
   gap: var(--space-2);
   margin-top: var(--block-gap);
   padding-top: var(--space-5);
-  border-top: 1px solid var(--border-default);
+  /* Custom border matches StoryBand's identical 18% cream opacity separator,
+     guaranteeing visual consistency across the unified dark narrative block,
+     as --border-default is a light-theme grey. */
+  border-top: 1px solid rgb(251 243 231 / 0.18);
   font-size: var(--text-body-sm);
-  color: var(--text-secondary);
+  color: var(--mp-cream-200);
 }
 .showroom svg {
   color: var(--accent);
@@ -61,13 +64,13 @@
 .showroomLink {
   margin-left: auto;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-inverse);
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 .showroomLink:hover {
-  border-bottom-color: var(--text-primary);
+  border-bottom-color: var(--text-inverse);
 }
 
 /* Tablet: 2-up */

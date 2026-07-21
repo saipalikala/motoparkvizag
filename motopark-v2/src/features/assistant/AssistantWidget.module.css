@@ -38,23 +38,44 @@
   pointer-events: none;
 }
 
-/* ── Mobile: clear the bottom navigation ──────────────────────────────
-   MobileBottomNav is `position: fixed; bottom: 0` and hides at >=1024px, so
-   below that breakpoint the launcher and the panel must both sit above it.
-
-   --nav-height-mobile is the same token MobileBottomNav sizes its rows with,
-   and env(safe-area-inset-bottom) matches the padding it adds for the iOS home
-   indicator — without that term the launcher lands ON the bar on notched
-   iPhones even though it clears it on Android. */
+/* ── Mobile: Bottom Sheet ──────────────────────────────
+   On mobile, the Assistant takes over as a premium Bottom Sheet, rendering OVER
+   the MobileBottomNav. The launcher still clears the bottom nav when closed. */
 @media (max-width: 1023px) {
   .launcher {
     bottom: calc(var(--space-5) + var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px));
   }
-  .panel {
-    bottom: calc(
-      var(--space-5) + 68px + var(--nav-height-mobile) + env(safe-area-inset-bottom, 0px)
-    );
+  
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.5);
+    animation: fade 0.2s ease both;
   }
+  
+  .panel {
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: auto;
+    /* Adaptive height leaves a comfortable gap at the top. 
+       dvh ensures the sheet natively responds to the mobile keyboard. */
+    max-height: calc(100dvh - var(--space-8) - env(safe-area-inset-top, 0px));
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    border: none;
+    animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1) both;
+    z-index: 61;
+  }
+  
+  .composer {
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
 }
 
 .panel {
@@ -64,8 +85,8 @@
   z-index: 60;
   display: flex;
   flex-direction: column;
-  width: min(380px, calc(100vw - var(--space-8)));
-  height: min(560px, calc(100dvh - 140px));
+  width: 380px;
+  height: 560px;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
@@ -78,6 +99,15 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.dragHandle {
+  display: none;
+}
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
 .header {
   display: flex;
   align-items: center;
@@ -85,6 +115,21 @@
   padding: var(--space-4);
   background: var(--bg-inverse-deep);
   color: var(--text-inverse);
+}
+@media (max-width: 1023px) {
+  .header {
+    display: block;
+    padding-top: var(--space-3);
+  }
+  .dragHandle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--text-inverse);
+    opacity: 0.3;
+    border-radius: var(--radius-full);
+    margin: 0 auto var(--space-3) auto;
+  }
 }
 .brandDot {
   width: 10px;
@@ -336,7 +381,7 @@
 .send:disabled { opacity: 0.45; cursor: not-allowed; }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel, .bubble { animation: none; }
+  .panel, .backdrop, .bubble { animation: none; }
   .launcher, .closeBtn { transition: none; }
   .typing span { animation: none; opacity: 0.5; }
 }
