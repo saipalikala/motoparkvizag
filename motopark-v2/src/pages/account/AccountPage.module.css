@@ -1,77 +1,856 @@
-/* AccountPage. Tokens only. */
+/* AccountPage — MotoPark V2 Dedicated Desktop & Mobile Rider Dashboard CSS Module */
 
-.head {
+.accountWrapper {
+  padding: var(--space-12, 48px) 0 var(--space-20, 80px);
+  background: var(--surface-subtle, #f9fafb);
+  min-height: calc(100vh - 80px);
+}
+
+/* ── 1. DESKTOP VIEW (MIN-WIDTH: 861px) ────────────────── */
+@media (min-width: 861px) {
+  .mobileView {
+    display: none !important;
+  }
+
+  .desktopView {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: var(--space-8, 36px);
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 100px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: var(--radius-2xl, 24px);
+    border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02);
+    padding: var(--space-6, 24px);
+  }
+
+  .sidebarHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: var(--space-6, 24px);
+    margin-bottom: var(--space-6, 20px);
+    border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  }
+
+  .avatarWrap {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  .avatarImg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ffffff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .avatarFallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    font-size: 2.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  .cameraBtn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--mp-orange, #ff6b00);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(255, 107, 0, 0.4);
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cameraBtn:hover {
+    transform: scale(1.1);
+  }
+
+  .fileInput {
+    display: none;
+  }
+
+  .userName {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--text-primary, #111827);
+    margin-bottom: 2px;
+  }
+
+  .userHandle {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #6b7280);
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  .editProfileBtn {
+    width: 100%;
+    height: 40px;
+    border-radius: 9999px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 0.84375rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background-color 200ms ease, transform 120ms ease;
+  }
+
+  .editProfileBtn:hover {
+    background: var(--mp-orange, #ff6b00);
+  }
+
+  .navMenu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .navItem {
+    position: relative;
+    width: 100%;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-secondary, #4b5563);
+    cursor: pointer;
+    text-align: left;
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+
+  .navItem:hover {
+    background: rgba(0, 0, 0, 0.03);
+    color: var(--text-primary, #111827);
+  }
+
+  .navItemActive {
+    color: var(--mp-orange, #ff6b00) !important;
+    font-weight: 700;
+    background: rgba(255, 107, 0, 0.04) !important;
+    border-left: 3px solid var(--mp-orange, #ff6b00);
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+
+  .specialPill {
+    font-size: 0.6875rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: linear-gradient(135deg, #ff6b00 0%, #ff8800 100%);
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 9999px;
+  }
+
+  .navIcon {
+    flex-shrink: 0;
+  }
+
+  .navLabel {
+    flex: 1;
+  }
+
+  .navBadge {
+    background: rgba(255, 107, 0, 0.12);
+    color: var(--mp-orange, #ff6b00);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+  }
+
+  .navChevron {
+    opacity: 0.3;
+    transition: transform 200ms ease, opacity 200ms ease;
+  }
+
+  .navItemActive .navChevron {
+    opacity: 1;
+    color: var(--mp-orange, #ff6b00);
+    transform: translateX(2px);
+  }
+
+  .navLogout {
+    margin-top: var(--space-4, 16px);
+    color: #ef4444 !important;
+  }
+
+  .navLogout:hover {
+    background: rgba(239, 68, 68, 0.06) !important;
+  }
+
+  .inputGrid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5, 20px);
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  .inputGrid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5, 20px);
+    margin-bottom: var(--space-4, 16px);
+  }
+
+  .bikesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-5, 20px);
+  }
+
+  .wishlistGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-6, 24px);
+  }
+
+  .addressGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-5, 20px);
+  }
+
+  .helpGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-6, 24px);
+  }
+}
+
+/* ── 2. DEDICATED MOBILE VIEW (< 860px) ────────────────── */
+@media (max-width: 860px) {
+  .desktopView {
+    display: none !important;
+  }
+
+  .accountWrapper {
+    padding: 16px 0 48px;
+    overflow-x: hidden;
+  }
+
+  .mobileView {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Mobile Header Card */
+  .mobileHeaderCard {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobileAvatarWrap {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    margin-bottom: 12px;
+  }
+
+  .avatarImg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  }
+
+  .avatarFallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    font-size: 1.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cameraBtn {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--mp-orange, #ff6b00);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .fileInput {
+    display: none;
+  }
+
+  .mobileUserName {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+
+  .mobileUserHandle {
+    font-size: 0.84375rem;
+    color: #6b7280;
+    margin-bottom: 16px;
+  }
+
+  .mobileEditBtn {
+    width: 100%;
+    height: 44px;
+    border-radius: 9999px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background-color 180ms ease, transform 120ms ease;
+  }
+
+  .mobileEditBtn:active {
+    transform: scale(0.98);
+  }
+
+  /* Mobile Quick Navigation Grid (2 Columns) */
+  .mobileNavGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobileNavItem {
+    height: 48px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 12px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #4b5563;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  .mobileNavItemActive {
+    background: var(--mp-orange, #ff6b00) !important;
+    color: #ffffff !important;
+    border-color: var(--mp-orange, #ff6b00) !important;
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.35);
+  }
+
+  .mobileNavIcon {
+    flex-shrink: 0;
+  }
+
+  .mobileNavLabel {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobileNavBadge {
+    background: rgba(255, 255, 255, 0.25);
+    color: currentColor;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 9999px;
+  }
+
+  .mobileNavLogout {
+    color: #ef4444 !important;
+  }
+
+  /* Mobile Content Area & Stacked Vertical Flow */
+  .mobileContentArea {
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .profileCard,
+  .ordersCard,
+  .addressFormCard,
+  .garageCardForm,
+  .helpCard {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    padding: 20px 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .inputGrid2,
+  .inputGrid3,
+  .bikesGrid,
+  .wishlistGrid,
+  .addressGrid,
+  .helpGrid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sectionHeaderFlex {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .sectionHeader {
+    margin-bottom: 20px;
+  }
+
+  .sectionTitle {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .sectionDesc {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+}
+
+/* ── COMMON CARDS & SHARED STYLES ──────────────────── */
+.tabSection {
+  animation: fadeInTab 280ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes fadeInTab {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.sectionEyebrow {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--mp-orange, #ff6b00);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.sectionTitle {
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.sectionDesc {
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+.garageSection {
+  margin-bottom: var(--space-8, 32px);
+}
+
+.subHeading {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.subHeadingIcon {
+  color: var(--mp-orange, #ff6b00);
+}
+
+.bikeCard {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-6, 24px);
+  display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--block-gap);
-}
-.title { font-size: var(--text-h1); }
-.email { font-size: var(--text-body-sm); color: var(--text-secondary); margin-top: var(--space-1); }
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--card-radius);
-  padding: var(--space-6);
-}
-.cardHead {
+.bikeBadgeRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
+  margin-bottom: 8px;
 }
-.cardTitle { font-size: var(--text-h5); }
 
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
-/* Field/control styles removed — now owned by components/ui/Field (docs/11 §1).
-   Both forms previously styled their own inputs, with padding and disabled
-   handling that had drifted from checkout and auth. */
+.bikeMake {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-orange, #ff6b00);
+}
 
-.addBtn, .shopLink {
+.primaryBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.bikeModel {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.bikeYear {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 16px;
+}
+
+.bikeCardFooter {
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+}
+
+.fitmentLink {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--text-body-sm);
-  font-weight: 600;
-  color: var(--accent);
+  gap: 6px;
+  font-size: 0.84375rem;
+  font-weight: 700;
+  color: var(--mp-orange, #ff6b00);
   text-decoration: none;
 }
-.muted { color: var(--text-secondary); font-size: var(--text-body-sm); }
 
-.addrList { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
-.addrItem {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+.garageCardForm {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-6, 24px);
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
-.addrName { font-weight: 600; font-size: var(--text-body-sm); }
-.addrText { font-size: var(--text-body-sm); color: var(--text-secondary); margin-top: 2px; }
-.addrDel { background: none; border: none; cursor: pointer; color: var(--text-secondary); flex-shrink: 0; }
-.addrDel:hover { color: var(--danger); }
 
-.addrForm { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.addrActions { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); }
-.cancel { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-weight: 600; }
-.err { font-size: var(--text-body-sm); color: var(--danger); }
+.profileCard,
+.ordersCard {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-8, 32px);
+  width: 100%;
+  box-sizing: border-box;
+}
 
-.ordersCard { grid-column: 1 / -1; }
+.err {
+  color: #ef4444;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4, 16px);
+}
 
-@media (min-width: 800px) {
-  .grid { grid-template-columns: 1fr 1fr; align-items: start; }
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-6, 24px);
+  padding-top: var(--space-6, 24px);
+  border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+}
+
+.addressCard {
+  position: relative;
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  padding: var(--space-6, 24px);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.addrHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.addrName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.defaultBadge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: rgba(255, 107, 0, 0.1);
+  color: var(--mp-orange, #ff6b00);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.addrBody {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #4b5563);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.addrCity {
+  font-size: 0.84375rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.addrPhone {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #9ca3af);
+  margin-top: 6px;
+}
+
+.addrDelBtn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.addressFormCard {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-8, 32px);
+  margin-top: var(--space-6, 24px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: var(--space-5, 20px);
+}
+
+.formActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: var(--space-6, 24px);
+}
+
+.cancelBtn {
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+}
+
+.emptyState {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px dashed var(--border-subtle, rgba(0, 0, 0, 0.12));
+  padding: var(--space-12, 48px) var(--space-6, 24px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.emptyIconWrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 107, 0, 0.08);
+  color: var(--mp-orange, #ff6b00);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.emptyTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #111827);
+  margin-bottom: 8px;
+}
+
+.emptyText {
+  font-size: 0.9375rem;
+  color: var(--text-secondary, #6b7280);
+  max-width: 360px;
+  margin-bottom: var(--space-6, 24px);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5, 20px) 0;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+}
+
+.toggleRow:last-child {
+  border-bottom: none;
+}
+
+.toggleTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 4px;
+}
+
+.toggleDesc {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+.toggleCheck {
+  width: 44px;
+  height: 24px;
+  accent-color: var(--mp-orange, #ff6b00);
+  cursor: pointer;
+}
+
+.helpCard {
+  background: var(--surface-default, #ffffff);
+  border-radius: var(--radius-2xl, 20px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  padding: var(--space-6, 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.helpIcon {
+  color: var(--mp-orange, #ff6b00);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.helpCardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin-bottom: 6px;
+}
+
+.helpCardText {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: var(--space-4, 16px);
+}
+
+.helpLink {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--mp-orange, #ff6b00);
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabSection {
+    animation: none !important;
+  }
 }

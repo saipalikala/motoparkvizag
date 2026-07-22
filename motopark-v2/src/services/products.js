@@ -95,16 +95,32 @@ function deriveMediaBg(p) {
   return MEDIA_BG_PALETTES[hash % MEDIA_BG_PALETTES.length];
 }
 
+/** Collect all unique non-null variant images. */
+function allImages(variants) {
+  const list = [];
+  for (const v of variants || []) {
+    for (const img of v.images || []) {
+      if (img && !list.includes(img)) list.push(img);
+    }
+  }
+  return list;
+}
+
 /** Raw V1 product doc → UI-ready card shape. */
 export function toProductCard(p) {
   if (!p) return null;
+  const primary = primaryImage(p.variants);
+  const derivedImages = allImages(p.variants);
+  const images = derivedImages.length > 0 ? derivedImages : primary ? [primary] : [];
+
   return {
     id: String(p._id),
     name: p.name,
     brand: p.brand,
     category: p.category,
     priceINR: p.price, // V1 stores whole rupees
-    image: primaryImage(p.variants),
+    image: primary,
+    images: p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : images,
     // V1 has no slug → route param carries the id (route: /products/:slug).
     url: `/products/${String(p._id)}`,
     inStock: anyInStock(p.variants),

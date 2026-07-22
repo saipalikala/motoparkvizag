@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import HeroContent from './hero/HeroContent.jsx';
 import HeroStage from './hero/HeroStage.jsx';
+import HeroMobilePurchaseBar from './hero/HeroMobilePurchaseBar.jsx';
 import styles from './ProductHero.module.css';
 
 /** Map product category/brand to reusable MotoPark V2 semantic hero theme classes */
@@ -47,19 +48,27 @@ export default function ProductHero({
   wishToggle,
 }) {
   const [copied, setCopied] = useState(false);
+  const [stickyVisible, setStickyVisible] = useState(false);
+  const actionBlockRef = useRef(null);
 
   const themeClass = getHeroThemeClass(product.category, product.brand);
   const isWish = wishHas(product.id);
 
-  const handleNext = () => {
-    if (images.length <= 1) return;
-    setImgIdx((prev) => (prev + 1) % images.length);
-  };
+  // IntersectionObserver to reveal sticky mobile purchase bar when main action block scrolls off-screen
+  useEffect(() => {
+    const el = actionBlockRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
 
-  const handlePrev = () => {
-    if (images.length <= 1) return;
-    setImgIdx((prev) => (prev - 1 + images.length) % images.length);
-  };
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setStickyVisible(!entry.isIntersecting);
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -90,9 +99,19 @@ export default function ProductHero({
         <span className={styles.crumbCurrent}>{product.name}</span>
       </nav>
 
-      {/* ── Editorial 2-Column Showcase Grid ──────────────────── */}
+      {/* ── Mobile-First & Desktop Editorial Showcase Grid ────── */}
       <div className={styles.heroGrid}>
-        {/* Left Content Column */}
+        {/* Hero Stage: Placed first on mobile (<1024px) via CSS grid order, second on desktop (≥1024px) */}
+        <HeroStage
+          productName={product.name}
+          images={images}
+          imageSrc={images[imgIdx]}
+          imgIdx={imgIdx}
+          setImgIdx={setImgIdx}
+          themeClass={themeClass}
+        />
+
+        {/* Hero Content */}
         <HeroContent
           product={product}
           colorIdx={colorIdx}
@@ -115,18 +134,21 @@ export default function ProductHero({
           wishToggle={wishToggle}
           handleShare={handleShare}
           copied={copied}
-        />
-
-        {/* Right Monumental Hero Stage */}
-        <HeroStage
-          productName={product.name}
-          imageSrc={images[imgIdx]}
-          imageCount={images.length}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          themeClass={themeClass}
+          actionBlockRef={actionBlockRef}
         />
       </div>
+
+      {/* ── Mobile Sticky Purchase Bar ──────────────────────────── */}
+      <HeroMobilePurchaseBar
+        product={product}
+        variant={variant}
+        canAdd={canAdd}
+        needsSize={needsSize}
+        size={size}
+        handleAdd={handleAdd}
+        added={added}
+        visible={stickyVisible}
+      />
     </section>
   );
 }

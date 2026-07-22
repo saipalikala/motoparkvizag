@@ -21,6 +21,7 @@ export default function ProductPage() {
   const { slug: id } = useParams();
   const { addItem } = useCart();
   const { has: wishHas, toggle: wishToggle } = useWishlist();
+  const { showToast } = useToast();
 
   const [product, setProduct] = useState(undefined); // undefined = loading, null = 404
   const [colorIdx, setColorIdx] = useState(0);
@@ -113,8 +114,9 @@ export default function ProductPage() {
       qty,
     });
     setAdded(true);
+    showToast(`Added ${product.name} to Cart`, 'success');
     window.clearTimeout(handleAdd._t);
-    handleAdd._t = window.setTimeout(() => setAdded(false), 2200);
+    handleAdd._t = window.setTimeout(() => setAdded(false), 2000);
   };
 
   const ldJson = {

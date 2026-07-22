@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
 import { useScrolled } from '@/hooks/useScrolled.js';
 import { useCart } from '@/contexts/CartContext.jsx';
+import { useWishlist } from '@/contexts/WishlistContext.jsx';
 import { useNav } from '@/contexts/NavContext.jsx';
 import logoBadge from '@/assets/images/logo-badge.png';
 import styles from './Navbar.module.css';
@@ -33,6 +34,25 @@ export default function Navbar() {
   const pastHero = useScrolled(Math.round(window.innerHeight * 0.80));
 
   const { count: cartCount } = useCart();
+  const { count: wishCount } = useWishlist();
+  const [cartPop, setCartPop] = useState(false);
+  const [wishPop, setWishPop] = useState(false);
+
+  useEffect(() => {
+    if (cartCount > 0) {
+      setCartPop(true);
+      const t = setTimeout(() => setCartPop(false), 240);
+      return () => clearTimeout(t);
+    }
+  }, [cartCount]);
+
+  useEffect(() => {
+    if (wishCount > 0) {
+      setWishPop(true);
+      const t = setTimeout(() => setWishPop(false), 240);
+      return () => clearTimeout(t);
+    }
+  }, [wishCount]);
   const { categories, brands, bikes } = useNav();
   const [openMenu, setOpenMenu] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -240,9 +260,14 @@ export default function Navbar() {
           <Link
             to="/wishlist"
             className={`${styles.iconBtn} ${styles.desktopOnly}`}
-            aria-label="Wishlist"
+            aria-label={`Wishlist${wishCount ? ` (${wishCount})` : ''}`}
           >
             <Heart size={20} strokeWidth={1.8} aria-hidden="true" />
+            {wishCount > 0 && (
+              <span className={`${styles.wishlistBadge} ${wishPop ? styles.badgePop : ''}`}>
+                {wishCount > 9 ? '9+' : wishCount}
+              </span>
+            )}
           </Link>
           <Link
             to="/account"
@@ -258,7 +283,7 @@ export default function Navbar() {
           >
             <ShoppingBag size={20} strokeWidth={1.8} aria-hidden="true" />
             {cartCount > 0 && (
-              <span className={styles.cartBadge}>
+              <span className={`${styles.cartBadge} ${cartPop ? styles.badgePop : ''}`}>
                 {cartCount > 9 ? '9+' : cartCount}
               </span>
             )}

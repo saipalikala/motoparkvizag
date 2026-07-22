@@ -1,6 +1,8 @@
-import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart, Share2, Star } from 'lucide-react';
-import Button from '@/components/ui/Button.jsx';
+import { useState } from 'react';
+import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart, Share2, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatINR } from '@/lib/format.js';
+import { useToast } from '@/contexts/ToastContext.jsx';
+import AddToCartButton from '@/components/commerce/AddToCartButton.jsx';
 import styles from '../ProductHero.module.css';
 
 const isHex = (v) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v || '');
@@ -26,21 +28,37 @@ export default function HeroContent({
   wishToggle,
   handleShare,
   copied,
+  actionBlockRef,
 }) {
+  const { showToast } = useToast();
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [heartPopping, setHeartPopping] = useState(false);
+  const descText = product.description || '';
+  const isLongDesc = descText.length > 140;
+
+  const handleWishlistToggle = () => {
+    setHeartPopping(true);
+    wishToggle({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      priceINR: product.priceINR,
+      image: variant.images?.[0] || null,
+      url: product.url,
+    });
+    showToast(isWish ? `Removed ${product.name} from Wishlist` : `Added ${product.name} to Wishlist`, 'info');
+    setTimeout(() => setHeartPopping(false), 300);
+  };
+
   return (
     <div className={styles.contentColumn}>
-      {/* Eyebrow */}
+      {/* 1. Eyebrow (Brand) */}
       <span className={styles.eyebrow}>{product.brand || 'MotoPark Original'}</span>
 
-      {/* Editorial Title */}
+      {/* 2. Editorial Title (Product Name) */}
       <h1 className={styles.title}>{product.name}</h1>
 
-      {/* Description */}
-      {product.description && (
-        <p className={styles.description}>{product.description}</p>
-      )}
-
-      {/* Price & Rating */}
+      {/* 3. Price & Rating Row */}
       <div className={styles.priceRatingRow}>
         <div className={styles.priceGroup}>
           <span className={`price price--lg ${discount ? 'price--sale' : ''}`}>
@@ -62,7 +80,21 @@ export default function HeroContent({
       </div>
       <p className={styles.taxNote}>Inclusive of all taxes & Pan-India delivery</p>
 
-      {/* Color Selection */}
+      {/* 4. Stock Row */}
+      <div className={styles.stockRow}>
+        {canAdd ? (
+          <span className={styles.inStock}>
+            <Check size={15} strokeWidth={2.4} aria-hidden="true" /> In stock
+            {chosenSizeObj && chosenSizeObj.stock <= 5 ? ` — only ${chosenSizeObj.stock} left` : ''}
+          </span>
+        ) : needsSize && !size ? (
+          <span className={styles.pickSize}>Select a size to check availability</span>
+        ) : (
+          <span className={styles.oos}>Out of stock</span>
+        )}
+      </div>
+
+      {/* 5. Color Selection (Variants) */}
       {product.variants && product.variants.length > 1 && (
         <div className={styles.selectBlock}>
           <p className={styles.selectLabel}>
@@ -90,7 +122,7 @@ export default function HeroContent({
         </div>
       )}
 
-      {/* Size Selection */}
+      {/* 6. Size Selection */}
       {needsSize && (
         <div className={styles.selectBlock}>
           <p className={styles.selectLabel}>Size</p>
@@ -118,22 +150,8 @@ export default function HeroContent({
         </div>
       )}
 
-      {/* Stock Indicator */}
-      <div className={styles.stockRow}>
-        {canAdd ? (
-          <span className={styles.inStock}>
-            <Check size={15} strokeWidth={2.4} aria-hidden="true" /> In stock
-            {chosenSizeObj && chosenSizeObj.stock <= 5 ? ` — only ${chosenSizeObj.stock} left` : ''}
-          </span>
-        ) : needsSize && !size ? (
-          <span className={styles.pickSize}>Select a size to check availability</span>
-        ) : (
-          <span className={styles.oos}>Out of stock</span>
-        )}
-      </div>
-
-      {/* Quantity & CTA Row */}
-      <div className={styles.actionBlock}>
+      {/* 7. Quantity & CTA Row (Single responsive row) */}
+      <div className={styles.actionBlock} ref={actionBlockRef}>
         <div className={styles.qtyStepper} aria-label="Quantity">
           <button
             type="button"
@@ -154,42 +172,23 @@ export default function HeroContent({
           </button>
         </div>
 
-        <Button
-          variant="primary"
-          size="lg"
+        <AddToCartButton
+          variant="full"
           className={styles.addBtn}
           onClick={handleAdd}
           disabled={!canAdd}
-        >
-          {added ? (
-            <>
-              <Check size={18} strokeWidth={2.4} aria-hidden="true" /> Added to Cart
-            </>
-          ) : canAdd ? (
-            'Add to Cart'
-          ) : needsSize && !size ? (
-            'Select a Size'
-          ) : (
-            'Out of Stock'
-          )}
-        </Button>
+          added={added}
+          defaultLabel={canAdd ? 'Add to Cart' : needsSize && !size ? 'Select a Size' : 'Out of Stock'}
+          successLabel="Added to Cart"
+        />
       </div>
 
-      {/* Utility Actions (Wishlist & Share) */}
+      {/* 8. Utility Actions (Wishlist & Share) */}
       <div className={styles.utilityRow}>
         <button
           type="button"
-          className={`${styles.utilityBtn} ${isWish ? styles.wishActive : ''}`}
-          onClick={() =>
-            wishToggle({
-              id: product.id,
-              name: product.name,
-              brand: product.brand,
-              priceINR: product.priceINR,
-              image: variant.images?.[0] || null,
-              url: product.url,
-            })
-          }
+          className={`${styles.utilityBtn} ${isWish ? styles.wishActive : ''} ${heartPopping ? styles.wishlistPop : ''}`}
+          onClick={handleWishlistToggle}
         >
           <Heart
             size={18}
@@ -206,7 +205,31 @@ export default function HeroContent({
         </button>
       </div>
 
-      {/* Assurances List */}
+      {/* 9. Description with Read More Toggle (3-4 line clamped preview) */}
+      {descText && (
+        <div className={styles.descWrapper}>
+          <p className={`${styles.description} ${!descExpanded && isLongDesc ? styles.descClamped : ''}`}>
+            {descText}
+          </p>
+          {isLongDesc && (
+            <button
+              type="button"
+              className={styles.readMoreBtn}
+              onClick={() => setDescExpanded(!descExpanded)}
+              aria-expanded={descExpanded}
+            >
+              <span>{descExpanded ? 'Show less' : 'Read more'}</span>
+              {descExpanded ? (
+                <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+              ) : (
+                <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 10. Assurances List */}
       <ul className={styles.assurances}>
         <li><ShieldCheck size={16} strokeWidth={1.8} aria-hidden="true" /> Genuine product</li>
         <li><Truck size={16} strokeWidth={1.8} aria-hidden="true" /> Ships Pan-India</li>

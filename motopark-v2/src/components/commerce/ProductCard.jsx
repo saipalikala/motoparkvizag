@@ -1,21 +1,27 @@
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
+import { useCart } from '@/contexts/CartContext.jsx';
+import { useToast } from '@/contexts/ToastContext.jsx';
 import { formatINR } from '@/lib/format.js';
-import { cloudinaryUrl } from '@/lib/image.js';
+import ProductImageGallery from './gallery/ProductImageGallery.jsx';
+import AddToCartButton from './AddToCartButton.jsx';
 import styles from './ProductCard.module.css';
 
 /**
- * ProductCard — Sculptural Product Card matching the Nike reference design.
- *
- * Visual hierarchy:
- * 1. Rounded Top Media Header with dynamic background gradient/color & top-left status pill badge.
- * 2. Title + Wishlist Row: Single-line bold title + circular floating Wishlist heart button.
- * 3. Short description (2-line clamped, optional gracefully collapsed).
- * 4. Price & Action Row: Large bold price (formatINR) + bottom-right floating cart action button with inverted cutout blending.
+ * ProductCard — Sculptural Product Card with interactive gallery, double-click locking,
+ * and button morph animations.
  */
 export default function ProductCard({ product, onAddToCart }) {
   const { has, toggle } = useWishlist();
+  const { addItem } = useCart();
+  const { showToast } = useToast();
+
+  const [added, setAdded] = useState(false);
+  const [heartPopping, setHeartPopping] = useState(false);
+  const isSubmitting = useRef(false);
+
   if (!product) return null;
 
   const {
@@ -23,6 +29,7 @@ export default function ProductCard({ product, onAddToCart }) {
     name,
     priceINR,
     image,
+    images = [],
     url,
     inStock,
     badge = 'Trending',
@@ -35,40 +42,55 @@ export default function ProductCard({ product, onAddToCart }) {
   const handleWishlistClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
+    setHeartPopping(true);
+
     toggle(product);
+    showToast(saved ? `Removed ${name} from Wishlist` : `Added ${name} to Wishlist`, 'info');
+
+    setTimeout(() => {
+      setHeartPopping(false);
+      isSubmitting.current = false;
+    }, 300);
   };
 
   const handleCartClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isSubmitting.current || inStock === false) return;
+    isSubmitting.current = true;
+
     if (onAddToCart) {
       onAddToCart(product);
+    } else {
+      addItem({
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        priceINR: product.priceINR,
+        image: image || images[0] || null,
+        qty: 1,
+      });
     }
+
+    setAdded(true);
+    showToast(`Added ${name} to Cart`, 'success');
+
+    setTimeout(() => {
+      setAdded(false);
+      isSubmitting.current = false;
+    }, 2000);
   };
 
   return (
     <Link to={url} className={styles.card} aria-label={`View ${name}`}>
       {/* Media Section */}
       <div className={styles.mediaWrapper} style={{ background: mediaBg }}>
-        {badge && <span className={styles.badge}>{badge}</span>}
-
-        {image ? (
-          <img
-            src={cloudinaryUrl(image, { w: 400 })}
-            alt={name}
-            loading="lazy"
-            decoding="async"
-            width="320"
-            height="400"
-            className={styles.productImage}
-          />
-        ) : (
-          <span className={styles.fallback} aria-hidden="true">
-            MP
-          </span>
-        )}
-
-        {inStock === false && <span className={styles.oos}>Out of Stock</span>}
+        <ProductImageGallery images={images} image={image} alt={name}>
+          {badge && <span className={styles.badge}>{badge}</span>}
+          {inStock === false && <span className={styles.oos}>Out of Stock</span>}
+        </ProductImageGallery>
       </div>
 
       {/* Content Area */}
@@ -80,7 +102,7 @@ export default function ProductCard({ product, onAddToCart }) {
           </h3>
           <button
             type="button"
-            className={`${styles.wishlistBtn} ${saved ? styles.wishlistActive : ''}`}
+            className={`${styles.wishlistBtn} ${saved ? styles.wishlistActive : ''} ${heartPopping ? styles.wishlistPop : ''}`}
             aria-label={saved ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
             aria-pressed={saved}
             onClick={handleWishlistClick}
@@ -107,15 +129,14 @@ export default function ProductCard({ product, onAddToCart }) {
         </div>
       </div>
 
-      {/* Floating Add to Cart Button */}
-      <button
-        type="button"
-        className={styles.cartBtn}
-        aria-label={`Add ${name} to cart`}
+      {/* Floating Add to Cart Button with Persistent ShoppingBag & Top-Right Check Badge */}
+      <AddToCartButton
+        variant="icon"
         onClick={handleCartClick}
-      >
-        <ShoppingBag size={20} strokeWidth={2} aria-hidden="true" />
-      </button>
+        added={added}
+        disabled={inStock === false}
+        ariaLabel={`Add ${name} to cart`}
+      />
     </Link>
   );
 }

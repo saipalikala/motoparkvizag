@@ -1,170 +1,163 @@
-/* Brand row — Premium ambient marquee and typography cards */
+/* BrandRow — MotoPark V2 Editorial Brand Showcase CSS Module */
 
 .wrap {
-  text-align: center;
-  /* Add subtle background contrast to ground the section if desired */
-  /* background-color: var(--surface-sunken); */
+  position: relative;
+  padding: var(--space-20, 80px) 0 var(--space-24, 96px);
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 107, 0, 0.012) 50%, transparent 100%);
+  overflow: hidden;
 }
 
 .header {
-  margin-bottom: var(--space-8);
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto var(--space-14, 56px);
 }
 
 .eyebrow {
-  font-size: var(--text-body-sm);
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-  margin-bottom: var(--space-2);
+  letter-spacing: 0.14em;
+  color: var(--mp-orange, #ff6b00);
+  margin-bottom: var(--space-3, 12px);
 }
 
 .title {
-  font-size: var(--text-h3);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary, #111827);
+  margin-bottom: var(--space-3, 12px);
+  line-height: 1.15;
 }
 
-/* ─── RAIL & MARQUEE (Desktop) ─── */
-.railContainer {
+.subtitle {
+  font-size: 1.0625rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.5;
+  margin: 0 auto;
+  max-width: 520px;
+}
+
+/* ── Showcase Container & Grid System ────────────────── */
+.showcaseContainer {
   position: relative;
   width: 100%;
-  overflow: hidden;
-  padding: var(--space-2) 0; /* Padding allows hover box-shadows to breathe without clipping */
 }
 
-/* Fades for cinematic depth */
-.fade {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 12vw;
-  max-width: 120px;
-  z-index: 2;
-  pointer-events: none;
-}
-.fadeLeft {
-  left: 0;
-  background: linear-gradient(to right, var(--surface-default) 0%, transparent 100%);
-}
-.fadeRight {
-  right: 0;
-  background: linear-gradient(to left, var(--surface-default) 0%, transparent 100%);
+.brandGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6, 24px);
+  width: 100%;
 }
 
-.railTrack {
-  display: flex;
-  width: max-content;
-  /* Ambient motion: extremely slow and subtle */
-  animation: marquee 60s linear infinite;
-}
-
-/* Interaction Priority: Pause immediately on interaction */
-.railContainer:hover .railTrack,
-.railContainer:focus-within .railTrack,
-.railContainer:active .railTrack {
-  animation-play-state: paused;
-}
-
-.list {
-  display: flex;
-  gap: var(--space-4);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  /* Exact gap applied to the end of the list ensures seamless duplication alignment */
-  padding-right: var(--space-4); 
-}
-
-/* ─── PREMIUM TYPOGRAPHY CARDS ─── */
-.brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4) var(--space-8);
-  
-  /* Minimalist borders and shapes */
-  background: var(--surface-default);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  
-  /* Typography */
-  font-size: var(--text-h4);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--text-secondary);
-  text-decoration: none;
-  white-space: nowrap;
-  
-  /* High-quality physics (Apple/Rivian feel) */
-  transition: 
-    transform 400ms cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 400ms cubic-bezier(0.2, 0, 0, 1),
-    border-color 400ms cubic-bezier(0.2, 0, 0, 1),
-    color 400ms cubic-bezier(0.2, 0, 0, 1),
-    background-color 400ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-/* Hover & Focus Interaction */
-.brand:hover,
-.brand:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--accent);
-  color: var(--text-primary);
-  outline: none;
-}
-
-/* Hardware accelerated transform */
-@keyframes marquee {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
-
-/* Accessibility: Pause animation for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .railTrack {
-    animation-play-state: paused !important;
+@media (max-width: 1024px) {
+  .brandGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
   }
 }
 
-/* ─── MOBILE (Native Scroll Snap) ─── */
-@media (max-width: 1023px) {
-  .railTrack {
-    /* Kill the ambient marquee completely on mobile */
-    animation: none !important;
-    width: 100%;
-    
-    /* Enable native momentum swipe */
+/* ── Mobile Touch Snap Carousel (< 767px) ────────────────── */
+@media (max-width: 767px) {
+  .wrap {
+    padding: var(--space-12, 48px) 0 var(--space-16, 64px);
+  }
+
+  .header {
+    margin-bottom: var(--space-8, 32px);
+    padding: 0 20px;
+  }
+
+  .showcaseContainer {
+    margin: 0 -20px;
+    width: calc(100% + 40px);
+  }
+
+  .brandGrid {
+    display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    
-    /* Add padding so first/last items aren't flush to screen edge */
-    padding: var(--space-2) var(--space-4);
-    
-    /* Hide scrollbar for a cleaner look */
-    scrollbar-width: none; 
+    padding: 8px 24px 28px;
+    gap: 16px;
+    scrollbar-width: none;
   }
-  .railTrack::-webkit-scrollbar {
-    display: none; 
-  }
-  
-  .list {
-    padding-right: 0;
-  }
-  
-  /* Remove duplicate on mobile so the scroll isn't artificially long */
-  .list[data-duplicate="true"] {
+
+  .brandGrid::-webkit-scrollbar {
     display: none;
   }
-  
-  .brand {
-    /* Snap items to the start or center */
-    scroll-snap-align: center;
-    scroll-margin: var(--space-4);
+
+  .brandCard {
+    flex: 0 0 70%;
+    max-width: 260px;
+    height: 110px !important;
+    scroll-snap-align: start;
   }
-  
-  /* Fades look awkward when scrolling manually */
-  .fade {
-    display: none;
+}
+
+/* ── Sculptural Editorial Brand Surface ────────────────── */
+.brandCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  padding: var(--space-6, 24px);
+  border-radius: var(--radius-2xl, 20px);
+  background: var(--surface-default, rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.04));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.015);
+  text-decoration: none;
+  outline: none;
+  will-change: transform, box-shadow, border-color;
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.brandMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.68;
+  will-change: opacity, transform;
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.brandName {
+  font-family: var(--font-sans, inherit);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #111827);
+  white-space: nowrap;
+}
+
+/* Hover & Focus State */
+.brandCard:hover,
+.brandCard:focus-visible {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
+  border-color: rgba(255, 107, 0, 0.2);
+}
+
+.brandCard:hover .brandMark,
+.brandCard:focus-visible .brandMark {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brandCard,
+  .brandMark {
+    transition: none !important;
+    transform: none !important;
   }
 }

@@ -1,0 +1,228 @@
+/* AddToCartButton — MotoPark V2 Premium Commerce Button CSS Module */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  outline: none;
+  overflow: hidden;
+  will-change: transform, background-color, box-shadow;
+  transition:
+    background-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Variant Styles */
+.variantFull {
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 9999px;
+  background: var(--mp-orange, #ff6b00);
+  color: #ffffff;
+  font-size: 0.9375rem;
+  box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25);
+}
+
+.variantCompact {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  background: var(--mp-orange, #ff6b00);
+  color: #ffffff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.22);
+}
+
+.variantIcon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  border-top-left-radius: 22px;
+  border-bottom-right-radius: 28px;
+  background: #ffffff;
+  color: var(--text-primary, #111827);
+  box-shadow: -4px -4px 14px rgba(0, 0, 0, 0.05);
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.variantIcon:hover {
+  color: var(--mp-orange, #ff6b00);
+  transform: scale(1.05);
+}
+
+/* Cutout curves for card icon variant */
+.variantIcon::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border-bottom-right-radius: 16px;
+  box-shadow: 6px 6px 0 6px #ffffff;
+  pointer-events: none;
+}
+
+.variantIcon::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -16px;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border-bottom-right-radius: 16px;
+  box-shadow: 6px 6px 0 6px #ffffff;
+  pointer-events: none;
+}
+
+/* Success State Interpolation & Soft Success Glow */
+.btnSuccess.variantFull,
+.btnSuccess.variantCompact {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+.btnSuccess.variantIcon {
+  color: #10b981;
+}
+
+/* Icon Container & Persistent ShoppingBag */
+.iconWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+/* ShoppingBag Micro-Motion: scale(1 -> 1.08 -> 1), translateY(0 -> -2px -> 0) */
+.bagPulse {
+  animation: bagMicroMotion 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes bagMicroMotion {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.08) translateY(-2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Top-Right Mini Success Badge: scale(0.75 -> 1), opacity(0 -> 1) */
+.successBadge {
+  position: absolute;
+  top: -4px;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 1.5px solid #ffffff;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+  will-change: transform, opacity;
+  animation: badgeScaleFade 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes badgeScaleFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.checkIcon {
+  will-change: transform, opacity;
+  animation: checkFadeIn 180ms cubic-bezier(0.22, 1, 0.36, 1) 40ms forwards;
+  opacity: 0;
+}
+
+@keyframes checkFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Sliding Text Container */
+.labelContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.2em;
+  overflow: hidden;
+}
+
+.labelTrack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.labelTrackAdded {
+  transform: translate3d(0, -50%, 0);
+}
+
+.labelText {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.2em;
+  white-space: nowrap;
+}
+
+.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .bagPulse,
+  .successBadge,
+  .checkIcon,
+  .labelTrack {
+    animation: none !important;
+    transition: none !important;
+  }
+}
