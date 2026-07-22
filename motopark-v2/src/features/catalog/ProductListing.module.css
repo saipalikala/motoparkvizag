@@ -469,12 +469,46 @@
    DESKTOP — persistent sidebar (≥ 900px)
    Behaviour preserved exactly from the original design.
    ══════════════════════════════════════════════════════════ */
+/* ── Filters Wrapper ──────────────────────────────────────── */
+.filtersWrapper {
+  display: block;
+}
+
+@media (max-width: 899px) {
+  .filtersWrapper {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1000;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform var(--dur-base) var(--ease-out), visibility 0s linear 0.3s;
+    background: var(--bg-surface);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  .filtersOpen {
+    transform: translateY(0);
+    visibility: visible;
+    transition: transform var(--dur-base) var(--ease-out), visibility 0s linear 0s;
+  }
+}
+
 @media (min-width: 900px) {
   .layout {
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: 290px 1fr;
     gap: var(--space-8);
     align-items: start;
   }
+
+  .filtersWrapper {
+    position: sticky;
+    top: 100px;
+  }
+
   /* Hide mobile-only elements */
   .filterToggle {
     display: none;
@@ -484,67 +518,5 @@
   }
   .backdrop {
     display: none;
-  }
-  .filtersFooter {
-    display: none;
-  }
-  .dragHandle {
-    display: none;
-  }
-
-  /* Persistent card-style sidebar */
-  .filters {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: var(--card-radius);
-    overflow: hidden; /* clip to border-radius */
-    display: flex;
-    flex-direction: column;
-    height: fit-content;
-  }
-
-  /* Body doesn't need overflow on desktop */
-  .filtersBody {
-    overflow: visible;
-    padding: var(--space-4) var(--space-5) var(--space-5);
-  }
-
-  /* Smaller chips on desktop sidebar */
-  .chip {
-    height: 36px;
-  }
-
-  /* Show desktop price apply button */
-  .priceGo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    align-self: flex-start;
-    height: 40px;
-    padding-inline: var(--space-4);
-    background: var(--bg-page);
-    border: 1.5px solid var(--border-default);
-    border-radius: var(--input-radius);
-    font-family: var(--font-body);
-    font-size: var(--text-body-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-  .priceGo:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* "Clear all" visible in header on desktop */
-  .clear {
-    display: block;
-  }
-  /* Close button not needed on desktop */
-  .closeFilters {
-    display: none !important;
   }
 }

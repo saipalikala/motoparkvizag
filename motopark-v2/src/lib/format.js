@@ -28,3 +28,15 @@ export function discountPercent(mrpPaise, pricePaise) {
   if (!mrpPaise || mrpPaise <= pricePaise) return 0;
   return Math.round(((mrpPaise - pricePaise) / mrpPaise) * 100);
 }
+
+/**
+ * Format popularity count as a full integer without abbreviations (K/M).
+ * - Clamp negative values to 0
+ * - Returns exact integer string (e.g. 13000, 8500, 1200, 999)
+ */
+export function formatPopularity(value) {
+  if (value == null || Number.isNaN(Number(value))) return '0';
+  const num = Math.max(0, Math.floor(Number(value)));
+  return num.toString();
+}
+

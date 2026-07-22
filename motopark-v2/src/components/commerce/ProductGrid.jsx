@@ -13,14 +13,7 @@ export default function ProductGrid({ products = [], loading = false, count = 8 
     return (
       <div className={styles.grid}>
         {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className={styles.skelCard} aria-hidden="true">
-            <div className={`skeleton ${styles.skelMedia}`} />
-            <div className={styles.skelBody}>
-              <div className={`skeleton ${styles.skelLineSm}`} />
-              <div className={`skeleton ${styles.skelLine}`} />
-              <div className={`skeleton ${styles.skelLineSm}`} />
-            </div>
-          </div>
+          <ProductCard.Skeleton key={i} />
         ))}
       </div>
     );

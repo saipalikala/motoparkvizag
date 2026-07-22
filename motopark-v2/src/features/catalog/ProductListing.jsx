@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import ProductGrid from '@/components/commerce/ProductGrid.jsx';
 import Button from '@/components/ui/Button.jsx';
+import FilterPanel from '@/components/commerce/FilterPanel.jsx';
 import { getProducts, getProductFilters } from '@/services/products.js';
-import { formatINR } from '@/lib/format.js';
 import styles from './ProductListing.module.css';
 
 const PAGE_SIZE = 12;
@@ -142,19 +142,17 @@ export default function ProductListing({
 
   const toggleBrand = (b) => {
     const set = new Set(selectedBrands);
-    set.has(b) ? set.delete(b) : set.add(b);
+    if (set.has(b)) {
+      set.delete(b);
+    } else {
+      set.add(b);
+    }
     patch({ brand: [...set].join(',') });
   };
 
   /** Apply price using the current draft values (desktop form + mobile footer). */
   const applyPriceFilter = () => {
     patch({ min: draftMin.trim(), max: draftMax.trim() });
-  };
-
-  /** Mobile only: commit price draft and close the bottom sheet. */
-  const handleMobileApply = () => {
-    patch({ min: draftMin.trim(), max: draftMax.trim() });
-    setShowFilters(false);
   };
 
   const clearAll = () => {
@@ -201,141 +199,28 @@ export default function ProductListing({
           />
         )}
 
-        {/* ── Filter panel (bottom sheet on mobile, sidebar on desktop) ── */}
-        <aside
+        {/* ── Filter Panel (shared component for mobile sheet & desktop sidebar) ── */}
+        <div
           id="filter-drawer"
-          className={`${styles.filters} ${showFilters ? styles.filtersOpen : ''}`}
-          aria-label="Product filters"
+          className={`${styles.filtersWrapper} ${showFilters ? styles.filtersOpen : ''}`}
         >
-          {/* Drag handle — decorative; signals the panel can be dismissed */}
-          <div className={styles.dragHandle} aria-hidden="true" />
-
-          {/* ─── Sticky header ─────────────────────────────────────── */}
-          <div className={styles.filtersHead}>
-            <h2 id="filter-drawer-title" className={styles.filtersTitle}>
-              Filters
-              {activeFilterCount > 0 && (
-                <span
-                  className={styles.filterCount}
-                  aria-label={`${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`}
-                >
-                  {activeFilterCount}
-                </span>
-              )}
-            </h2>
-
-            {/* "Clear all" — visible on desktop in header; on mobile it lives in the footer */}
-            {hasFilters && (
-              <button type="button" className={styles.clear} onClick={clearAll}>
-                Clear all
-              </button>
-            )}
-
-            <button
-              type="button"
-              className={styles.closeFilters}
-              onClick={() => setShowFilters(false)}
-              aria-label="Close filters"
-            >
-              <X size={18} strokeWidth={1.8} aria-hidden="true" />
-            </button>
-          </div>
-
-          {/* ─── Scrollable content ────────────────────────────────── */}
-          <div className={styles.filtersBody}>
-
-            {/* Brand chips */}
-            {!lockedBrand && facets.brands.length > 0 && (
-              <section className={styles.group}>
-                <h3 className={styles.groupTitle}>Brand</h3>
-                <div className={styles.chipGrid} role="group" aria-label="Filter by brand">
-                  {facets.brands.map((b) => (
-                    <button
-                      key={b}
-                      type="button"
-                      className={`${styles.chip} ${selectedBrands.includes(b) ? styles.chipActive : ''}`}
-                      onClick={() => toggleBrand(b)}
-                      aria-pressed={selectedBrands.includes(b)}
-                    >
-                      {b}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Price filter */}
-            <section className={styles.group}>
-              <h3 className={styles.groupTitle}>Price (₹)</h3>
-              <form
-                className={styles.priceForm}
-                onSubmit={(e) => { e.preventDefault(); applyPriceFilter(); }}
-              >
-                <div className={styles.priceRow}>
-                  <div className={styles.priceField}>
-                    <label htmlFor="price-min" className={styles.priceLabel}>Min ₹</label>
-                    <input
-                      id="price-min"
-                      type="number"
-                      name="min"
-                      min="0"
-                      placeholder={facets.priceRange.min ? String(facets.priceRange.min) : '0'}
-                      value={draftMin}
-                      onChange={(e) => setDraftMin(e.target.value)}
-                      className={styles.priceInput}
-                      aria-label="Minimum price in rupees"
-                    />
-                  </div>
-                  <span className={styles.priceSeparator} aria-hidden="true">–</span>
-                  <div className={styles.priceField}>
-                    <label htmlFor="price-max" className={styles.priceLabel}>Max ₹</label>
-                    <input
-                      id="price-max"
-                      type="number"
-                      name="max"
-                      min="0"
-                      placeholder={facets.priceRange.max ? String(facets.priceRange.max) : 'Any'}
-                      value={draftMax}
-                      onChange={(e) => setDraftMax(e.target.value)}
-                      className={styles.priceInput}
-                      aria-label="Maximum price in rupees"
-                    />
-                  </div>
-                </div>
-                {facets.priceRange.max > 0 && (
-                  <p className={styles.priceHint}>
-                    Range: {formatINR(facets.priceRange.min)} – {formatINR(facets.priceRange.max)}
-                  </p>
-                )}
-                {/* Desktop only — inline Apply button inside the form */}
-                <button type="submit" className={styles.priceGo}>
-                  Apply
-                </button>
-              </form>
-            </section>
-
-          </div>{/* /filtersBody */}
-
-          {/* ─── Sticky footer (mobile only) ───────────────────────── */}
-          <div className={styles.filtersFooter}>
-            <button
-              type="button"
-              className={styles.footerClear}
-              onClick={clearAll}
-              disabled={!hasFilters && draftMin === '' && draftMax === ''}
-            >
-              Clear All
-            </button>
-            <button
-              type="button"
-              className={styles.footerApply}
-              onClick={handleMobileApply}
-            >
-              {activeFilterCount > 0 ? `Apply (${activeFilterCount})` : 'Apply Filters'}
-            </button>
-          </div>
-
-        </aside>{/* /filters */}
+          <FilterPanel
+            facets={facets}
+            selectedBrands={selectedBrands}
+            lockedBrand={lockedBrand}
+            toggleBrand={toggleBrand}
+            draftMin={draftMin}
+            setDraftMin={setDraftMin}
+            draftMax={draftMax}
+            setDraftMax={setDraftMax}
+            applyPriceFilter={applyPriceFilter}
+            clearAll={clearAll}
+            activeFilterCount={activeFilterCount}
+            hasFilters={hasFilters}
+            onClose={() => setShowFilters(false)}
+            isMobile={showFilters}
+          />
+        </div>
 
         {/* ── Results ── */}
         <div className={styles.results}>

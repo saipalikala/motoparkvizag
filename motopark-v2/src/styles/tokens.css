@@ -66,6 +66,13 @@
   --accent-pressed: var(--mp-orange-700);
   --accent-soft: var(--mp-orange-50);
 
+  /* Semantic Accent Extensions (Surfaces, Borders, Text, Shadow) */
+  --bg-surface-accent: var(--mp-orange-50);
+  --bg-surface-accent-hover: var(--mp-orange-100);
+  --border-accent: var(--mp-orange-100);
+  --text-accent: var(--mp-orange-600);
+  --shadow-accent: 0 2px 8px rgb(210 67 31 / 0.08);
+
   --border-default: var(--mp-neutral-200);
   --border-strong: var(--mp-navy-200);
   --focus-ring: var(--mp-blue-500); /* focus ≠ action: never orange */

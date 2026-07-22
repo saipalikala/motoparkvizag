@@ -24,10 +24,13 @@
   max-width: 60vw;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-8);
+.lowerDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-bottom: var(--block-gap);
+  padding: var(--space-6) 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
 }
 
 /* ── Gallery ── */

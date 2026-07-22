@@ -1,6 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import Button from '@/components/ui/Button.jsx';
 import styles from './StoryBand.module.css';
 
 /**
@@ -111,18 +108,6 @@ export default function StoryBand() {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Stage 3: Closing Brand Statement & Primary CTA */}
-        <div className={styles.closingAction}>
-          <p className={styles.closingEyebrow}>Why Riders Trust MotoPark</p>
-          <h3 className={`display ${styles.closingTitle}`}>
-            Ride Better. Ride Further.
-          </h3>
-          <Button as={Link} to="/store" variant="primary" size="lg">
-            Explore Riding Gear
-            <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
-          </Button>
         </div>
       </div>
     </section>

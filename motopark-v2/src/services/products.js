@@ -31,6 +31,70 @@ function anyInStock(variants) {
   return false;
 }
 
+const THEME_PALETTES = [
+  { primary: '#D4DEC9', secondary: '#556B2F' }, // Sage Green (matching reference UI)
+  { primary: '#E3D7C7', secondary: '#6E5D4F' }, // Warm Sand / Earth
+  { primary: '#D6E2E9', secondary: '#3A5A40' }, // Soft Slate / Forest
+  { primary: '#E9DAC1', secondary: '#8B5A2B' }, // Warm Amber / Copper
+  { primary: '#DBE4EE', secondary: '#3B5998' }, // Cool Blue / Steel
+];
+
+function deriveTheme(p) {
+  if (p?.theme?.primary && p?.theme?.secondary) return p.theme;
+  const idStr = String(p?._id || p?.name || 'product');
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 5) - hash + idStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return THEME_PALETTES[Math.abs(hash) % THEME_PALETTES.length];
+}
+
+function derivePopularity(p) {
+  if (typeof p?.popularity === 'number') return p.popularity;
+  const idStr = String(p?._id || p?.name || '100');
+  let hash = 0;
+  for (let i = 0; i < idStr.length; i++) {
+    hash = (hash << 3) + idStr.charCodeAt(i);
+  }
+  const base = Math.abs(hash) % 15000;
+  return base < 500 ? base + 150 : base;
+}
+
+function deriveTags(p) {
+  if (Array.isArray(p?.tags) && p.tags.length > 0) return p.tags;
+  const pool = [p?.category, p?.brand, 'Armor', 'ECE 22.06', 'Waterproof', 'Thermal', 'Reflective'].filter(Boolean);
+  return Array.from(new Set(pool)).slice(0, 5);
+}
+
+const BADGES = ['Trending', 'New', 'Best Seller', 'Popular', 'Limited'];
+const MEDIA_BG_PALETTES = [
+  'radial-gradient(circle at center, #29354a 0%, #0f1624 100%)', // Dark Slate Gradient
+  'linear-gradient(135deg, #D4DEC9 0%, #B5C4A3 100%)',           // Soft Sage
+  'radial-gradient(circle at center, #3A2E39 0%, #1A1219 100%)', // Dark Plum Gradient
+  'linear-gradient(135deg, #E3D7C7 0%, #C9B9A6 100%)',           // Warm Sand
+  'linear-gradient(135deg, #2B3A4E 0%, #151F2C 100%)',           // Deep Navy
+];
+
+function deriveBadge(p) {
+  if (p?.badge) return p.badge;
+  const hash = Math.abs((p?._id || p?.name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
+  return BADGES[hash % BADGES.length];
+}
+
+function deriveDescription(p) {
+  if (p?.description && typeof p.description === 'string' && p.description.trim()) {
+    return p.description;
+  }
+  return 'Lightweight, durable, and built for peak performance on every ride.';
+}
+
+function deriveMediaBg(p) {
+  if (p?.mediaBg) return p.mediaBg;
+  const hash = Math.abs((p?._id || p?.name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
+  return MEDIA_BG_PALETTES[hash % MEDIA_BG_PALETTES.length];
+}
+
 /** Raw V1 product doc → UI-ready card shape. */
 export function toProductCard(p) {
   if (!p) return null;
@@ -44,6 +108,13 @@ export function toProductCard(p) {
     // V1 has no slug → route param carries the id (route: /products/:slug).
     url: `/products/${String(p._id)}`,
     inStock: anyInStock(p.variants),
+    popularity: derivePopularity(p),
+    deliveryText: p.deliveryText || 'Free Delivery until 16/06/2026',
+    tags: deriveTags(p),
+    theme: deriveTheme(p),
+    badge: deriveBadge(p),
+    description: deriveDescription(p),
+    mediaBg: deriveMediaBg(p),
   };
 }
 

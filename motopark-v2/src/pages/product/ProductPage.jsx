@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import Reveal from '@/components/ui/Reveal.jsx';
 import { getProduct } from '@/services/products.js';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
-import { formatINR, discountPercent } from '@/lib/format.js';
-import { cloudinaryUrl } from '@/lib/image.js';
+import { discountPercent } from '@/lib/format.js';
+import ProductHero from './ProductHero.jsx';
 import SimilarProducts from './SimilarProducts.jsx';
 import styles from './ProductPage.module.css';
-
-const isHex = (v) => /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v || '');
 
 /**
  * ProductPage (PDP) `/products/:slug` — V1 has no slug so the param carries the
@@ -151,208 +148,35 @@ export default function ProductPage() {
         <script type="application/ld+json">{JSON.stringify(ldJson)}</script>
       </Helmet>
 
-      {/* Breadcrumb */}
-      <nav className={styles.crumb} aria-label="Breadcrumb">
-        <Link to="/">Home</Link>
-        <span aria-hidden="true">/</span>
-        <Link to="/store">Store</Link>
-        <span aria-hidden="true">/</span>
-        <span className={styles.crumbCurrent}>{product.name}</span>
-      </nav>
+      {/* ── Product Hero Section (Editorial Showcase) ── */}
+      <ProductHero
+        product={product}
+        colorIdx={colorIdx}
+        selectColor={selectColor}
+        imgIdx={imgIdx}
+        setImgIdx={setImgIdx}
+        size={size}
+        setSize={setSize}
+        qty={qty}
+        setQty={setQty}
+        canAdd={canAdd}
+        needsSize={needsSize}
+        variantInStock={variantInStock}
+        chosenSizeObj={chosenSizeObj}
+        availableStock={availableStock}
+        discount={discount}
+        variant={variant}
+        images={images}
+        sizes={sizes}
+        handleAdd={handleAdd}
+        added={added}
+        wishHas={wishHas}
+        wishToggle={wishToggle}
+      />
 
-      <div className={styles.layout}>
-        {/* ── Gallery ── */}
-        <div className={styles.gallery}>
-          <div className={styles.stage}>
-            {images[imgIdx] ? (
-              <img src={cloudinaryUrl(images[imgIdx], { w: 800 })} alt={product.name} width="640" height="800" className={styles.stageImg} />
-            ) : (
-              <span className={styles.stageFallback} aria-hidden="true">MP</span>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className={styles.thumbs} role="listbox" aria-label="Product images">
-              {images.map((src, i) => (
-                <button
-                  key={src}
-                  type="button"
-                  className={`${styles.thumb} ${i === imgIdx ? styles.thumbActive : ''}`}
-                  onClick={() => setImgIdx(i)}
-                  aria-label={`Image ${i + 1}`}
-                  aria-selected={i === imgIdx}
-                >
-                  <img src={cloudinaryUrl(src, { w: 120 })} alt="" width="72" height="90" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── Info ── */}
-        <div className={styles.info}>
-          <p className={styles.brand}>{product.brand}</p>
-          <h1 className={styles.name}>{product.name}</h1>
-
-          <div className={styles.priceRow}>
-            <span className={`price price--lg ${discount ? 'price--sale' : ''}`}>
-              {formatINR(product.priceINR)}
-            </span>
-            {discount > 0 && (
-              <>
-                <span className="price price--mrp">{formatINR(product.mrpINR)}</span>
-                <span className={styles.save}>{discount}% off</span>
-              </>
-            )}
-          </div>
-          <p className={styles.tax}>Inclusive of all taxes</p>
-
-          {/* Colors */}
-          {product.variants.length > 1 && (
-            <div className={styles.selectBlock}>
-              <p className={styles.selectLabel}>
-                Colour: <strong>{variant.colorName}</strong>
-              </p>
-              <div className={styles.swatches}>
-                {product.variants.map((v, i) => (
-                  <button
-                    key={`${v.colorName}-${i}`}
-                    type="button"
-                    className={`${styles.swatch} ${i === colorIdx ? styles.swatchActive : ''}`}
-                    onClick={() => selectColor(i)}
-                    aria-label={v.colorName}
-                    aria-pressed={i === colorIdx}
-                    title={v.colorName}
-                  >
-                    {isHex(v.color) ? (
-                      <span className={styles.swatchDot} style={{ background: v.color }} />
-                    ) : (
-                      <span className={styles.swatchText}>{v.colorName}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Sizes */}
-          {needsSize && (
-            <div className={styles.selectBlock}>
-              <p className={styles.selectLabel}>Size</p>
-              <div className={styles.sizes}>
-                {sizes.map((s) => {
-                  const oos = s.stock <= 0;
-                  return (
-                    <button
-                      key={s.size}
-                      type="button"
-                      className={`${styles.size} ${size === s.size ? styles.sizeActive : ''} ${oos ? styles.sizeOos : ''}`}
-                      onClick={() => {
-                        if (oos) return;
-                        setSize(s.size);
-                        // Sizes stock independently — a qty picked for a roomier
-                        // size must not carry over onto a scarcer one.
-                        setQty((q) => Math.min(q, Math.max(1, s.stock)));
-                      }}
-                      disabled={oos}
-                      aria-pressed={size === s.size}
-                    >
-                      {s.size}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Stock line */}
-          <p className={styles.stock}>
-            {canAdd ? (
-              <span className={styles.inStock}>
-                <Check size={15} strokeWidth={2.4} aria-hidden="true" /> In stock
-                {chosenSizeObj && chosenSizeObj.stock <= 5 ? ` — only ${chosenSizeObj.stock} left` : ''}
-              </span>
-            ) : needsSize && !size ? (
-              <span className={styles.pickSize}>Select a size to check availability</span>
-            ) : (
-              <span className={styles.oos}>Out of stock</span>
-            )}
-          </p>
-
-          {/* Qty + Add */}
-          <div className={styles.buyRow}>
-            <div className={styles.qty} aria-label="Quantity">
-              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease quantity" disabled={qty <= 1}>
-                <Minus size={16} strokeWidth={2} aria-hidden="true" />
-              </button>
-              <span aria-live="polite">{qty}</span>
-              <button
-                type="button"
-                onClick={() => setQty((q) => Math.min(q + 1, Math.max(1, availableStock)))}
-                aria-label="Increase quantity"
-                disabled={qty >= availableStock}
-              >
-                <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              </button>
-            </div>
-            <Button
-              variant="primary"
-              size="lg"
-              className={styles.addBtn}
-              onClick={handleAdd}
-              disabled={!canAdd}
-            >
-              {added ? (
-                <>
-                  <Check size={18} strokeWidth={2.4} aria-hidden="true" /> Added to cart
-                </>
-              ) : canAdd ? (
-                'Add to cart'
-              ) : needsSize && !size ? (
-                'Select a size'
-              ) : (
-                'Out of stock'
-              )}
-            </Button>
-
-            <button
-              type="button"
-              className={`${styles.wish} ${wishHas(product.id) ? styles.wishOn : ''}`}
-              aria-label={wishHas(product.id) ? 'Remove from wishlist' : 'Save to wishlist'}
-              aria-pressed={wishHas(product.id)}
-              onClick={() =>
-                wishToggle({
-                  id: product.id,
-                  name: product.name,
-                  brand: product.brand,
-                  priceINR: product.priceINR,
-                  image: images[0] || null,
-                  url: product.url,
-                })
-              }
-            >
-              <Heart
-                size={20}
-                strokeWidth={1.8}
-                fill={wishHas(product.id) ? 'currentColor' : 'none'}
-                aria-hidden="true"
-              />
-            </button>
-          </div>
-
-          {/* Trust mini-row */}
-          <ul className={styles.assurances}>
-            <li><ShieldCheck size={16} strokeWidth={1.8} aria-hidden="true" /> Genuine product</li>
-            <li><Truck size={16} strokeWidth={1.8} aria-hidden="true" /> Ships Pan-India</li>
-            <li><RotateCcw size={16} strokeWidth={1.8} aria-hidden="true" /> Easy returns</li>
-          </ul>
-
-          {/* Details */}
-          {product.description && (
-            <section className={styles.detail}>
-              <h2 className={styles.detailTitle}>Description</h2>
-              <p className={styles.detailBody}>{product.description}</p>
-            </section>
-          )}
+      {/* ── Lower Details Sections (Unchanged) ── */}
+      {(product.specs || product.care) && (
+        <div className={styles.lowerDetails}>
           {product.specs && (
             <section className={styles.detail}>
               <h2 className={styles.detailTitle}>Specifications</h2>
@@ -361,12 +185,12 @@ export default function ProductPage() {
           )}
           {product.care && (
             <section className={styles.detail}>
-              <h2 className={styles.detailTitle}>Care</h2>
+              <h2 className={styles.detailTitle}>Care Instructions</h2>
               <p className={styles.detailBody}>{product.care}</p>
             </section>
           )}
         </div>
-      </div>
+      )}
       <Reveal>
         <SimilarProducts product={product} />
       </Reveal>
