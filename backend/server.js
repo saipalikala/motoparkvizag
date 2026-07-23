@@ -32,6 +32,8 @@ import cartRoutes, { wishlistRouter } from "./routes/cartRoutes.js";
 import aiRoutes            from "./routes/aiRoutes.js";
 import webhookRoutes       from "./routes/webhookRoutes.js";
 import checkoutRoutes      from "./routes/checkoutRoutes.js";
+import campaignRoutes      from "./routes/campaignRoutes.js";
+import adminCampaignRoutes from "./routes/adminCampaignRoutes.js";
 import connectDB           from "./config/db.js";
 import { hasJwtSecret }    from "./config/jwt.js";
 
@@ -244,8 +246,10 @@ app.use("/api/categories",     addCacheHeaders, categoryRoutes);
 app.use("/api/bikes",          addCacheHeaders, bikeRoutes);
 app.use("/api/home-layout",    addCacheHeaders, homeLayoutRoutes);
 
-app.use("/api/admin",      adminRoutes);
-app.use("/api/upload",     uploadLimiter, uploadRoutes);
+app.use("/api/admin/campaigns", adminCampaignRoutes);
+app.use("/api/admin",          adminRoutes);
+app.use("/api/campaigns",      addCacheHeaders, campaignRoutes);
+app.use("/api/upload",         uploadLimiter, uploadRoutes);
 app.use("/api/products",   productRoutes);
 app.use("/api/collections", collectionRoutes);
 app.use("/api/media",      mediaRoutes);

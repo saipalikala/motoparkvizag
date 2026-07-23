@@ -3,19 +3,16 @@
  *
  * Admin Campaign Experience System — CRUD service.
  *
- * Backend contract (to be implemented):
- *   GET    /api/campaigns           → array of all campaigns
- *   POST   /api/campaigns           → create campaign
- *   PUT    /api/campaigns/:id       → update campaign
- *   DELETE /api/campaigns/:id       → delete campaign
- *   PATCH  /api/campaigns/:id/toggle → toggle enabled
- *
- * Images: uses the existing POST /api/upload/media endpoint (same as products,
- * showcase). Returns { url } — a Cloudinary URL.
+ * Backend contract (Dedicated Admin Router):
+ *   GET    /api/admin/campaigns           → list of all campaigns
+ *   POST   /api/admin/campaigns           → create campaign
+ *   PUT    /api/admin/campaigns/:id       → update campaign
+ *   DELETE /api/admin/campaigns/:id       → soft delete campaign
+ *   PATCH  /api/admin/campaigns/:id/toggle → toggle enabled
  */
 import { adminApi } from '../lib/adminApi.js';
 
-/** Campaign types — kept in sync with the storefront type definition. */
+/** Campaign types — kept in sync with storefront definitions. */
 export const CAMPAIGN_TYPES = [
   { value: 'general',          label: 'General Announcement' },
   { value: 'season_sale',      label: 'Season Sale' },
@@ -37,14 +34,16 @@ export const DISMISS_BEHAVIOURS = [
   { value: 'always',   label: 'Always (show every visit)' },
 ];
 
-/** Presentation types — extensible registry. */
+/** Presentation placement types. */
 export const PRESENTATION_TYPES = [
   { value: 'floating_card', label: 'Floating Card (bottom-right / mobile sheet)' },
-  // { value: 'strip',         label: 'Announcement Strip' },  // future
+  { value: 'offer_bar',     label: 'Top Offer Bar' },
+  { value: 'story_band',    label: 'Story Band Showcase' },
+  { value: 'homepage_hero', label: 'Homepage Hero Banner' },
 ];
 
-/** Image upload limit — mirrors backend. */
-export const IMAGE_MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+/** Image upload limit — 20 MB */
+export const IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 
 export function validateImage(file) {
   const allowed = ['image/jpeg', 'image/png', 'image/webp'];
@@ -53,7 +52,7 @@ export function validateImage(file) {
   return null;
 }
 
-/** Upload a campaign image → Cloudinary URL string. */
+/** Upload campaign image → Cloudinary URL string */
 export async function uploadCampaignImage(file) {
   const fd = new FormData();
   fd.append('media', file);
@@ -64,37 +63,38 @@ export async function uploadCampaignImage(file) {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────
 
-/** Fetch all campaigns (admin view — includes disabled/expired). */
+/** Fetch all campaigns (Admin view). */
 export async function listCampaigns() {
-  const { data } = await adminApi.get('/campaigns');
+  const { data } = await adminApi.get('/admin/campaigns');
+  if (data?.data && Array.isArray(data.data)) return data.data;
   return Array.isArray(data) ? data : [];
 }
 
 /** Create a new campaign. */
 export async function createCampaign(payload) {
-  const { data } = await adminApi.post('/campaigns', payload);
-  return data;
+  const { data } = await adminApi.post('/admin/campaigns', payload);
+  return data?.data ?? data;
 }
 
 /** Update an existing campaign by id. */
 export async function updateCampaign(id, payload) {
-  const { data } = await adminApi.put(`/campaigns/${id}`, payload);
-  return data;
+  const { data } = await adminApi.put(`/admin/campaigns/${id}`, payload);
+  return data?.data ?? data;
 }
 
 /** Delete a campaign by id. */
 export async function deleteCampaign(id) {
-  const { data } = await adminApi.delete(`/campaigns/${id}`);
+  const { data } = await adminApi.delete(`/admin/campaigns/${id}`);
   return data;
 }
 
 /** Toggle enabled/disabled. */
 export async function toggleCampaign(id, enabled) {
-  const { data } = await adminApi.patch(`/campaigns/${id}/toggle`, { enabled });
-  return data;
+  const { data } = await adminApi.patch(`/admin/campaigns/${id}/toggle`, { enabled });
+  return data?.data ?? data;
 }
 
-/** Blank campaign for the "create" form. */
+/** Blank campaign model for "create" modal. */
 export function blankCampaign() {
   return {
     name:             '',

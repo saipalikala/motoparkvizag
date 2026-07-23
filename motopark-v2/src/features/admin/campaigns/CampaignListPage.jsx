@@ -84,7 +84,7 @@ export default function CampaignListPage() {
       setFormOpen(false);
       setEditing(null);
     } catch (err) {
-      setError(err?.message ?? 'Save failed. Please try again.');
+      setError(err?.response?.data?.message ?? err?.message ?? 'Save failed. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -97,7 +97,7 @@ export default function CampaignListPage() {
       setRows((rs) => rs.map((r) => (r._id === row._id ? updated : r)));
       showNotice(`"${row.name}" ${updated.enabled ? 'enabled' : 'disabled'}.`);
     } catch (err) {
-      setError(err?.message ?? 'Toggle failed.');
+      setError(err?.response?.data?.message ?? err?.message ?? 'Toggle failed.');
     } finally {
       setSaving(false);
     }
@@ -112,7 +112,7 @@ export default function CampaignListPage() {
       showNotice(`Deleted "${toDelete.name}".`);
       setToDelete(null);
     } catch (err) {
-      setError(err?.message ?? 'Delete failed.');
+      setError(err?.response?.data?.message ?? err?.message ?? 'Delete failed.');
     } finally {
       setSaving(false);
     }
