@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
-import { useScrolled } from '@/hooks/useScrolled.js';
+import { useScrollThresholds } from '@/hooks/useScrollThresholds.js';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
 import { useNav } from '@/contexts/NavContext.jsx';
@@ -27,11 +27,14 @@ import styles from './Navbar.module.css';
  * Mobile: Hamburger · Logo · Icons; search bar toggles open below on tap.
  */
 export default function Navbar() {
-  // Any scroll beyond 8 px → leave transparent state.
-  const scrolled = useScrolled(8);
-  // Past approximately the hero section (80 vh) → switch to cream frosted.
-  // Computed once at mount; acceptable for this purpose (no SSR, no resize events needed).
-  const pastHero = useScrolled(Math.round(window.innerHeight * 0.80));
+  // Both thresholds share ONE scroll listener + ONE rAF loop (useScrollThresholds)
+  // instead of one pair each — halves the per-frame scroll-handling work.
+  // scrolled: any movement past 8px leaves the transparent state.
+  // pastHero: past ~80% of the viewport height switches to cream frosted.
+  const { scrolled, pastHero } = useScrollThresholds({
+    scrolled: 8,
+    pastHero: Math.round(window.innerHeight * 0.80),
+  });
 
   const { count: cartCount } = useCart();
   const { count: wishCount } = useWishlist();

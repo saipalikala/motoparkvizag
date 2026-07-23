@@ -14,10 +14,14 @@
   transition:
     transform var(--dur-fast, 0.25s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     box-shadow var(--dur-fast, 0.25s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  will-change: transform;
 }
 
+/* will-change scoped to :hover only (not the base .card) — up to 16 of these
+   render on the homepage at once, and an unconditional will-change promotes
+   every single one to its own persistent GPU layer for the page's entire
+   lifetime for a benefit that only matters during a ~250ms hover. */
 .card:hover {
+  will-change: transform;
   transform: translateY(-4px);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.09), 0 4px 12px rgba(0, 0, 0, 0.05);
 }

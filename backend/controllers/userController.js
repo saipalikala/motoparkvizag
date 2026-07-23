@@ -54,7 +54,7 @@ export const sendOtp = async (req, res) => {
         await user.save();
 
         /* Send OTP email */
-        await getResend().emails.send({
+        const { data: sentEmail, error: sendError } = await getResend().emails.send({
             from: FROM,
             to: email,
             subject: `${otp} — Your MotoPark login code`,
@@ -91,7 +91,19 @@ export const sendOtp = async (req, res) => {
             `,
         });
 
-        console.log(`✅ OTP email sent to ${email}`);
+        /* Resend's SDK resolves (does not throw) on a rejected send — e.g. the
+           sandbox sender onboarding@resend.dev can only deliver to the Resend
+           account's own verified address, or the domain in FROM isn't verified.
+           Checking sendError is what makes that failure visible instead of a
+           silent "OTP sent" that never arrives. */
+        if (sendError) {
+            console.error(`❌ OTP email to ${email} was rejected by Resend:`, sendError);
+            return res.status(502).json({
+                message: "Could not send the login code right now. Please try again shortly.",
+            });
+        }
+
+        console.log(`✅ OTP email sent to ${email} (id: ${sentEmail?.id})`);
         res.json({ message: "OTP sent to your email" });
 
     } catch (err) {

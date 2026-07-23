@@ -45,7 +45,6 @@ const ProductImageGallery = memo(function ProductImageGallery({
   const [animating, setAnimating] = useState(false);
 
   const containerRef = useRef(null);
-  const lastWheelTime = useRef(0);
   const touchStartPos = useRef({ x: 0, y: 0 });
 
   // Trigger animation state on change
@@ -117,39 +116,12 @@ const ProductImageGallery = memo(function ProductImageGallery({
     }
   }, [activeIndex, total, imageList, imageWidth]);
 
-  // Native wheel listener for non-passive preventDefault
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el || total <= 1) return;
-
-    const onWheel = (e) => {
-      const now = Date.now();
-      // 250ms throttle for trackpad & mouse wheel
-      if (now - lastWheelTime.current < 250) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
-      if (Math.abs(e.deltaY) > 8 || Math.abs(e.deltaX) > 8) {
-        e.preventDefault();
-        e.stopPropagation();
-        lastWheelTime.current = now;
-
-        const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-        if (delta > 0) {
-          const nextIdx = (activeIndex + 1) % total;
-          triggerTransition(nextIdx, 'next');
-        } else {
-          const prevIdx = (activeIndex - 1 + total) % total;
-          triggerTransition(prevIdx, 'prev');
-        }
-      }
-    };
-
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, [activeIndex, total, triggerTransition]);
+  // Wheel-driven cycling was removed: it required a non-passive `wheel`
+  // listener (`preventDefault`/`stopPropagation` on the page's own scroll
+  // input) on every multi-image card, which intermittently swallowed page
+  // scroll whenever the cursor was over a gallery mid-scroll. Click, touch
+  // swipe, keyboard arrows and the dots already cover gallery navigation —
+  // removing this is a straight subtraction, not a replacement.
 
   // Touch handlers for mobile swipe
   const handleTouchStart = useCallback((e) => {

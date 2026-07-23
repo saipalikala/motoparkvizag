@@ -10,6 +10,10 @@ import styles from './Reveal.module.css';
  *
  * Never wrap the hero or anything containing the LCP image — see useReveal.
  *
+ * Also applies `content-visibility: auto` (Reveal.module.css .skipOffscreen)
+ * so a wrapped section costs nothing to layout/paint while off-screen —
+ * independent of the reveal-animation state, always on.
+ *
  * @param {number} delay    ms, for deliberately sequencing two adjacent blocks.
  * @param {number} duration ms; defaults to the commerce-section 280ms. The
  *                          story band is the one place doctrine allows 400ms.
@@ -17,7 +21,9 @@ import styles from './Reveal.module.css';
 export default function Reveal({ children, className = '', delay = 0, duration }) {
   const { ref, armed, revealed } = useReveal();
 
-  const classes = [className, armed && styles.armed, revealed && styles.in].filter(Boolean).join(' ');
+  const classes = [styles.skipOffscreen, className, armed && styles.armed, revealed && styles.in]
+    .filter(Boolean)
+    .join(' ');
 
   const style = {};
   if (delay) style['--reveal-delay'] = `${delay}ms`;

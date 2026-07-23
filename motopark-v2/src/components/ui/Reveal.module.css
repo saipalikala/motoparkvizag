@@ -1,6 +1,21 @@
 /* Scroll reveal — transform/opacity only, per the Motion Doctrine.
    `armed` is added by JS, so without JS there is no hidden state to get stuck in. */
 
+/* Skip layout/style/paint for a section's subtree while it's off-screen —
+   independent of the reveal-animation state above (applies whether or not
+   the section was ever `armed`, since a section revealed synchronously on
+   load can still scroll out of view later and should stop costing anything
+   at that point too). `auto` remembers the real rendered height after first
+   paint and uses that as the off-screen placeholder, so there's no layout
+   shift once a section has been measured once. Ignored by browsers that
+   don't support it (older Safari/Firefox) — content just renders normally,
+   no functional difference, only the optimisation is unavailable.
+   Never applied to Hero: it isn't wrapped in <Reveal> at all (see HomePage). */
+.skipOffscreen {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
 .armed {
   opacity: 0;
   transform: translateY(14px);

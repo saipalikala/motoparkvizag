@@ -1,0 +1,242 @@
+/* ══════════════════════════════════════════════════════════
+   StoryBandCinematic.module.css
+   Scoped to src/cinematic/storyband/ — no global styles touched.
+   Desktop-only (mounted whenever StoryBand.jsx's own desktop check passes —
+   NOT gated on prefers-reduced-motion; see .trackStatic/.stickyStatic below
+   for that path).
+   ══════════════════════════════════════════════════════════ */
+
+.track {
+  position: relative;
+  height: 400vh;
+}
+
+/* CSS `position: sticky` keeps this on screen for .track's scroll distance —
+   no GSAP pin-spacer (useScrollSequence is called with pin: false). */
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--mp-navy-900);
+}
+
+/* ─── Reduced-motion variant — same video/mask/content, no scroll-jack ────
+   No tall track, no sticky: nothing here forces extra scroll distance
+   (a motion-sensitivity concern in its own right, separate from the scale
+   animation). Just a normal-flow, single-viewport section. */
+.trackStatic {
+  position: relative;
+}
+
+.stickyStatic {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--mp-navy-900);
+}
+
+/* ─── Video layer — NEVER transformed; always natural, unzoomed ─────────── */
+.videoStage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Navy scrim carrying the mask cutout ────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--mp-navy-900);
+  opacity: 0.92;
+  will-change: opacity;
+  mask-image: url(#storyTextMask);
+  -webkit-mask-image: url(#storyTextMask);
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+}
+
+/* ─── Mask SVG — invisible; its <mask> is referenced by .overlay ────────── */
+.maskSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.maskText {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 1rem + 10vw, 11rem);
+  font-weight: 800; /* Sakana only ships weight 400 — the browser synthesizes
+     bold. Verified against the real .ttf, not a fallback system font: glyph
+     shapes (and therefore the transform-origin below) differ meaningfully
+     between the two. */
+  letter-spacing: -0.03em;
+  /* Mask polarity: the <rect> in the mask def is white (overlay shown
+     everywhere by default); this text must be BLACK to punch the cutout
+     (CSS mask-image: white = show masked element, black = hide it — the
+     inverse of what "white text as a stencil" intuitively suggests).
+     Verified with an isolated test harness after the real component
+     initially shipped this backwards (letters rendered as opaque navy
+     over a fully visible photo — the exact opposite of "video visible
+     only through the letterforms"). */
+  fill: black;
+  transform-box: fill-box;
+  /* NOT dead centre. The bounding-box centre of "MOTOPARK" at rest lands
+     inside the counter (hollow centre) of the 2nd "O" — zooming from a
+     hole fills the whole viewport with "no ink" well before the
+     letterforms are meant to exceed the viewport edges. 40% 50% lands
+     inside solid stroke instead: ~90%+ of the viewport reads as ink by
+     26x, verified empirically against the real Sakana.ttf (synthesized
+     bold) at 1x/12x/20x/26x. This is tuned to this specific
+     word/font/weight/tracking, not a formula — re-verify the same way if
+     any of those change. */
+  transform-origin: 40% 50%;
+  will-change: transform;
+}
+
+/* ─── Brand story content — fades in once the video reads clean (90%+) ──── */
+.content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: 0 clamp(24px, 6vw, 96px);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+/* Reduced-motion only: the full-motion timeline never shows the wordmark
+   (upper-middle, mask `y="30%"` in the JSX) and this content block
+   simultaneously — the wordmark fades before content fades in. The
+   reduced-motion path shows both at once with no animation to sequence
+   them, so they'd otherwise overlap dead-centre. Pinning content to the
+   bottom third keeps both readable without changing what either shows. */
+.contentStatic {
+  justify-content: flex-end;
+  padding-bottom: clamp(32px, 6vh, 72px);
+}
+
+.eyebrow {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-orange-300);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.2rem + 3vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--text-inverse);
+  max-width: 20ch;
+}
+
+.lede {
+  max-width: 44ch;
+  font-size: var(--text-body-lg);
+  color: var(--mp-cream-200);
+}
+
+/* ─── Rider Disciplines — staggered within the same closing window ──────── */
+.disciplines {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-8);
+  max-width: 72rem;
+  margin-top: var(--space-8);
+  text-align: left;
+}
+
+.disciplineItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.disciplineNumber {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--mp-orange-300);
+  letter-spacing: 0.06em;
+}
+
+.disciplineTagline {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mp-cream-100);
+}
+
+.disciplineTitle {
+  font-size: var(--text-h3);
+  font-weight: 700;
+  color: var(--text-inverse);
+}
+
+/* ─── Frosted-glass controls — play/pause + mute only. No presets, no zoom-
+   factor slider, no code export: those are the reference AI Studio
+   playground's own authoring tools, not customer-facing features. ────────── */
+.controls {
+  position: absolute;
+  right: clamp(20px, 4vw, 48px);
+  bottom: clamp(20px, 4vw, 48px);
+  z-index: 3;
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: 999px;
+  background: rgb(27 37 54 / 0.45); /* --mp-navy-900 tint */
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgb(251 243 231 / 0.14);
+}
+
+.controlBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-inverse);
+  cursor: pointer;
+  transition: background var(--dur-fast, 150ms) var(--ease-out);
+}
+
+.controlBtn:hover,
+.controlBtn:focus-visible {
+  background: rgb(251 243 231 / 0.16);
+}
+
+.controlBtn:focus-visible {
+  outline: 2px solid var(--mp-orange-300);
+  outline-offset: 2px;
+}

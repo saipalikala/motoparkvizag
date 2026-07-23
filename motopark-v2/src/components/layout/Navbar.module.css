@@ -62,8 +62,8 @@
   width: 100%;
 
   background: var(--nav-bg);                   /* rgb(253 251 247 / 0.92) */
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
   border-bottom: 1px solid var(--border-default);
 
   transition:
@@ -71,6 +71,13 @@
     backdrop-filter var(--dur-base) var(--ease-out),
     border-color    var(--dur-fast) var(--ease-out),
     box-shadow      var(--dur-fast) var(--ease-out);
+
+  /* This header is position:fixed above continuously-scrolling content, so
+     the browser must recompute the backdrop blur on every compositor frame
+     of every scroll — not just when the scroll-state class changes. Pinning
+     it to its own layer keeps that recompute from also invalidating/repainting
+     neighbouring layers each frame. */
+  transform: translateZ(0);
 }
 
 /* Progressively enhanced: if blur is unsupported, use solid page bg. */
@@ -122,8 +129,14 @@
 */
 .isHome.scrolled:not(.pastHero) {
   background: rgb(20 28 41 / 0.58);
-  backdrop-filter: blur(24px) saturate(1.5);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  /* Was blur(24px) saturate(1.5) — this is the state active for the whole
+     first scroll pass through the hero, directly above the hero's own photo
+     track and (on eligible desktops) the WebGL canvas. 14px reads visually
+     near-identical at navbar height while costing meaningfully less to
+     resample every frame; saturate is unchanged since it's cheap relative
+     to blur radius. */
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
   border-bottom-color: rgb(253 251 247 / 0.07);
   box-shadow:
     0 8px 40px rgb(20 28 41 / 0.30),
@@ -138,8 +151,8 @@
 */
 .isHome.pastHero {
   background: var(--nav-bg);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
   border-bottom-color: var(--border-default);
   box-shadow: var(--shadow-sm);
 }
