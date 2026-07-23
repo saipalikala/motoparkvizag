@@ -32,6 +32,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  background: transparent;
 }
 
 .fallback {
@@ -41,24 +42,24 @@
   letter-spacing: 0.08em;
 }
 
-/* Status Badge Top-Left */
 .badge {
   position: absolute;
   top: 12px;
   left: 12px;
-  padding: 4px 12px;
-  border-radius: var(--radius-full, 9999px);
-  font-size: var(--text-caption, 0.75rem);
-  font-weight: 600;
-  color: var(--text-accent);
-  background: var(--bg-surface-accent);
-  border: 1px solid var(--border-accent);
-  box-shadow: var(--shadow-accent);
-  letter-spacing: 0.02em;
-  z-index: 2;
-  transition:
-    background-color var(--dur-fast, 0.2s) var(--ease-out),
-    transform var(--dur-fast, 0.2s) var(--ease-out);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  z-index: 6;
+  pointer-events: none;
 }
 
 .badge:hover {

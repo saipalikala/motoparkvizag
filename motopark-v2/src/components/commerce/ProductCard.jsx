@@ -9,6 +9,17 @@ import ProductImageGallery from './gallery/ProductImageGallery.jsx';
 import AddToCartButton from './AddToCartButton.jsx';
 import styles from './ProductCard.module.css';
 
+function formatBadge(badge) {
+  if (!badge) return null;
+  const lower = String(badge).trim().toLowerCase();
+  if (lower.includes('trending')) return '🔥';
+  if (lower.includes('popular')) return '⭐';
+  if (lower.includes('best seller') || lower.includes('bestseller')) return '🏆';
+  if (lower.includes('new')) return '✨';
+  if (lower.includes('limited')) return '⚡';
+  return '🔥';
+}
+
 /**
  * ProductCard — Sculptural Product Card with interactive gallery, double-click locking,
  * and button morph animations.
@@ -34,7 +45,6 @@ export default function ProductCard({ product, onAddToCart }) {
     inStock,
     badge = 'Trending',
     description,
-    mediaBg = 'radial-gradient(circle at center, #29354a 0%, #0f1624 100%)',
   } = product;
 
   const saved = has(id);
@@ -86,9 +96,9 @@ export default function ProductCard({ product, onAddToCart }) {
   return (
     <Link to={url} className={styles.card} aria-label={`View ${name}`}>
       {/* Media Section */}
-      <div className={styles.mediaWrapper} style={{ background: mediaBg }}>
+      <div className={styles.mediaWrapper}>
         <ProductImageGallery images={images} image={image} alt={name}>
-          {badge && <span className={styles.badge}>{badge}</span>}
+          {badge && <span className={styles.badge}>{formatBadge(badge)}</span>}
           {inStock === false && <span className={styles.oos}>Out of Stock</span>}
         </ProductImageGallery>
       </div>

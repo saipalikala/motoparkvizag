@@ -1,3 +1,5 @@
+
+
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -6,6 +8,7 @@ import Reveal from '@/components/ui/Reveal.jsx';
 import { getProduct } from '@/services/products.js';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
+import { useToast } from '@/contexts/ToastContext.jsx';
 import { discountPercent } from '@/lib/format.js';
 import ProductHero from './ProductHero.jsx';
 import SimilarProducts from './SimilarProducts.jsx';
@@ -76,9 +79,17 @@ export default function ProductPage() {
     );
   }
 
-  const variant = product.variants[colorIdx] || product.variants[0] || { images: [], sizes: [], colorName: '' };
-  const images = variant.images;
-  const sizes = variant.sizes;
+  const variantsList = Array.isArray(product.variants) ? product.variants : [];
+  const variant = variantsList[colorIdx] || variantsList[0] || { images: [], sizes: [], colorName: '' };
+  const rawImages = Array.isArray(variant.images) && variant.images.length > 0
+    ? variant.images
+    : Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : product.image
+        ? [product.image]
+        : [];
+  const images = rawImages.filter(Boolean);
+  const sizes = Array.isArray(variant.sizes) ? variant.sizes : [];
   const onlyStandard = sizes.length === 1 && /^standard$/i.test(sizes[0]?.size || '');
   const chosenSizeObj = onlyStandard ? sizes[0] : sizes.find((s) => s.size === size) || null;
   const needsSize = !onlyStandard && sizes.length > 0;

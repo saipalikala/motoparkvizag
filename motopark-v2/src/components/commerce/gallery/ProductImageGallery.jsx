@@ -23,13 +23,17 @@ const ProductImageGallery = memo(function ProductImageGallery({
   children, // Custom overlays passed by parent (e.g. HeroGradient, status badges)
 }) {
   const imageList = useMemo(() => {
+    let list = [];
     if (Array.isArray(images) && images.length > 0) {
-      return images.filter(Boolean);
+      list = images.filter(Boolean);
+    } else if (typeof images === 'string' && images.trim()) {
+      list = [images.trim()];
+    } else if (Array.isArray(image) && image.length > 0) {
+      list = image.filter(Boolean);
+    } else if (image) {
+      list = [image];
     }
-    if (image) {
-      return [image];
-    }
-    return [];
+    return list;
   }, [images, image]);
 
   const total = imageList.length;
@@ -74,7 +78,7 @@ const ProductImageGallery = memo(function ProductImageGallery({
     [activeIndex, total, triggerTransition],
   );
 
-  const handlePrev = useCallback(
+  const _handlePrev = useCallback(
     (e) => {
       if (e) {
         e.preventDefault();
@@ -224,7 +228,7 @@ const ProductImageGallery = memo(function ProductImageGallery({
 
       {/* Screen Reader Live Announcement */}
       {total > 1 && (
-        <span className="sr-only" aria-live="polite">
+        <span className={styles.srOnly} aria-live="polite">
           Showing image {activeIndex + 1} of {total} for {alt}
         </span>
       )}

@@ -51,12 +51,14 @@ const AddToCartButton = memo(function AddToCartButton({
         )}
       </span>
 
-      {/* Vertical Sliding Text (Full & Compact variants only) */}
+      {/* Active Text Label (Full & Compact variants only) */}
       {!isIconOnly && (
         <span className={styles.labelContainer} aria-hidden="true">
-          <span className={`${styles.labelTrack} ${added ? styles.labelTrackAdded : ''}`}>
-            <span className={styles.labelText}>{defaultLabel}</span>
-            <span className={styles.labelText}>{successLabel}</span>
+          <span
+            key={added ? 'success' : 'default'}
+            className={`${styles.labelText} ${added ? styles.labelTextSuccess : ''}`}
+          >
+            {added ? successLabel : defaultLabel}
           </span>
         </span>
       )}
