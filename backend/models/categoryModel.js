@@ -17,8 +17,27 @@ const categorySchema = new mongoose.Schema(
             type: String
         },
 
+        coverImage: {
+            type: String
+        },
+
         description: {
             type: String
+        },
+
+        ctaText: {
+            type: String,
+            default: "Explore Collection >"
+        },
+
+        displayOrder: {
+            type: Number,
+            default: 0
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {

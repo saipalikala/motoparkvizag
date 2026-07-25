@@ -32,7 +32,7 @@ const router = express.Router();
 /* ── GET ALL (public) ── */
 router.get("/", async (req, res) => {
   try {
-    const categories = await Category.find().sort({ name: 1 }).lean(); // [F5]
+    const categories = await Category.find().sort({ displayOrder: 1, name: 1 }).lean(); // [F5]
     res.json(categories);
   } catch (err) {
     res.status(500).json({ message: "Failed to load categories", error: err.message });
@@ -42,7 +42,7 @@ router.get("/", async (req, res) => {
 /* ── CREATE (admin) ── */
 router.post("/", authMiddleware, async (req, res) => { // [F2]
   try {
-    const { name, image, description } = req.body;
+    const { name, image, coverImage, description, ctaText, displayOrder, isActive } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "Category name is required" });
@@ -56,13 +56,47 @@ router.post("/", authMiddleware, async (req, res) => { // [F2]
       return res.status(409).json({ message: `Category "${name}" already exists` });
     }
 
-    const category = await Category.create({ name: name.trim(), slug, image, description });
+    const category = await Category.create({ 
+      name: name.trim(), 
+      slug, 
+      image, 
+      coverImage,
+      description,
+      ctaText: ctaText || "Explore Collection >",
+      displayOrder: displayOrder !== undefined ? Number(displayOrder) : 0,
+      isActive: isActive !== undefined ? Boolean(isActive) : true
+    });
     res.status(201).json(category);
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({ message: "Category already exists" });
     }
     res.status(500).json({ message: "Failed to create category", error: err.message });
+  }
+});
+
+/* ── BULK UPDATE ORDER (admin) ── */
+router.put("/bulk-order", authMiddleware, async (req, res) => {
+  try {
+    const { categories } = req.body;
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ message: "categories array is required" });
+    }
+
+    const updates = categories.map((cat, index) => ({
+      updateOne: {
+        filter: { _id: cat._id },
+        update: { displayOrder: cat.displayOrder !== undefined ? cat.displayOrder : index }
+      }
+    }));
+
+    if (updates.length > 0) {
+      await Category.bulkWrite(updates);
+    }
+
+    res.json({ message: "Order updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update order", error: err.message });
   }
 });
 
@@ -74,11 +108,15 @@ router.put("/:id", authMiddleware, async (req, res) => { // [F2]
       return res.status(400).json({ message: "Invalid category ID" });
     }
 
-    const { name, image, description } = req.body;
+    const { name, image, coverImage, description, ctaText, displayOrder, isActive } = req.body;
     const updateData = {};
     if (name)        { updateData.name = name.trim(); updateData.slug = name.toLowerCase().trim().replace(/\s+/g, "-"); }
     if (image)        updateData.image       = image;
+    if (coverImage !== undefined) updateData.coverImage = coverImage;
     if (description !== undefined) updateData.description = description;
+    if (ctaText !== undefined) updateData.ctaText = ctaText;
+    if (displayOrder !== undefined) updateData.displayOrder = Number(displayOrder);
+    if (isActive !== undefined) updateData.isActive = Boolean(isActive);
 
     const updated = await Category.findByIdAndUpdate(
       req.params.id,

@@ -260,11 +260,13 @@ if (bike) {
     query.compatibleBikes = { $in: docs.map(d => d._id) };
 }
 
-const orClauses = [];
+const flagsOrClauses = [];
 
 if (flags) {
-    flags.split(",").forEach(flag => orClauses.push({ [flag]: true }));
+    flags.split(",").forEach(flag => flagsOrClauses.push({ [flag]: true }));
 }
+
+const categoryOrClauses = [];
 
 if (category) {
     const catQuery = mongoose.Types.ObjectId.isValid(category)
@@ -285,7 +287,7 @@ if (category) {
     if (!cat)
         return res.json({ products: [], total: 0, page, pages: 0 });
 
-    orClauses.push(
+    categoryOrClauses.push(
         { category: cat._id.toString() },
         {
             category: {
@@ -298,7 +300,19 @@ if (category) {
     );
 }
 
-if (orClauses.length) query.$or = orClauses;
+// flags and category are independent constraints, each internally an OR (a
+// flag matches any of several boolean fields; a category matches by id or by
+// name) — but the two constraints must AND together. A single shared $or (as
+// this used to be) reads as "flag OR category" instead of "flag AND
+// category" whenever both are supplied — e.g. "Trending" on a locked
+// category page would broaden results instead of narrowing them.
+if (flagsOrClauses.length && categoryOrClauses.length) {
+    query.$and = [{ $or: flagsOrClauses }, { $or: categoryOrClauses }];
+} else if (flagsOrClauses.length) {
+    query.$or = flagsOrClauses;
+} else if (categoryOrClauses.length) {
+    query.$or = categoryOrClauses;
+}
 
         if (minPrice || maxPrice) {
             query.price = {};

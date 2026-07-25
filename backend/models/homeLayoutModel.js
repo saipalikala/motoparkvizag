@@ -28,6 +28,7 @@ const sectionSchema = new mongoose.Schema({
 
     settings: {
         title: String,
+        subtitle: String,
         collection: String,
         category: String,
         limit: Number,
