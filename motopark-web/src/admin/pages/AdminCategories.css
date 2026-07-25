@@ -158,6 +158,41 @@
     cursor: not-allowed;
 }
 
+/* DND Table */
+.acat-table-wrap {
+  overflow-x: auto;
+}
+
+.acat-table-header {
+  display: flex;
+  padding: 12px;
+  border-bottom: 1px solid #2c2c2e;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8e8e93;
+  text-transform: uppercase;
+}
+
+.acat-table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.acat-table-row {
+  transition: background-color 0.2s;
+}
+
+.acat-table-row:hover {
+  background: #1c1c1e !important;
+}
+
+.acat-table-row.is-dragging {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2c2c2e;
+  border-radius: 8px;
+  z-index: 100;
+}
+
 /* LIST */
 .acat-loading,
 .acat-empty {
