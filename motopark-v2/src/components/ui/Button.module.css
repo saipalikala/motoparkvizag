@@ -130,15 +130,15 @@
    than a flat card surface. Ordinary .outline/.ghost already assume a dark
    surface and no longer need a separate "on navy" reading. ───────────── */
 .onDark.outline {
-  color: var(--text-primary);
+  color: #ffffff;
   border-color: rgb(255 255 255 / 0.45);
 }
 .onDark.outline:hover {
   background: rgb(255 255 255 / 0.12);
-  border-color: var(--text-primary);
+  border-color: #ffffff;
 }
 .onDark.ghost {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 .onDark.ghost:hover {
   background: rgb(255 255 255 / 0.12);

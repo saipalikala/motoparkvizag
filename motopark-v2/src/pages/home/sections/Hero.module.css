@@ -91,7 +91,7 @@
 }
 
 .headline {
-  color: var(--text-primary);
+  color: #ffffff;
   text-wrap: balance;
   margin-bottom: var(--space-4);
 }
@@ -107,7 +107,7 @@
 
 .subline {
   font-size: var(--text-body-lg);
-  color: var(--text-secondary);
+  color: rgb(255 255 255 / 0.7);
   max-width: 34rem;
   margin-bottom: var(--space-6);
 }

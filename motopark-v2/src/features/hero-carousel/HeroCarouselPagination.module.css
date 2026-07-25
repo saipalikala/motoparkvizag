@@ -21,10 +21,10 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-full);
-  background: var(--glass-bg);
+  background: rgb(0 0 0 / 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgb(255 255 255 / 0.15);
   pointer-events: auto;
   box-shadow: var(--shadow-sm);
 }

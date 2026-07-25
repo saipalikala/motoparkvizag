@@ -387,9 +387,12 @@ export default function AssistantWidget() {
     if (!open) return;
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
     if (isMobile) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = 'hidden';
     }
     return () => {
+      document.body.style.paddingRight = '';
       document.body.style.overflow = '';
     };
   }, [open]);

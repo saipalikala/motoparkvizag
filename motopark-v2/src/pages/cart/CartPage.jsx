@@ -60,7 +60,8 @@ export default function CartPage() {
                 const key = lineKey(it);
                 // Lines saved before stock was tracked carry no `stock`; leave those
                 // uncapped here — the server rejects an over-order either way.
-                const atStockCap = Number.isInteger(it.stock) && it.qty >= it.stock;
+                const stock = Number(it.stock);
+                const atStockCap = Number.isInteger(stock) && it.qty >= stock;
                 return (
                   <li key={key} className={styles.line}>
                     <Link to={`/products/${it.id}`} className={styles.thumb}>
@@ -109,13 +110,13 @@ export default function CartPage() {
                               onClick={() => updateQty(key, it.qty + 1)}
                               aria-label="Increase quantity"
                               disabled={atStockCap}
-                              title={atStockCap ? `Only ${it.stock} in stock` : undefined}
+                              title={atStockCap ? `Only ${stock} in stock` : undefined}
                             >
                               <Plus size={15} strokeWidth={2} aria-hidden="true" />
                             </button>
                           </div>
                           {atStockCap && (
-                            <span className={styles.stockNote}>Only {it.stock} left</span>
+                            <span className={styles.stockNote}>Only {stock} left</span>
                           )}
                         </div>
                         <span className={`price ${styles.linePrice}`}>

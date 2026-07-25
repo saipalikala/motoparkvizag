@@ -26,7 +26,8 @@ const lineKey = (l) => `${l.id}|${l.color ?? ''}|${l.size ?? ''}`;
  */
 const capQty = (line, qty) => {
   const wanted = Math.max(1, qty);
-  return Number.isInteger(line?.stock) ? Math.min(wanted, Math.max(1, line.stock)) : wanted;
+  const stock = Number(line?.stock);
+  return Number.isInteger(stock) ? Math.min(wanted, Math.max(1, stock)) : wanted;
 };
 
 function load() {
