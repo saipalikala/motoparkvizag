@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
-import '@fontsource-variable/geist';
+import '@fontsource-variable/outfit';
 import './styles/tokens.css';
 import './styles/fonts.css';
 import './styles/base.css';

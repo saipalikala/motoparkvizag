@@ -18,7 +18,7 @@
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: var(--mp-navy-900);
+  background: var(--bg-page);
 }
 
 /* ─── Reduced-motion variant — same video/mask/content, no scroll-jack ────
@@ -33,7 +33,7 @@
   position: relative;
   height: 100vh;
   overflow: hidden;
-  background: var(--mp-navy-900);
+  background: var(--bg-page);
 }
 
 /* ─── Video layer — NEVER transformed; always natural, unzoomed ─────────── */
@@ -58,7 +58,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: var(--mp-navy-900);
+  background: var(--bg-page);
   opacity: 0.92;
   will-change: opacity;
   mask-image: url(#storyTextMask);
@@ -141,7 +141,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mp-orange-300);
+  color: var(--text-accent);
 }
 
 .headline {
@@ -150,14 +150,14 @@
   font-weight: 700;
   line-height: 1.08;
   letter-spacing: -0.02em;
-  color: var(--text-inverse);
+  color: var(--text-primary);
   max-width: 20ch;
 }
 
 .lede {
   max-width: 44ch;
   font-size: var(--text-body-lg);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
 }
 
 /* ─── Rider Disciplines — staggered within the same closing window ──────── */
@@ -181,7 +181,7 @@
 .disciplineNumber {
   font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--mp-orange-300);
+  color: var(--text-accent);
   letter-spacing: 0.06em;
 }
 
@@ -190,13 +190,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mp-cream-100);
+  color: var(--text-tertiary);
 }
 
 .disciplineTitle {
   font-size: var(--text-h3);
   font-weight: 700;
-  color: var(--text-inverse);
+  color: var(--text-primary);
 }
 
 /* ─── Frosted-glass controls — play/pause + mute only. No presets, no zoom-
@@ -211,10 +211,10 @@
   gap: var(--space-2);
   padding: var(--space-2);
   border-radius: 999px;
-  background: rgb(27 37 54 / 0.45); /* --mp-navy-900 tint */
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgb(251 243 231 / 0.14);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
 }
 
 .controlBtn {
@@ -226,17 +226,17 @@
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: var(--text-inverse);
+  color: var(--text-primary);
   cursor: pointer;
   transition: background var(--dur-fast, 150ms) var(--ease-out);
 }
 
 .controlBtn:hover,
 .controlBtn:focus-visible {
-  background: rgb(251 243 231 / 0.16);
+  background: rgb(255 255 255 / 0.16);
 }
 
 .controlBtn:focus-visible {
-  outline: 2px solid var(--mp-orange-300);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

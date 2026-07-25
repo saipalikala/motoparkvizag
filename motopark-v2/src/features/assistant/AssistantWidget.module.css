@@ -1,4 +1,6 @@
-/* MotoBuddy AI Assistant — Premium ChatGPT / Claude Responsive Styles */
+/* MotoBuddy AI Assistant — Design System V2. Previously an entirely
+   independent light/slate palette, unconnected to tokens.css; now re-skinned
+   onto the same dark surface system as the rest of the storefront. */
 
 .launcher {
   position: fixed;
@@ -9,11 +11,11 @@
   height: 56px;
   border: none;
   border-radius: 50%;
-  background: var(--bg-inverse-deep, #0f172a);
-  color: #ffffff;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-size: 22px;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.28);
+  box-shadow: 0 10px 28px rgb(5 11 22 / 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,7 +24,7 @@
 
 .launcher:hover {
   transform: scale(1.06) translateY(-2px);
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 14px 34px rgb(5 11 22 / 0.55);
 }
 
 .launcher:active {
@@ -47,9 +49,9 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  background: var(--success);
+  border: 2px solid var(--bg-surface);
+  box-shadow: 0 0 0 3px rgb(47 169 104 / 0.2);
 }
 
 /* Backdrop for Mobile */
@@ -68,10 +70,10 @@
   width: 480px;
   height: 680px;
   max-height: calc(100vh - 110px);
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
   border-radius: 24px;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28), 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 60px rgb(5 11 22 / 0.5), 0 4px 16px rgb(5 11 22 / 0.3);
   overflow: hidden;
   animation: panelRise 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -90,9 +92,9 @@
 /* Header */
 .header {
   padding: 16px 20px;
-  background: var(--bg-inverse-deep, #0f172a);
-  color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-default);
   flex-shrink: 0;
 }
 
@@ -112,16 +114,16 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b00 0%, #ff8533 100%);
+  background: linear-gradient(135deg, var(--mp-flame-500) 0%, var(--mp-flame-300) 100%);
   display: grid;
   place-items: center;
-  color: #ffffff;
+  color: var(--text-on-accent);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.35);
+  box-shadow: 0 4px 12px rgb(255 106 46 / 0.35);
 }
 
 .headerBotIcon {
-  color: #ffffff;
+  color: var(--text-on-accent);
 }
 
 .onlineDot {
@@ -131,8 +133,8 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #10b981;
-  border: 2px solid #0f172a;
+  background: var(--success);
+  border: 2px solid var(--bg-surface);
 }
 
 .headerTitles {
@@ -150,7 +152,7 @@
 .title {
   font-size: 15px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -162,9 +164,9 @@
   letter-spacing: 0.02em;
   padding: 2px 7px;
   border-radius: 9999px;
-  background: rgba(255, 107, 0, 0.22);
-  color: #ff9d54;
-  border: 1px solid rgba(255, 107, 0, 0.4);
+  background: var(--bg-surface-accent);
+  color: var(--text-accent);
+  border: 1px solid var(--border-accent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -173,7 +175,7 @@
 
 .subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
   margin-top: 2px;
   line-height: 1.2;
 }
@@ -185,7 +187,7 @@
   place-items: center;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   cursor: pointer;
   border-radius: 10px;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -194,8 +196,8 @@
 }
 
 .closeBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: var(--bg-surface-warm);
+  color: var(--text-primary);
 }
 
 /* Messages Scroll View */
@@ -206,7 +208,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background: #f8fafc;
+  background: var(--bg-page);
   scroll-behavior: smooth;
 }
 
@@ -228,17 +230,17 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--mp-orange, #ff6b00);
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--text-on-accent);
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(255, 107, 0, 0.25);
+  box-shadow: 0 4px 10px rgb(255 106 46 / 0.25);
   margin-top: 2px;
 }
 
 .avatarIcon {
-  color: #ffffff;
+  color: var(--text-on-accent);
 }
 
 .msgCol {
@@ -258,20 +260,23 @@
   border-radius: 18px;
   font-size: 15px;
   line-height: 1.65;
-  color: #1e293b;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 4px 14px rgb(5 11 22 / 0.25);
   word-break: break-word;
   animation: messageFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* User's own messages get the accent fill — the one conversational context
+   where a solid accent bubble (not just CTA/price/rating) is expected UI
+   convention, using the AA-conscious button-fill step for the white text. */
 .row.user .bubble {
-  background: var(--bg-inverse-deep, #0f172a);
-  color: #ffffff;
+  background: var(--btn-primary-bg);
+  color: var(--text-on-accent);
   border: none;
   border-radius: 18px 18px 4px 18px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 4px 14px rgb(255 106 46 / 0.3);
 }
 
 .userText {
@@ -280,11 +285,11 @@
 
 .systemBox {
   font-size: 14px;
-  color: #b45309;
-  background: #fffbeb;
+  color: var(--warning);
+  background: var(--warning-soft);
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid #fcd34d;
+  border: 1px solid rgb(245 166 35 / 0.3);
 }
 
 .retryBtn {
@@ -294,16 +299,16 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid #d97706;
-  background: #ffffff;
-  color: #b45309;
+  border: 1px solid rgb(245 166 35 / 0.4);
+  background: var(--bg-surface);
+  color: var(--warning);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .retryBtn:hover {
-  background: #fef3c7;
+  background: var(--warning-soft);
 }
 
 @keyframes messageFade {
@@ -332,7 +337,7 @@
 .messageHeading {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   margin: 8px 0 2px 0;
 }
 
@@ -347,16 +352,15 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--mp-orange, #ff6b00);
+  background: var(--accent);
   margin-top: 9px;
   flex-shrink: 0;
 }
 
 .inlineCode {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-surface-warm);
+  color: var(--text-primary);
   padding: 2px 6px;
   border-radius: 6px;
 }
@@ -382,13 +386,13 @@
   letter-spacing: 0.02em;
   padding: 3px 9px;
   border-radius: 9999px;
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: var(--info-soft);
+  color: var(--info);
+  border: 1px solid rgb(76 159 232 / 0.3);
 }
 
 .toolChipIcon {
-  color: #2563eb;
+  color: var(--info);
 }
 
 /* Product Cards Grid inside Messages */
@@ -402,26 +406,29 @@
 .cardItem {
   display: flex;
   flex-direction: column;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--bg-surface);
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgb(5 11 22 / 0.3);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .cardItem:hover {
   transform: translateY(-3px);
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 20px rgb(5 11 22 / 0.4);
 }
 
+/* Light neutral frame behind product photography — matches the rest of the
+   storefront's convention of product images sitting on a light backdrop
+   even inside an otherwise-dark card (docs/09 §9.3). */
 .cardImgFrame {
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #f8fafc;
+  background: var(--mp-ink-50);
   overflow: hidden;
 }
 
@@ -456,13 +463,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .cardName {
   font-size: 13px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -480,13 +487,13 @@
 .cardPrice {
   font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--price);
 }
 
 .cardCta {
   font-size: 12px;
   font-weight: 600;
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -509,7 +516,7 @@
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -517,12 +524,12 @@
 }
 
 .actionBtn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: var(--bg-surface-warm);
+  color: var(--text-primary);
 }
 
 .actionActive {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -538,7 +545,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #94a3b8;
+  background: var(--text-tertiary);
   animation: typingWave 1.2s infinite ease-in-out;
 }
 
@@ -564,8 +571,8 @@
 /* Suggestions Area */
 .suggestionsWrapper {
   padding: 12px 16px;
-  background: #ffffff;
-  border-top: 1px solid #f1f5f9;
+  background: var(--bg-page);
+  border-top: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -577,12 +584,12 @@
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 .sparkleIcon {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
 }
 
 .suggestions {
@@ -597,9 +604,9 @@
   justify-content: space-between;
   padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #334155;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
   text-align: left;
@@ -608,20 +615,20 @@
 }
 
 .suggestionBtn:hover {
-  background: #ffffff;
-  border-color: var(--mp-orange, #ff6b00);
-  color: #0f172a;
+  background: var(--bg-surface-warm);
+  border-color: var(--accent);
+  color: var(--text-primary);
   transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgb(5 11 22 / 0.3);
 }
 
 .sugArrow {
-  color: #94a3b8;
+  color: var(--text-tertiary);
   transition: transform 0.15s ease;
 }
 
 .suggestionBtn:hover .sugArrow {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
   transform: translateX(2px);
 }
 
@@ -631,21 +638,21 @@
   align-items: flex-end;
   gap: 10px;
   padding: 14px 16px;
-  border-top: 1px solid #e2e8f0;
-  background: #ffffff;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-page);
   flex-shrink: 0;
 }
 
 .input {
   flex: 1;
   padding: 12px 16px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-default);
   border-radius: 16px;
   font: inherit;
   font-size: 15px;
   line-height: 1.5;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--text-primary);
+  background: var(--bg-surface);
   resize: none;
   min-height: 46px;
   max-height: 120px;
@@ -654,8 +661,8 @@
 }
 
 .input:focus-visible {
-  border-color: var(--mp-orange, #ff6b00);
-  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(255 106 46 / 0.15);
 }
 
 .send {
@@ -663,19 +670,19 @@
   height: 44px;
   border: none;
   border-radius: 50%;
-  background: var(--mp-orange, #ff6b00);
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--text-on-accent);
   display: grid;
   place-items: center;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
+  box-shadow: 0 4px 14px rgb(255 106 46 / 0.3);
   transition: transform 0.15s ease, background-color 0.15s ease, opacity 0.15s ease;
 }
 
 .send:hover:not(:disabled) {
   transform: scale(1.05);
-  background: #e56000;
+  background: var(--accent-hover);
 }
 
 .send:disabled {
@@ -709,7 +716,7 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: rgba(15, 23, 42, 0.65);
+    background: rgb(5 11 22 / 0.65);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     animation: backdropFade 0.2s ease both;
@@ -732,7 +739,7 @@
     border-radius: 0;
     border: none;
     box-shadow: none;
-    background: #ffffff;
+    background: var(--bg-page);
     z-index: 10000;
     animation: mobileSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
@@ -747,14 +754,14 @@
     width: 38px;
     height: 4px;
     border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgb(255 255 255 / 0.3);
     margin: 0 auto 8px auto;
   }
 
   .header {
     padding-top: max(12px, env(safe-area-inset-top, 12px));
     padding-bottom: 14px;
-    background: #0f172a;
+    background: var(--bg-surface);
   }
 
   .composer {

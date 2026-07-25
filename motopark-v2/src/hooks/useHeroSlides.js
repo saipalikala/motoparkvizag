@@ -28,7 +28,7 @@ import { FALLBACK_SLIDE } from '@/features/hero-carousel/fallbackSlide.js';
  * either way.
  */
 export function useHeroSlides() {
-  const [slides, setSlides] = useState(() => [FALLBACK_SLIDE]);
+  const [slides, setSlides] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

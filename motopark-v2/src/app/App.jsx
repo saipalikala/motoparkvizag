@@ -21,6 +21,7 @@ const CampaignOverlay = lazy(() =>
 );
 
 import { AuthProvider } from '@/contexts/AuthContext.jsx';
+import { ThemeProvider } from '@/contexts/ThemeContext.jsx';
 import { CartProvider } from '@/contexts/CartContext.jsx';
 import { WishlistProvider } from '@/contexts/WishlistContext.jsx';
 import { NavProvider } from '@/contexts/NavContext.jsx';
@@ -47,34 +48,36 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <WishlistProvider>
-        <NavProvider>
-        <CampaignProvider>
-        <ToastProvider>
-          <a className="skip-link" href="#main">
-            Skip to content
-          </a>
-          <Navbar />
-          <main id="main" style={{ paddingTop: 'var(--nav-height)', paddingBottom: 'var(--space-16)' }}>
-            <ErrorBoundary>
-              <AppRouter />
-            </ErrorBoundary>
-          </main>
-          <Footer />
-          <MobileBottomNav />
-          <AssistantWidget />
-          {/* Campaign Experience System — portaled overlay, homepage only.
-              Lazy-loaded so it never blocks initial render or LCP. */}
-          <Suspense fallback={null}>
-            <CampaignOverlay />
-          </Suspense>
-        </ToastProvider>
-        </CampaignProvider>
-        </NavProvider>
-        </WishlistProvider>
-      </CartProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+          <NavProvider>
+          <CampaignProvider>
+          <ToastProvider>
+            <a className="skip-link" href="#main">
+              Skip to content
+            </a>
+            <Navbar />
+            <main id="main" style={{ paddingTop: 'var(--nav-height)', paddingBottom: 'var(--space-16)' }}>
+              <ErrorBoundary>
+                <AppRouter />
+              </ErrorBoundary>
+            </main>
+            <Footer />
+            <MobileBottomNav />
+            <AssistantWidget />
+            {/* Campaign Experience System — portaled overlay, homepage only.
+                Lazy-loaded so it never blocks initial render or LCP. */}
+            <Suspense fallback={null}>
+              <CampaignOverlay />
+            </Suspense>
+          </ToastProvider>
+          </CampaignProvider>
+          </NavProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

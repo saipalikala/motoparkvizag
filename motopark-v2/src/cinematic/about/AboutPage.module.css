@@ -7,7 +7,7 @@
   /* The cinematic starts black and transitions through the brand palette.
      This background prevents any flash of the global page background color
      between the route loading and the component painting. */
-  background: #000;
+  background: var(--bg-page);
   overflow-x: hidden;
 
   /* The app shell has paddingBottom: var(--space-16) on <main>.

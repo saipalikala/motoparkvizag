@@ -78,7 +78,6 @@
   margin-bottom: var(--space-3);
 }
 .trackingNo {
-  font-family: ui-monospace, monospace;
   color: var(--text-primary);
 }
 
@@ -103,7 +102,7 @@
   height: 52px;
   border-radius: var(--radius-full);
   background: var(--bg-surface-warm);
-  color: var(--mp-navy-400);
+  color: var(--text-secondary);
 }
 .emptyTitle {
   font-weight: 600;

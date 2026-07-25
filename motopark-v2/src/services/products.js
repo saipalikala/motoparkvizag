@@ -67,7 +67,6 @@ function deriveTags(p) {
   return Array.from(new Set(pool)).slice(0, 5);
 }
 
-const BADGES = ['Trending', 'New', 'Best Seller', 'Popular', 'Limited'];
 const MEDIA_BG_PALETTES = [
   'radial-gradient(circle at center, #29354a 0%, #0f1624 100%)', // Dark Slate Gradient
   'linear-gradient(135deg, #D4DEC9 0%, #B5C4A3 100%)',           // Soft Sage
@@ -76,10 +75,14 @@ const MEDIA_BG_PALETTES = [
   'linear-gradient(135deg, #2B3A4E 0%, #151F2C 100%)',           // Deep Navy
 ];
 
+/** Real, admin-curated signals only (Commerce Law 9: no fake urgency) — never
+ * a hash-derived placeholder. Returns null when no flag is set. */
 function deriveBadge(p) {
   if (p?.badge) return p.badge;
-  const hash = Math.abs((p?._id || p?.name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0));
-  return BADGES[hash % BADGES.length];
+  if (p?.trending) return 'Trending';
+  if (p?.newArrival) return 'New';
+  if (p?.featured) return 'Best Seller';
+  return null;
 }
 
 function deriveDescription(p) {
@@ -119,6 +122,9 @@ export function toProductCard(p) {
     brand: p.brand,
     category: p.category,
     priceINR: p.price, // V1 stores whole rupees
+    // Same rule as getProduct()'s mrpINR — surfaced here too so cards can show
+    // real sale pricing instead of a bare price (Commerce Law 2).
+    mrpINR: p.originalPrice && p.originalPrice > p.price ? p.originalPrice : null,
     image: primary,
     images: p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : images,
     // V1 has no slug → route param carries the id (route: /products/:slug).

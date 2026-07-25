@@ -11,11 +11,11 @@
  * This component renders exactly the `floating_card` presentation. Future types
  * (strip, banner, fullscreen) would be separate sibling components.
  *
- * Design language: 100% MotoPark V2 tokens. No new design primitives.
- *   - Navy-800 background (`var(--bg-inverse-deep)`)
+ * Design language: 100% MotoPark Design System V2 tokens. No new design primitives.
+ *   - Ember background by default (`var(--mp-ember-900)`, overridable via `--campaign-bg`)
  *   - Sakana display font for the headline (`var(--font-display)`)
  *   - Existing Button primitive (variant="primary" / "ghost", onDark)
- *   - Sunset gradient accent line — the brand signature from the old OfferBar
+ *   - Flame gradient accent line — the brand signature from the old OfferBar
  *   - Orange badge token (`var(--badge-sale-bg)` / `var(--badge-sale-fg)`)
  */
 import { useRef } from 'react';
