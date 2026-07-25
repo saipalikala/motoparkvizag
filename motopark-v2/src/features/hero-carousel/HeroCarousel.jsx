@@ -38,7 +38,7 @@ import styles from './HeroCarousel.module.css';
  * Everything else (HeroScene, scrim, aria structure, LCP image strategy,
  * photo callback-refs for parallax) is UNCHANGED from Phase 3.4.
  */
-export default function HeroCarousel({ slides = [] }) {
+export default function HeroCarousel({ slides = [], onIndexChange }) {
   // Stable ref for the viewport DOM node — used by useEmblaAutoplay to
   // attach hover-pause listeners without causing effect re-runs on render.
   const viewportRef = useRef(null);
@@ -57,6 +57,10 @@ export default function HeroCarousel({ slides = [] }) {
   // snapshots this array rather than reading it at scroll-event time.
   const slideRefs = useRef([]);
   slideRefs.current = [];
+
+  useEffect(() => {
+    if (onIndexChange) onIndexChange(selectedIndex);
+  }, [selectedIndex, onIndexChange]);
 
   useEmblaParallax(emblaApi, slideRefs);
   useEmblaAutoplay(emblaApi, viewportRef, slides.length);

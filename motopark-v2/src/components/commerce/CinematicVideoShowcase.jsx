@@ -36,6 +36,39 @@ import styles from './CinematicVideoShowcase.module.css';
  * empty. Nothing renders now until the fetch settles, and an empty result hides
  * the section rather than inventing content.
  */
+const FALLBACK_SLIDES = [
+  {
+    id: 'sonic-gp',
+    tag: 'NEW DROP',
+    title: 'SONIC GP HELMET',
+    description: 'Precision engineered for ultimate high-speed aerodynamic protection.',
+    src: 'https://res.cloudinary.com/demo/video/upload/v1688647000/docs/sport.mp4',
+    poster: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?q=80&w=1440&auto=format&fit=crop',
+    buyLink: '/store',
+    cta: 'Shop Now',
+  },
+  {
+    id: 'track-day',
+    tag: 'RACE READY',
+    title: 'KORDA HYBRID SUIT',
+    description: 'Full-grain leather with CE Level 2 armor for maximum track confidence.',
+    src: 'https://res.cloudinary.com/demo/video/upload/v1688647000/docs/sport.mp4',
+    poster: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?q=80&w=1440&auto=format&fit=crop',
+    buyLink: '/store',
+    cta: 'Explore Armor',
+  },
+  {
+    id: 'adventure-touring',
+    tag: 'ALL TERRAIN',
+    title: 'SHAD TERRA LUGGAGE',
+    description: 'Forged aluminum waterproof panniers engineered for extreme long haul touring.',
+    src: 'https://res.cloudinary.com/demo/video/upload/v1688647000/docs/sport.mp4',
+    poster: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=1440&auto=format&fit=crop',
+    buyLink: '/store',
+    cta: 'View Cases',
+  },
+];
+
 export default function CinematicVideoShowcase() {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef(null);
@@ -43,37 +76,26 @@ export default function CinematicVideoShowcase() {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
 
-  // An empty array is a resolved "nothing to show", distinct from null. Errors
-  // resolve the same way: no slides beats stock footage.
   useEffect(() => {
     let alive = true;
     getShowcaseSlides()
       .then((live) => {
-        if (alive) setSlides(Array.isArray(live) ? live : []);
+        if (alive) {
+          setSlides(Array.isArray(live) && live.length > 0 ? live : FALLBACK_SLIDES);
+        }
       })
       .catch(() => {
-        if (alive) setSlides([]);
+        if (alive) setSlides(FALLBACK_SLIDES);
       });
     return () => {
       alive = false;
     };
   }, []);
 
-  /* Placed after every hook so the hook order never varies.
-   *
-   * While resolving, render the section's shell and nothing else. This is what
-   * keeps CLS at zero: .theater is a fixed 85vh, so the box is identical before
-   * and after the slides arrive — content fills in without moving anything. The
-   * naive version of this fix (render nothing until data lands) would insert
-   * 85vh into the page mid-load and shift everything below it. */
   if (slides === null) {
     return <section className={styles.theater} aria-busy="true" aria-label="Loading rider stories" />;
   }
 
-  /* Resolved but empty: drop the section. This collapses 85vh, which can shift
-   * content below — accepted deliberately, because it only happens when the API
-   * returns nothing or fails, and the alternative is a permanent 85vh of blank
-   * navy on the homepage. */
   if (slides.length === 0) return null;
 
   const current = slides[active] ?? slides[0];
@@ -152,71 +174,75 @@ export default function CinematicVideoShowcase() {
             </AnimatePresence>
           </div>
 
-          {/* Chrome: gradient + center stage + filmstrip. CSS-fades out during playback. */}
+          {/* Chrome: gradient + bottom-left content lockup + bottom-right filmstrip dock */}
           <div className={`${styles.chrome} ${playing ? styles.chromeHidden : ''}`}>
             <div className={styles.scrim} aria-hidden="true" />
 
-            <div className={styles.center}>
-              <AnimatePresence mode="wait">
-                <m.div
-                  key={current.id}
-                  className={styles.centerText}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: reduceMotion ? 0 : -10 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.35 }}
-                >
-                  <p className={styles.eyebrow}>{current.tag}</p>
-                  <h2 className={`display ${styles.title}`}>{current.title}</h2>
-                  <p className={styles.desc}>{current.description}</p>
-                </m.div>
-              </AnimatePresence>
+            <div className={styles.bottomStage}>
+              {/* Left Column: Editorial Content Lockup */}
+              <div className={styles.heroLockup}>
+                <AnimatePresence mode="wait">
+                  <m.div
+                    key={current.id}
+                    className={styles.centerText}
+                    initial={{ opacity: 0, y: reduceMotion ? 0 : 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: reduceMotion ? 0 : -15 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.35 }}
+                  >
+                    {current.tag && <span className={styles.eyebrow}>{current.tag}</span>}
+                    <h2 className={`display ${styles.title}`}>{current.title}</h2>
+                    {current.description && <p className={styles.desc}>{current.description}</p>}
+                  </m.div>
+                </AnimatePresence>
 
-              <div className={styles.actions}>
-                <button type="button" className={styles.playBtn} onClick={play}>
-                  <Play size={20} strokeWidth={2} aria-hidden="true" className={styles.playIcon} />
-                  Play Video
-                </button>
+                <div className={styles.actions}>
+                  <button type="button" className={styles.playBtn} onClick={play}>
+                    <Play size={18} strokeWidth={2} aria-hidden="true" className={styles.playIcon} />
+                    Play Video
+                  </button>
 
-                {current.buyLink &&
-                  (current.buyLink.startsWith('/') ? (
-                    <Link to={current.buyLink} className={styles.shopBtn}>
-                      {current.cta}
-                      <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-                    </Link>
-                  ) : (
-                    <a
-                      href={current.buyLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.shopBtn}
-                    >
-                      {current.cta}
-                      <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-                    </a>
-                  ))}
+                  {current.buyLink &&
+                    (current.buyLink.startsWith('/') ? (
+                      <Link to={current.buyLink} className={styles.shopBtn}>
+                        {current.cta || 'Shop the Gear'}
+                        <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+                      </Link>
+                    ) : (
+                      <a
+                        href={current.buyLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.shopBtn}
+                      >
+                        {current.cta || 'Shop the Gear'}
+                        <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+                      </a>
+                    ))}
+                </div>
               </div>
-            </div>
 
-            <div className={styles.filmstrip} aria-label="More rider stories">
-              {slides.map((v, i) =>
-                i === active ? null : (
+              {/* Right Column: Floating Filmstrip Dock */}
+              <div className={styles.filmstrip} aria-label="More rider stories">
+                {slides.map((v, i) => (
                   <m.button
                     key={v.id}
                     type="button"
-                    className={styles.thumb}
+                    className={`${styles.thumb} ${i === active ? styles.thumbActive : ''}`}
                     onClick={() => selectSlide(i)}
                     aria-label={`Show ${v.title}`}
-                    whileHover={reduceMotion ? undefined : { y: -4, scale: 1.03 }}
+                    whileHover={reduceMotion ? undefined : { y: -4, scale: 1.04 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                   >
-                    {/* Rendered at ~166px; was downloading the 1448px original. */}
                     <img src={cloudinaryUrl(v.poster, { w: 360 })} alt="" className={styles.thumbImg} loading="lazy" />
                     <span className={styles.thumbScrim} aria-hidden="true" />
-                    <span className={styles.thumbLabel}>{v.title}</span>
+                    <div className={styles.thumbMeta}>
+                      {i === active && <span className={styles.activeDot} />}
+                      <span className={styles.thumbLabel}>{v.title}</span>
+                    </div>
                   </m.button>
-                ),
-              )}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -231,7 +257,7 @@ export default function CinematicVideoShowcase() {
               }}
               aria-label="Exit video"
             >
-              <X size={20} strokeWidth={2} aria-hidden="true" />
+              <X size={20} strokeWidth={1.8} aria-hidden="true" />
             </button>
           )}
         </div>

@@ -50,7 +50,7 @@ export default function ShopByBike() {
       <div className={styles.card}>
         <div className={styles.copy}>
           <span className={styles.iconWrap} aria-hidden="true">
-            <Bike size={24} strokeWidth={1.7} />
+            <Bike size={24} strokeWidth={1.8} />
           </span>
           <div>
             <p className={styles.eyebrow}>Made for your machine</p>

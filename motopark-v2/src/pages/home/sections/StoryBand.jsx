@@ -181,7 +181,7 @@ export default function StoryBand() {
               <path
                 d={HERO_NOTCH_PATH}
                 fill="none"
-                stroke="rgb(251 243 231 / 0.18)"
+                stroke="rgb(255 255 255 / 0.18)"
                 strokeWidth="1.5"
                 vectorEffect="non-scaling-stroke"
               />

@@ -35,7 +35,7 @@
   padding: var(--space-3) var(--space-4);
   font: inherit;
   font-size: var(--text-body); /* 16px floor: prevents iOS zoom-on-focus */
-  background: var(--bg-page);
+  background: var(--bg-surface);
   border: 1px solid var(--input-border);
   border-radius: var(--input-radius);
   color: var(--text-primary);

@@ -21,7 +21,7 @@ export default function SectionHeader({ id, eyebrow, title, action, as: Heading 
       {action && (
         <Link to={action.href} className={styles.action}>
           {action.label}
-          <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+          <ArrowRight size={16} strokeWidth={1.8} aria-hidden="true" />
         </Link>
       )}
     </header>

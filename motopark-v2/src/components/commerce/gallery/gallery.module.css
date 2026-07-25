@@ -14,7 +14,9 @@
 }
 
 .galleryContainer:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--mp-orange, #ff6b00);
+  /* Focus ring is always blue, never accent orange — focus ≠ action
+     (docs/09 §2.2, matches the global :focus-visible rule in base.css). */
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
   border-radius: inherit;
 }
 
@@ -104,7 +106,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.18);
+  background: rgb(255 255 255 / 0.18);
   border: none;
   padding: 0;
   margin: 0;
@@ -118,22 +120,22 @@
 }
 
 .dot:hover {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgb(255 255 255 / 0.35);
 }
 
 .dotActive {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ff5500;
+  background: var(--accent);
   transform: scale(1.2);
-  box-shadow: 0 0 6px rgba(255, 85, 0, 0.4);
+  box-shadow: 0 0 6px rgb(255 106 46 / 0.4);
 }
 
 .fallbackText {
   font-weight: 700;
   font-size: var(--text-h3, 1.5rem);
-  color: rgba(0, 0, 0, 0.2);
+  color: rgb(255 255 255 / 0.2);
   letter-spacing: 0.08em;
 }
 

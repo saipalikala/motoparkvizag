@@ -1,9 +1,8 @@
-/* StoryBand.module.css — Monumental Editorial Storytelling Chapter.
-   Single art-directed canvas on Navy 800 (--bg-inverse-deep). */
+/* StoryBand.module.css — Monumental Editorial Storytelling Chapter. */
 
 .band {
-  background: var(--bg-inverse-deep);
-  color: var(--text-inverse);
+  background: var(--bg-page);
+  color: var(--text-primary);
   padding-top: var(--section-gap);
   padding-bottom: clamp(var(--space-20), 12vw, var(--space-32));
   position: relative;
@@ -53,13 +52,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mp-orange-300);
+  color: var(--text-accent);
   margin-bottom: var(--space-3);
 }
 
 .title {
   font-size: var(--text-h1);
-  color: var(--text-inverse);
+  color: var(--text-primary);
   line-height: 1.05;
   letter-spacing: -0.03em;
   margin-bottom: var(--space-4);
@@ -68,7 +67,7 @@
 
 .lede {
   font-size: var(--text-body-lg);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   max-width: 44ch;
   line-height: 1.6;
 }
@@ -80,7 +79,7 @@
   aspect-ratio: 16 / 10;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
-  background: var(--mp-navy-700);
+  background: var(--bg-surface-warm);
 
   /* Architectural stepped notch clipPath */
   clip-path: url(#heroArchitecturalNotch);
@@ -113,8 +112,8 @@
   inset: 0;
   background: linear-gradient(
     to top,
-    rgb(20 28 41 / 0.75) 0%,
-    rgb(20 28 41 / 0.25) 60%,
+    rgb(5 11 22 / 0.75) 0%,
+    rgb(5 11 22 / 0.25) 60%,
     transparent 100%
   );
 }
@@ -125,7 +124,7 @@
   flex-direction: column;
   gap: var(--space-6);
   padding-top: var(--space-4);
-  border-top: 1px solid rgb(251 243 231 / 0.12);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .journeysHeader {
@@ -133,7 +132,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
 }
 
 .journeysGrid {
@@ -157,7 +156,7 @@
 .journeyNumber {
   font-size: var(--text-caption);
   font-weight: 700;
-  color: var(--mp-orange-300);
+  color: var(--text-accent);
   letter-spacing: 0.06em;
 }
 
@@ -166,18 +165,18 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mp-cream-100);
+  color: var(--text-tertiary);
 }
 
 .journeyTitle {
   font-size: var(--text-h3);
   font-weight: 700;
-  color: var(--text-inverse);
+  color: var(--text-primary);
 }
 
 .journeyCopy {
   font-size: var(--text-body-sm);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   line-height: 1.55;
   max-width: 36ch;
 }

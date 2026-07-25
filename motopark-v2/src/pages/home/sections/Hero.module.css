@@ -1,5 +1,5 @@
-/* Homepage Hero — Concept C cinematic navy frame → light commerce below.
-   Tokens only. Text-over-image is AA via the scrim (cream on navy ~10:1). */
+/* Homepage Hero — Design System V2. Text-over-image is AA via the scrim
+   (white on near-black scrim, well above 10:1). */
 
 .hero {
   position: relative;
@@ -11,8 +11,8 @@
      scroll. This completely prevents the `object-fit: cover` image from scaling
      or jumping when the user scrolls. */
   min-height: 100svh;
-  background: var(--bg-inverse-deep); /* navy-800 base under the photo */
-  color: var(--text-inverse);
+  background: var(--bg-page);
+  color: var(--text-primary);
   overflow: hidden;
 }
 
@@ -45,19 +45,15 @@
   background:
     linear-gradient(
       to top,
-      rgb(20 28 41 / 0.92) 0%,
-      rgb(20 28 41 / 0.62) 38%,
-      rgb(20 28 41 / 0.28) 70%,
-      rgb(20 28 41 / 0.15) 100%
+      rgb(5 11 22 / 0.92) 0%,
+      rgb(5 11 22 / 0.62) 38%,
+      rgb(5 11 22 / 0.28) 70%,
+      rgb(5 11 22 / 0.15) 100%
     ),
-    linear-gradient(to right, rgb(20 28 41 / 0.55), transparent 60%);
+    linear-gradient(to right, rgb(5 11 22 / 0.55), transparent 60%);
 }
 
 /* ── Inner layout ──────────────────────────────────────── */
-/* Final-review: the ticker that used to share this grid with .copy is gone
-   (Campaigns own promotional content now) — .copy is the only child, so the
-   two-column split this used to need is gone too. .copy's own max-width:40rem
-   is what actually constrains its reading width; nothing here needs to. */
 .inner {
   position: relative;
   width: 100%;
@@ -74,29 +70,44 @@
   max-width: 40rem;
 }
 
+/* Eyebrow badge — pill, dark-translucent fill, flame border/text (docs/09 §9.5) */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-body-sm);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--mp-cream-100);
-  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: rgb(5 11 22 / 0.6);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-accent);
+  margin-bottom: var(--space-5);
 }
 .eyebrow svg {
-  color: var(--mp-orange-300);
+  color: var(--text-accent);
 }
 
 .headline {
-  color: var(--text-inverse);
+  color: var(--text-primary);
   text-wrap: balance;
   margin-bottom: var(--space-4);
 }
 
+/* The reference's emphasis span (e.g. "Limits" in flame orange) — applied via
+   :last-child from HeroContent-style markup where the CMS headline ends in
+   a highlighted word; harmless no-op if a headline has no such span. */
+.headline em,
+.headline :global(.headlineAccent) {
+  font-style: normal;
+  color: var(--accent);
+}
+
 .subline {
   font-size: var(--text-body-lg);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   max-width: 34rem;
   margin-bottom: var(--space-6);
 }
@@ -105,6 +116,57 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+/* ── Stat strip — the ONE sanctioned glassmorphism context (docs/09 §5):
+   content floating directly over the hero photo. Real store facts only
+   (config/store.js) — never fabricated numbers. ──────────────────────── */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  pointer-events: none;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  flex: 1 1 180px;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .statCard { background: rgb(5 11 22 / 0.85); }
+}
+
+.statIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-accent);
+  color: var(--text-accent);
+}
+
+.statValue {
+  font-size: var(--text-h4);
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.statLabel {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
 }
 
 /* No min-height media override needed — 100dvh is correct at all breakpoints.

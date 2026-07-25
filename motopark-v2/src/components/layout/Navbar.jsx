@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X } from 'lucide-react';
+import { ChevronDown, Heart, Menu, Search, ShoppingBag, User, X, Sun, Moon } from 'lucide-react';
 import { useScrollThresholds } from '@/hooks/useScrollThresholds.js';
+import { useTheme } from '@/contexts/ThemeContext.jsx';
 import { useCart } from '@/contexts/CartContext.jsx';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
 import { useNav } from '@/contexts/NavContext.jsx';
+import SearchPreview from '@/components/commerce/SearchPreview.jsx';
 import logoBadge from '@/assets/images/logo-badge.png';
 import styles from './Navbar.module.css';
 
@@ -36,6 +38,7 @@ export default function Navbar() {
     pastHero: Math.round(window.innerHeight * 0.80),
   });
 
+  const { theme, toggleTheme } = useTheme();
   const { count: cartCount } = useCart();
   const { count: wishCount } = useWishlist();
   const [cartPop, setCartPop] = useState(false);
@@ -138,13 +141,6 @@ export default function Navbar() {
     return () => document.removeEventListener('pointerdown', onClick);
   }, [openMenu]);
 
-  // Mobile search form submit → navigate to search page.
-  const submitSearch = (e) => {
-    e.preventDefault();
-    const q = new FormData(e.currentTarget).get('q')?.toString().trim();
-    if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
-  };
-
   // MOTOPARK wordmark — shared between main bar and mobile drawer.
   const wordmark = (
     <span className={styles.wordmark}>
@@ -212,7 +208,7 @@ export default function Navbar() {
                 }
               >
                 {menu.label}
-                <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
+                <ChevronDown size={12} strokeWidth={1.8} aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -252,14 +248,16 @@ export default function Navbar() {
               <Search size={20} strokeWidth={1.8} aria-hidden="true" />
             )}
           </button>
-          {/* Desktop: search icon → /search page */}
-          <Link
-            to="/search"
+          {/* Desktop: real search input + live-preview dropdown */}
+          <SearchPreview wrapClassName={styles.desktopOnly} placeholder="Search MotoPark…" />
+          <button
+            type="button"
             className={`${styles.iconBtn} ${styles.desktopOnly}`}
-            aria-label="Search products"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            onClick={toggleTheme}
           >
-            <Search size={20} strokeWidth={1.8} aria-hidden="true" />
-          </Link>
+            {theme === 'dark' ? <Sun size={20} strokeWidth={1.8} aria-hidden="true" /> : <Moon size={20} strokeWidth={1.8} aria-hidden="true" />}
+          </button>
           <Link
             to="/wishlist"
             className={`${styles.iconBtn} ${styles.desktopOnly}`}
@@ -362,23 +360,15 @@ export default function Navbar() {
         className={`${styles.mobileSearchWrap} ${styles.mobileOnly} ${searchOpen ? styles.mobileSearchWrapOpen : ''}`}
       >
         <div className={styles.mobileSearchInner}>
-          <form
-            className={styles.mobileSearch}
-            onSubmit={submitSearch}
-            role="search"
-            aria-hidden={!searchOpen}
-          >
-            <Search size={16} strokeWidth={1.8} aria-hidden="true" className={styles.searchIcon} />
-            <input
-              ref={searchInputRef}
-              name="q"
-              type="search"
-              placeholder="Search helmets, jackets, brands…"
-              aria-label="Search products"
-              autoComplete="off"
-              tabIndex={searchOpen ? 0 : -1}
-            />
-          </form>
+          <SearchPreview
+            inputRef={searchInputRef}
+            formClassName={styles.mobileSearch}
+            iconClassName={styles.searchIcon}
+            ariaHidden={!searchOpen}
+            tabIndex={searchOpen ? 0 : -1}
+            placeholder="Search helmets, jackets, brands…"
+            onNavigate={() => setSearchOpen(false)}
+          />
         </div>
       </div>
 
@@ -478,6 +468,18 @@ export default function Navbar() {
               </div>
 
               <div className={styles.drawerFoot}>
+                <button
+                  type="button"
+                  className={styles.accordionBtn}
+                  style={{ justifyContent: 'center', marginBottom: 'var(--space-4)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)' }}
+                  onClick={toggleTheme}
+                >
+                  {theme === 'dark' ? (
+                    <><Sun size={18} /> Switch to Light Mode</>
+                  ) : (
+                    <><Moon size={18} /> Switch to Dark Mode</>
+                  )}
+                </button>
                 <p className={styles.drawerTagline}>Genuine gear. No compromises.</p>
                 <p className={styles.drawerMeta}>Vizag showroom · Shipping Pan-India</p>
               </div>

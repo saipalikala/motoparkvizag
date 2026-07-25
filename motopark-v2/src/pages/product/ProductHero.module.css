@@ -13,22 +13,22 @@
   align-items: center;
   gap: var(--space-2, 8px);
   font-size: var(--text-body-sm, 0.875rem);
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   margin-bottom: var(--space-2);
 }
 
 .crumb a {
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color var(--dur-fast, 0.2s) var(--ease-out);
 }
 
 .crumb a:hover {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
 }
 
 .crumbCurrent {
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -44,18 +44,23 @@
   align-items: stretch;
 }
 
-@media (min-width: 1024px) {
+/* docs/09 line 305: side-by-side PDP begins >=900px */
+@media (min-width: 900px) {
   .heroGrid {
-    grid-template-columns: 40% 60%;
+    /* docs/09 line 179/307: PDP desktop 7/5 split, gallery/buy-box */
+    grid-template-columns: 7fr 5fr;
     gap: var(--space-10, 40px);
   }
 
-  .contentColumn {
+  /* Gallery first (left), buy-box second (right) — DOM order stays
+     gallery-first/content-second (see ProductHero.jsx), so this is a pure
+     visual reorder that never touches the IntersectionObserver ref below. */
+  .heroStage {
     grid-column: 1;
     grid-row: 1;
   }
 
-  .heroStage {
+  .contentColumn {
     grid-column: 2;
     grid-row: 1;
   }
@@ -81,7 +86,7 @@
   gap: 4px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
   background: none;
   border: none;
   padding: 0;
@@ -103,19 +108,17 @@
   left: 0;
   right: 0;
   z-index: 99;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
   padding: 10px 16px;
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -8px 24px rgb(5 11 22 / 0.35);
   transform: translateY(100%);
   transition: transform 230ms cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
   pointer-events: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .mobileStickyBar {
     display: none !important;
   }
@@ -148,7 +151,7 @@
   height: 42px;
   border-radius: 8px;
   object-fit: contain;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--bg-surface-warm);
   flex-shrink: 0;
 }
 
@@ -161,16 +164,18 @@
 .mobileStickyTitle {
   font-size: 0.875rem;
   font-weight: 700;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* This is the product's current price — accent-colored, matching the rest
+   of the storefront's price treatment (docs/09 §0). */
 .mobileStickyPrice {
   font-size: 0.9375rem;
   font-weight: 800;
-  color: var(--mp-orange, #ff6b00);
+  color: var(--price);
 }
 
 .mobileStickyBtn {
@@ -178,7 +183,7 @@
   padding: 0 20px !important;
   font-size: 0.875rem !important;
   font-weight: 700 !important;
-  border-radius: 9999px !important;
+  border-radius: var(--radius-full) !important;
   flex-shrink: 0;
 }
 
@@ -195,22 +200,32 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--mp-orange, #ff6b00);
+  color: var(--text-accent);
+}
+
+.authenticityLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-body-sm, 0.875rem);
+  color: var(--text-secondary);
+  margin: -8px 0 0 0;
 }
 
 .title {
+  font-family: var(--font-display);
   font-size: clamp(2.25rem, 4vw, 3.5rem);
   font-weight: 800;
   line-height: 1.06;
   letter-spacing: -0.025em;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
   margin: 0;
   text-wrap: balance;
 }
 
 .description {
   font-size: var(--text-body, 1rem);
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   line-height: 1.55;
   margin: 0;
   max-width: 48ch;
@@ -232,40 +247,21 @@
   gap: var(--space-3);
 }
 
+/* Save/discount indicator — a deeper flame step than the (now always-orange)
+   price itself, so a discount still reads as distinct. */
 .saveBadge {
   padding: 3px 8px;
   font-size: 11px;
   font-weight: 700;
-  color: #ffffff;
-  background: var(--mp-orange, #ff6b00);
+  color: var(--badge-sale-fg);
+  background: var(--badge-sale-bg);
   border-radius: 6px;
   letter-spacing: 0.03em;
 }
 
-.ratingBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--text-primary, #111827);
-  background: rgba(0, 0, 0, 0.04);
-  padding: 4px 10px;
-  border-radius: 9999px;
-}
-
-.starIcon {
-  color: #f59e0b;
-}
-
-.reviewCount {
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-}
-
 .taxNote {
   font-size: var(--text-caption, 0.75rem);
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   margin: -8px 0 0 0;
 }
 
@@ -278,12 +274,12 @@
 
 .selectLabel {
   font-size: var(--text-body-sm, 0.875rem);
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .selectLabel strong {
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
 }
 
 .swatches {
@@ -292,7 +288,8 @@
   gap: var(--space-2, 8px);
 }
 
-.swatch {
+/* Color Dot Swatches */
+.swatchDotBtn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -300,15 +297,18 @@
   background: none;
   padding: 2px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-.swatch:hover {
+.swatchDotBtn:hover {
   transform: scale(1.08);
 }
 
-.swatchActive {
-  border-color: var(--mp-orange, #ff6b00);
+.swatchDotActive {
+  border-color: var(--accent);
 }
 
 .swatchDot {
@@ -316,15 +316,44 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
 }
 
-.swatchText {
-  font-size: 11px;
+/* Text Pill Swatches */
+.swatchTextBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding-inline: 14px;
+  min-width: 44px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  font-size: 0.8125rem;
   font-weight: 600;
-  padding: 2px 8px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 9999px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.swatchTextBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.swatchTextActive {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent) !important;
+}
+
+.swatchLabel {
+  white-space: nowrap;
 }
 
 .sizes {
@@ -338,11 +367,11 @@
   height: 40px;
   padding-inline: 12px;
   border-radius: var(--radius-md, 10px);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #ffffff;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
   cursor: pointer;
   transition:
     border-color var(--dur-fast) var(--ease-out),
@@ -351,14 +380,14 @@
 }
 
 .sizeBtn:hover:not(:disabled) {
-  border-color: var(--mp-orange, #ff6b00);
-  color: var(--mp-orange, #ff6b00);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .sizeActive {
-  border-color: var(--mp-orange, #ff6b00);
-  background: var(--mp-orange, #ff6b00);
-  color: #ffffff !important;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent) !important;
 }
 
 .sizeOos {
@@ -375,16 +404,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #16a34a;
+  color: var(--success);
   font-weight: 600;
 }
 
 .pickSize {
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .oos {
-  color: #dc2626;
+  color: var(--danger);
   font-weight: 600;
 }
 
@@ -399,9 +428,9 @@
 .qtyStepper {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 9999px;
-  background: #ffffff;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
   padding: 4px;
   height: 48px;
 }
@@ -414,13 +443,13 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
   border-radius: 50%;
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 
 .qtyStepper button:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-surface-warm);
 }
 
 .qtyStepper button:disabled {
@@ -438,7 +467,7 @@
 .addBtn {
   flex: 1;
   height: 48px;
-  border-radius: 9999px !important;
+  border-radius: var(--radius-full) !important;
   font-weight: 700 !important;
 }
 
@@ -456,7 +485,7 @@
   gap: 8px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -464,11 +493,11 @@
 }
 
 .utilityBtn:hover {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
 }
 
 .wishActive {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .assurances {
@@ -478,9 +507,9 @@
   list-style: none;
   padding: var(--space-3) 0 0 0;
   margin: 0;
-  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  border-top: 1px dashed var(--border-default);
   font-size: 0.75rem;
-  color: var(--text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .assurances li {
@@ -492,7 +521,7 @@
 /* ── Right Monumental Hero Image Stage ─────────────────── */
 .heroStage {
   position: relative;
-  border-radius: 28px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   height: 78vh;
   min-height: 520px;
@@ -507,21 +536,35 @@
   transition: box-shadow var(--dur-fast, 0.2s) var(--ease-out);
 }
 
+/* Subtle edge fade mixing card borders seamlessly into background color */
+.heroStage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  pointer-events: none;
+  box-shadow: inset 0 0 45px 20px var(--bg-page);
+  z-index: 6;
+}
+
 .heroGalleryContainer {
   width: 100%;
   height: 100%;
   position: relative;
+  mask-image: radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 92% 92% at 50% 50%, black 75%, transparent 100%);
 }
 
 .heroGalleryImage {
   width: 90%;
   height: 90%;
   object-fit: contain;
-  filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.24));
+  filter: drop-shadow(0 24px 36px rgb(5 11 22 / 0.45));
 }
 
+/* Focus ring is always blue, never accent orange — focus ≠ action. */
 .heroStage:focus-visible {
-  box-shadow: 0 0 0 3px var(--mp-orange, #ff6b00);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Reusable Semantic Hero Themes — Clean transparent background */
@@ -533,25 +576,12 @@
   background: transparent;
 }
 
-/* Seamless Left Gradient Mask Fade */
+/* Seamless Subtle 4-Edge Ambient Fade */
 .gradientFadeMask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 180px;
-  background: linear-gradient(
-    to right,
-    var(--bg-page, #fdfbf7) 0%,
-    rgba(253, 251, 247, 0.85) 40%,
-    rgba(253, 251, 247, 0.3) 70%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 5;
+  display: none !important;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .gradientFadeMask {
     display: none;
   }
@@ -563,102 +593,3 @@
   }
 }
 
-/* Dominant Hero Image with Combined Motion (Scale + Slide + Fade) */
-.heroImg {
-  width: 90%;
-  height: 90%;
-  object-fit: contain;
-  filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.24));
-  animation: heroReveal 0.35s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  will-change: transform, opacity;
-}
-
-@keyframes heroReveal {
-  0% {
-    opacity: 0.5;
-    transform: scale(0.96) translateX(16px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateX(0);
-  }
-}
-
-.stageFallback {
-  font-size: 3.5rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-/* Minimal Glass Interaction Dot (NO numeric count) */
-.centerNavIndicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  z-index: 3;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transition:
-    transform var(--dur-fast, 0.2s) var(--ease-out),
-    opacity var(--dur-fast, 0.2s) var(--ease-out);
-}
-
-.indicatorDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--text-primary, #111827);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.indicatorPulse {
-  transform: translate(-50%, -50%) scale(1.35) !important;
-}
-
-.indicatorMuted {
-  opacity: 0.35;
-}
-
-/* Reference Image 2 PDP Info Overlay */
-.heroMetaOverlay {
-  position: absolute;
-  bottom: 28px;
-  right: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  z-index: 5;
-  pointer-events: none;
-  gap: 2px;
-}
-
-.heroMetaCounter {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-}
-
-.heroMetaName {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--text-primary, #111827);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-@media (max-width: 768px) {
-  .heroMetaOverlay {
-    display: none;
-  }
-}

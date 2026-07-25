@@ -3,6 +3,11 @@
    Filtered catalogue layout: sidebar filters + results grid.
    Tokens only — no raw hex outside the token system.
    Mobile-first. Desktop sidebar behaviour preserved exactly.
+
+   Note: the filter panel itself is the shared <FilterPanel> component
+   (components/commerce/FilterPanel.module.css) — this file only owns the
+   page header, the results toolbar/pager, the backdrop, and the wrapper
+   that turns FilterPanel into a mobile bottom sheet vs. a desktop sidebar.
    ══════════════════════════════════════════════════════════ */
 
 /* ── Page header ─────────────────────────────────────────── */
@@ -63,222 +68,6 @@
   cursor: pointer;
 }
 
-/* ══════════════════════════════════════════════════════════
-   FILTER PANEL — shared base styles
-   ══════════════════════════════════════════════════════════ */
-
-/* ── Drag handle (mobile bottom sheet indicator) ─────────── */
-.dragHandle {
-  display: none; /* mobile only */
-  width: 40px;
-  height: 4px;
-  border-radius: var(--radius-full);
-  background: var(--border-strong);
-  opacity: 0.35;
-  margin: var(--space-3) auto var(--space-1);
-  flex-shrink: 0;
-}
-
-/* ── Filter header ───────────────────────────────────────── */
-.filtersHead {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border-default);
-  flex-shrink: 0;
-}
-.filtersTitle {
-  font-size: var(--text-h5);
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  line-height: 1;
-}
-/* Active-filter count badge */
-.filterCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding-inline: 5px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-}
-/* "Clear all" in header — visible on desktop, hidden on mobile (footer handles it) */
-.clear {
-  margin-left: auto;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--text-body-sm);
-  font-weight: 600;
-  color: var(--accent);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.clear:hover {
-  background: var(--accent-soft);
-}
-/* Close button — mobile only, hidden on desktop */
-.closeFilters {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--bg-page);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  color: var(--text-primary);
-  flex-shrink: 0;
-  transition: background var(--dur-fast) var(--ease-out);
-}
-.closeFilters:hover {
-  background: var(--border-default);
-}
-
-/* ── Scrollable filter body ───────────────────────────────── */
-.filtersBody {
-  padding: var(--space-5);
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* ── Filter group ────────────────────────────────────────── */
-.group {
-  padding-bottom: var(--space-6);
-  margin-bottom: var(--space-6);
-  border-bottom: 1px solid var(--border-default);
-}
-.group:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
-.groupTitle {
-  font-size: var(--text-caption);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-4);
-}
-
-/* ── Brand chips ─────────────────────────────────────────── */
-.chipGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  height: 36px;
-  padding-inline: var(--space-4);
-  background: var(--bg-page);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-full);
-  font-size: var(--text-body-sm);
-  font-weight: 500;
-  color: var(--text-primary);
-  cursor: pointer;
-  white-space: nowrap;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-.chip:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.chipActive {
-  background: var(--accent-soft); /* --mp-orange-50 */
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* ── Price filter ────────────────────────────────────────── */
-.priceForm {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.priceRow {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--space-2);
-}
-.priceField {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.priceLabel {
-  font-size: var(--text-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-.priceInput {
-  width: 100%;
-  height: 48px;
-  padding-inline: var(--space-3);
-  background: var(--bg-page);
-  border: 1.5px solid var(--input-border);
-  border-radius: var(--input-radius);
-  color: var(--text-primary);
-  font-size: var(--text-body);
-  transition: border-color var(--dur-fast) var(--ease-out);
-  /* Hide browser spin buttons */
-  -moz-appearance: textfield;
-}
-.priceInput::-webkit-inner-spin-button,
-.priceInput::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-}
-.priceInput:focus {
-  border-color: var(--focus-ring);
-  outline: none;
-}
-.priceSeparator {
-  color: var(--text-secondary);
-  font-weight: 500;
-  /* Align with the vertical centre of the 48px input:
-     48px input - 1.55 line-height × 16px body ≈ 48 - 24.8 = 23.2 / 2 ≈ 12px
-     Use padding-bottom to shift the dash down to the input midline. */
-  padding-bottom: 14px;
-  flex-shrink: 0;
-}
-.priceHint {
-  font-size: var(--text-caption);
-  color: var(--text-secondary);
-}
-/* Desktop-only inline apply button */
-.priceGo {
-  display: none; /* mobile uses the sticky footer "Apply Filters" button */
-}
-
-/* ── Sticky footer (mobile bottom sheet only) ────────────── */
-.filtersFooter {
-  display: none; /* shown in mobile breakpoint below */
-}
-
 /* ── Backdrop ────────────────────────────────────────────── */
 .backdrop {
   position: fixed;
@@ -319,157 +108,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   MOBILE — full-width bottom sheet  (< 900px)
+   FILTER WRAPPER — mobile bottom sheet (< 900px) / desktop
+   sticky sidebar (>= 900px). The single source of truth for
+   this behaviour (a duplicate, out-of-sync copy targeting a
+   never-rendered `.filters` container was removed here).
    ══════════════════════════════════════════════════════════ */
-@media (max-width: 899px) {
-  /* Bottom sheet container */
-  .filters {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: var(--z-drawer);
-    max-height: 92dvh;
-    background: var(--bg-surface);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: 0 -8px 40px rgb(20 28 41 / 0.20);
-    /* Stack header / body / footer vertically */
-    display: flex;
-    flex-direction: column;
-    /* Hidden state — delayed visibility prevents the element receiving
-       focus/pointer events while the exit transition plays out */
-    transform: translateY(100%);
-    visibility: hidden;
-    transition:
-      transform var(--dur-base) var(--ease-out),
-      visibility 0s linear var(--dur-base);
-  }
-  /* Open state */
-  .filtersOpen {
-    transform: translateY(0);
-    visibility: visible;
-    transition:
-      transform var(--dur-base) var(--ease-out),
-      visibility 0s linear 0s; /* visibility immediate on enter */
-  }
-
-  /* Drag handle */
-  .dragHandle {
-    display: block;
-  }
-
-  /* Header */
-  .filtersHead {
-    padding: var(--space-3) var(--space-5) var(--space-4);
-  }
-
-  /* Show the close × button */
-  .closeFilters {
-    display: inline-flex;
-  }
-
-  /* "Clear all" moved to footer on mobile */
-  .clear {
-    display: none;
-  }
-
-  /* Scrollable body between sticky header and footer */
-  .filtersBody {
-    padding: var(--space-5) var(--space-5) var(--space-4);
-    overscroll-behavior: contain;
-    /* Thin, subtle scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
-  }
-  .filtersBody::-webkit-scrollbar {
-    width: 4px;
-  }
-  .filtersBody::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .filtersBody::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-    border-radius: 2px;
-  }
-
-  /* Larger chip touch targets on mobile (≥ 48px) */
-  .chip {
-    height: 48px;
-    padding-inline: var(--space-5);
-    font-size: var(--text-body);
-  }
-
-  /* Group rhythm */
-  .group {
-    padding-bottom: var(--space-5);
-    margin-bottom: var(--space-5);
-  }
-
-  /* Sticky footer */
-  .filtersFooter {
-    display: flex;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-5);
-    /* Respect iOS home indicator */
-    padding-bottom: max(var(--space-5), env(safe-area-inset-bottom, var(--space-4)));
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border-default);
-    flex-shrink: 0;
-  }
-  /* Ghost "Clear All" */
-  .footerClear {
-    flex: 0 0 auto;
-    height: 52px;
-    padding-inline: var(--space-5);
-    background: transparent;
-    border: 1.5px solid var(--border-strong);
-    border-radius: var(--btn-radius);
-    font-family: var(--font-body);
-    font-size: var(--text-body);
-    font-weight: 600;
-    color: var(--text-primary);
-    cursor: pointer;
-    white-space: nowrap;
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-  .footerClear:hover {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-  .footerClear:disabled {
-    opacity: 0.38;
-    cursor: not-allowed;
-  }
-  /* Primary "Apply Filters" */
-  .footerApply {
-    flex: 1;
-    height: 52px;
-    padding-inline: var(--space-5);
-    background: var(--btn-primary-bg);
-    border: none;
-    border-radius: var(--btn-radius);
-    font-family: var(--font-body);
-    font-size: var(--text-body);
-    font-weight: 700;
-    color: var(--btn-primary-fg);
-    cursor: pointer;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-  .footerApply:hover {
-    background: var(--btn-primary-bg-hover);
-  }
-  .footerApply:active {
-    background: var(--accent-pressed);
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   DESKTOP — persistent sidebar (≥ 900px)
-   Behaviour preserved exactly from the original design.
-   ══════════════════════════════════════════════════════════ */
-/* ── Filters Wrapper ──────────────────────────────────────── */
 .filtersWrapper {
   display: block;
 }
@@ -481,13 +124,12 @@
     z-index: 1000;
     max-height: 85vh;
     overflow-y: auto;
-    border-top-left-radius: 28px;
-    border-top-right-radius: 28px;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     transform: translateY(100%);
     visibility: hidden;
     transition: transform var(--dur-base) var(--ease-out), visibility 0s linear 0.3s;
     background: var(--bg-surface);
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
   }
 
   .filtersOpen {

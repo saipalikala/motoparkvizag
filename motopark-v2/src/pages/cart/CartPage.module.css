@@ -20,7 +20,7 @@
   height: 64px;
   border-radius: var(--radius-full);
   background: var(--bg-surface-warm);
-  color: var(--mp-navy-400);
+  color: var(--text-secondary);
 }
 .emptyTitle {
   font-size: var(--text-h4);
@@ -94,7 +94,7 @@
 }
 .thumbFallback {
   font-weight: 700;
-  color: var(--mp-navy-300);
+  color: var(--text-secondary);
 }
 
 .lineMain {

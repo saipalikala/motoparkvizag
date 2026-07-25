@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart, Share2, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Check, ShieldCheck, Truck, RotateCcw, Minus, Plus, Heart, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatINR } from '@/lib/format.js';
 import { useToast } from '@/contexts/ToastContext.jsx';
 import AddToCartButton from '@/components/commerce/AddToCartButton.jsx';
@@ -55,10 +55,18 @@ export default function HeroContent({
       {/* 1. Eyebrow (Brand) */}
       <span className={styles.eyebrow}>{product.brand || 'MotoPark Original'}</span>
 
+      {/* 1b. Brand authenticity line (docs/09 line 274) */}
+      {product.brand && (
+        <p className={styles.authenticityLine}>
+          <ShieldCheck size={14} strokeWidth={2} aria-hidden="true" /> Genuine {product.brand} — Authorized Retailer
+        </p>
+      )}
+
       {/* 2. Editorial Title (Product Name) */}
       <h1 className={styles.title}>{product.name}</h1>
 
-      {/* 3. Price & Rating Row */}
+      {/* 3. Price Row — no rating badge: no real per-product rating data exists
+          yet (docs/18-adjacent audit), so this doesn't fake one. */}
       <div className={styles.priceRatingRow}>
         <div className={styles.priceGroup}>
           <span className={`price price--lg ${discount ? 'price--sale' : ''}`}>
@@ -70,12 +78,6 @@ export default function HeroContent({
               <span className={styles.saveBadge}>{discount}% OFF</span>
             </>
           )}
-        </div>
-
-        <div className={styles.ratingBadge} title="4.8 out of 5 stars">
-          <Star size={14} fill="currentColor" strokeWidth={0} className={styles.starIcon} aria-hidden="true" />
-          <span>4.8</span>
-          <span className={styles.reviewCount}>(48)</span>
         </div>
       </div>
       <p className={styles.taxNote}>Inclusive of all taxes & Pan-India delivery</p>
@@ -95,30 +97,35 @@ export default function HeroContent({
       </div>
 
       {/* 5. Color Selection (Variants) */}
-      {product.variants && product.variants.length > 1 && (
+      {variant?.colorName && variant.colorName.toLowerCase() !== 'default' && (
         <div className={styles.selectBlock}>
           <p className={styles.selectLabel}>
             Colour: <strong>{variant.colorName}</strong>
           </p>
-          <div className={styles.swatches}>
-            {product.variants.map((v, i) => (
-              <button
-                key={`${v.colorName}-${i}`}
-                type="button"
-                className={`${styles.swatch} ${i === colorIdx ? styles.swatchActive : ''}`}
-                onClick={() => selectColor(i)}
-                aria-label={v.colorName}
-                aria-pressed={i === colorIdx}
-                title={v.colorName}
-              >
-                {isHex(v.color) ? (
-                  <span className={styles.swatchDot} style={{ background: v.color }} />
-                ) : (
-                  <span className={styles.swatchText}>{v.colorName}</span>
-                )}
-              </button>
-            ))}
-          </div>
+          {product.variants && product.variants.length > 1 && (
+            <div className={styles.swatches}>
+              {product.variants.map((v, i) => {
+                const hex = isHex(v.color);
+                return (
+                  <button
+                    key={`${v.colorName}-${i}`}
+                    type="button"
+                    className={`${hex ? styles.swatchDotBtn : styles.swatchTextBtn} ${i === colorIdx ? (hex ? styles.swatchDotActive : styles.swatchTextActive) : ''}`}
+                    onClick={() => selectColor(i)}
+                    aria-label={v.colorName}
+                    aria-pressed={i === colorIdx}
+                    title={v.colorName}
+                  >
+                    {hex ? (
+                      <span className={styles.swatchDot} style={{ background: v.color }} />
+                    ) : (
+                      <span className={styles.swatchLabel}>{v.colorName}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

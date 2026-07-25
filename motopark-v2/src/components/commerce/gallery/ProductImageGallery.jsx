@@ -20,6 +20,7 @@ const ProductImageGallery = memo(function ProductImageGallery({
   containerClassName = '',
   imageClassName = '',
   showDots = true,
+  priority = false, // PDP hero stage passes true — likely LCP element, must not lazy-load
   children, // Custom overlays passed by parent (e.g. HeroGradient, status badges)
 }) {
   const imageList = useMemo(() => {
@@ -195,6 +196,7 @@ const ProductImageGallery = memo(function ProductImageGallery({
           animating={animating}
           imageWidth={imageWidth}
           className={imageClassName}
+          priority={priority}
         />
       </div>
 

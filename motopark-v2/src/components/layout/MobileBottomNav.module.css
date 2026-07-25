@@ -6,14 +6,8 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   background: var(--nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-default);
   padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-@supports not (backdrop-filter: blur(12px)) {
-  .bar { background: var(--bg-page); }
 }
 
 @media (min-width: 1024px) {
@@ -34,12 +28,13 @@
   transition: color var(--dur-instant) var(--ease-out);
 }
 
-/* Active = ink + indicator bar. Orange Law self-correction: wayfinding
-   is not action — the accent stays reserved for CTAs/sale. */
+/* Active = orange + indicator bar, matching the desktop nav's active-link
+   treatment (docs/09 §9.4 — observed directly in the Figma reference:
+   colour signals active state, not just weight). */
 .tab { position: relative; }
 
 .active {
-  color: var(--text-primary);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -52,5 +47,5 @@
   width: 24px;
   height: 2px;
   border-radius: 1px;
-  background: var(--text-primary);
+  background: var(--accent);
 }

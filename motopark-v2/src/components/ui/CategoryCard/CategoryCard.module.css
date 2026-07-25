@@ -1,0 +1,123 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 400px; /* Base height for 4:5 aspect ratio feel */
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  transition: transform var(--dur-slow) var(--ease-out), box-shadow var(--dur-slow) var(--ease-out);
+}
+
+.card:hover, .card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  outline: none;
+}
+
+.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: transform var(--dur-slow) var(--ease-out);
+  z-index: 1;
+}
+
+.bgPlaceholder {
+  background-color: var(--bg-surface-warm);
+}
+
+.card:hover .bg {
+  transform: scale(1.05);
+}
+
+/* Gradient overlay to make text readable */
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Content wrapper */
+.content {
+  position: relative;
+  z-index: 3;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  font-size: var(--text-h3);
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.description {
+  font-size: var(--text-body-sm);
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  margin-bottom: var(--space-2);
+  line-height: 1.4;
+}
+
+/* CTA */
+.ctaWrapper {
+  overflow: hidden;
+}
+
+.ctaText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  color: var(--accent);
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform var(--dur-normal) var(--ease-out), opacity var(--dur-normal) var(--ease-out);
+}
+
+.card:hover .ctaText, .card:focus-visible .ctaText {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ctaIcon {
+  transition: transform var(--dur-normal) var(--ease-out);
+}
+
+.card:hover .ctaIcon {
+  transform: translateX(4px);
+}
+
+/* Extensibility Slots */
+.badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 4;
+}
+
+.slotOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}

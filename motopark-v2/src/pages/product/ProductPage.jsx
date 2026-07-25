@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import Reveal from '@/components/ui/Reveal.jsx';
 import { getProduct } from '@/services/products.js';
@@ -32,6 +33,7 @@ export default function ProductPage() {
   const [size, setSize] = useState('');
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [openDetail, setOpenDetail] = useState('specs');
 
   useEffect(() => {
     let alive = true;
@@ -148,7 +150,7 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="container section">
+    <div className="container section" data-product-id={product.id}>
       <Helmet>
         <title>{`${product.name} — ${product.brand} | MotoPark`}</title>
         <meta
@@ -187,19 +189,43 @@ export default function ProductPage() {
         wishToggle={wishToggle}
       />
 
-      {/* ── Lower Details Sections (Unchanged) ── */}
+      {/* ── Lower Details — Specs / Care Accordion ── */}
       {(product.specs || product.care) && (
         <div className={styles.lowerDetails}>
           {product.specs && (
             <section className={styles.detail}>
-              <h2 className={styles.detailTitle}>Specifications</h2>
-              <p className={styles.detailBody}>{product.specs}</p>
+              <button
+                type="button"
+                className={styles.detailHeader}
+                onClick={() => setOpenDetail((d) => (d === 'specs' ? null : 'specs'))}
+                aria-expanded={openDetail === 'specs'}
+              >
+                <h2 className={styles.detailTitle}>Specifications</h2>
+                {openDetail === 'specs' ? (
+                  <ChevronUp size={18} strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
+                )}
+              </button>
+              {openDetail === 'specs' && <p className={styles.detailBody}>{product.specs}</p>}
             </section>
           )}
           {product.care && (
             <section className={styles.detail}>
-              <h2 className={styles.detailTitle}>Care Instructions</h2>
-              <p className={styles.detailBody}>{product.care}</p>
+              <button
+                type="button"
+                className={styles.detailHeader}
+                onClick={() => setOpenDetail((d) => (d === 'care' ? null : 'care'))}
+                aria-expanded={openDetail === 'care'}
+              >
+                <h2 className={styles.detailTitle}>Care Instructions</h2>
+                {openDetail === 'care' ? (
+                  <ChevronUp size={18} strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
+                )}
+              </button>
+              {openDetail === 'care' && <p className={styles.detailBody}>{product.care}</p>}
             </section>
           )}
         </div>

@@ -51,19 +51,19 @@
 .coverFallback {
   font-weight: 700;
   font-size: var(--text-h2);
-  color: var(--mp-navy-300);
+  color: var(--text-secondary);
 }
 .scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgb(20 28 41 / 0.78), rgb(20 28 41 / 0.05) 60%);
+  background: var(--gradient-scrim);
 }
 
 .tileText {
   position: absolute;
   left: var(--space-4);
   bottom: var(--space-4);
-  color: var(--text-inverse);
+  color: var(--text-primary);
 }
 .tileName {
   display: block;
@@ -73,7 +73,7 @@
 }
 .tileCount {
   font-size: var(--text-body-sm);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
 }
 
 .skel {

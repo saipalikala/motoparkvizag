@@ -1,6 +1,7 @@
 /* Button — DS primitive. Tokens only; focus ring is global (base.css). */
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -20,7 +21,35 @@
     background-color var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
     color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
     transform var(--dur-instant) var(--ease-out);
+}
+
+.btn[aria-busy='true'] {
+  cursor: progress;
+  pointer-events: none;
+}
+
+/* Loading: the label keeps its layout box (visibility, not display) so the
+   button's width never shifts when the spinner appears; the spinner overlays
+   centered via the .btn's own position:relative. */
+.labelHidden {
+  visibility: hidden;
+}
+.spinner {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.spinner svg {
+  animation: btn-spin 0.8s linear infinite;
+}
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn:active {
@@ -52,17 +81,19 @@
 .primary {
   background: var(--btn-primary-bg);
   color: var(--btn-primary-fg);
+  box-shadow: var(--shadow-xs);
 }
 .primary:hover {
   background: var(--btn-primary-bg-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .secondary {
-  background: var(--mp-navy-700);
-  color: var(--text-inverse);
+  background: var(--mp-ink-700);
+  color: var(--text-primary);
 }
 .secondary:hover {
-  background: var(--mp-navy-800);
+  background: var(--mp-ink-600);
 }
 
 .outline {
@@ -72,7 +103,7 @@
 }
 .outline:hover {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--mp-ink-100);
 }
 
 .ghost {
@@ -83,18 +114,32 @@
   background: var(--bg-surface-warm);
 }
 
-/* ── On navy surfaces (hero, footer) ───────────────────── */
+.danger {
+  background: var(--danger);
+  color: var(--text-on-accent);
+  box-shadow: var(--shadow-xs);
+}
+.danger:hover {
+  filter: brightness(0.92);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── On photography (hero) — every surface is dark now, so this variant
+   exists only for the one case that still needs it: guaranteed-visible
+   text/border sitting directly over variable, busy photo content, rather
+   than a flat card surface. Ordinary .outline/.ghost already assume a dark
+   surface and no longer need a separate "on navy" reading. ───────────── */
 .onDark.outline {
-  color: var(--text-inverse);
-  border-color: rgb(251 243 231 / 0.45);
+  color: var(--text-primary);
+  border-color: rgb(255 255 255 / 0.45);
 }
 .onDark.outline:hover {
-  background: rgb(251 243 231 / 0.12);
-  border-color: var(--text-inverse);
+  background: rgb(255 255 255 / 0.12);
+  border-color: var(--text-primary);
 }
 .onDark.ghost {
-  color: var(--text-inverse);
+  color: var(--text-primary);
 }
 .onDark.ghost:hover {
-  background: rgb(251 243 231 / 0.12);
+  background: rgb(255 255 255 / 0.12);
 }

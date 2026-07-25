@@ -25,6 +25,7 @@ export default function HeroStage({
         imageWidth={1000}
         containerClassName={styles.heroGalleryContainer}
         imageClassName={styles.heroGalleryImage}
+        priority
       >
         {/* Composition: PDP signature left-to-right gradient fade mask */}
         <HeroGradient />

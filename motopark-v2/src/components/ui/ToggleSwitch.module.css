@@ -12,15 +12,15 @@
 .labelSpan {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary);
 }
 
 .switchTrack {
   position: relative;
   width: 44px;
   height: 24px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-warm);
   border: none;
   cursor: pointer;
   padding: 2px;
@@ -28,7 +28,7 @@
 }
 
 .switchActive {
-  background: var(--mp-orange, #ff6b00);
+  background: var(--accent);
 }
 
 .switchThumb {
@@ -36,8 +36,8 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: var(--mp-ink-0);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--dur-fast, 0.25s) cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
 }

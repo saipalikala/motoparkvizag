@@ -152,9 +152,9 @@ export default function BrandRow() {
 
         {/* Infinite Dual-Row Marquee Stage */}
         <div className={styles.showcaseStage}>
-          {/* Top Row — Auto Scroll RIGHT */}
+          {/* Top Row — Auto Scroll LEFT */}
           <div className={styles.trackRow}>
-            <div className={`${styles.marqueeTrack} ${styles.trackRight}`}>
+            <div className={`${styles.marqueeTrack} ${styles.trackLeft}`}>
               {marqueeRow1.map((b, i) => {
                 const logoSvg = BRAND_LOGOS[b.slug] ?? BRAND_LOGOS.axor;
                 return (
@@ -172,9 +172,9 @@ export default function BrandRow() {
             </div>
           </div>
 
-          {/* Bottom Row — Auto Scroll LEFT */}
+          {/* Bottom Row — Auto Scroll RIGHT */}
           <div className={styles.trackRow}>
-            <div className={`${styles.marqueeTrack} ${styles.trackLeft}`}>
+            <div className={`${styles.marqueeTrack} ${styles.trackRight}`}>
               {marqueeRow2.map((b, i) => {
                 const logoSvg = BRAND_LOGOS[b.slug] ?? BRAND_LOGOS.smk;
                 return (

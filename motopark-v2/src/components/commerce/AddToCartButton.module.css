@@ -9,7 +9,6 @@
   border: none;
   cursor: pointer;
   user-select: none;
-  font-family: inherit;
   font-weight: 700;
   white-space: nowrap;
   outline: none;
@@ -30,34 +29,40 @@
 .variantFull {
   height: 48px;
   padding: 0 24px;
-  border-radius: 9999px;
-  background: var(--mp-orange, #ff6b00);
-  color: #ffffff;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
   font-size: 0.9375rem;
-  box-shadow: 0 4px 16px rgba(255, 107, 0, 0.25);
+  box-shadow: 0 4px 16px rgb(255 106 46 / 0.25);
 }
 
 .variantCompact {
   height: 42px;
   padding: 0 18px;
-  border-radius: 9999px;
-  background: var(--mp-orange, #ff6b00);
-  color: #ffffff;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
   font-size: 0.875rem;
-  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.22);
+  box-shadow: 0 4px 14px rgb(255 106 46 / 0.22);
 }
 
+/* Radii deliberately match ProductCard's .card (--radius-xl) and
+   .mediaWrapper (--radius-lg) — this is the button that floats in the
+   card's own bottom-right corner cutout, so the three move together.
+   Only ever rendered inside ProductCard (variant="icon" is not used
+   elsewhere), so it uses the card's white --product-card-* tokens, not
+   the site-wide dark --bg-surface. */
 .variantIcon {
   position: absolute;
   bottom: 0;
   right: 0;
   width: 60px;
   height: 60px;
-  border-top-left-radius: 22px;
-  border-bottom-right-radius: 28px;
-  background: #ffffff;
-  color: var(--text-primary, #111827);
-  box-shadow: -4px -4px 14px rgba(0, 0, 0, 0.05);
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-xl);
+  background: var(--product-card-bg);
+  color: var(--product-card-text);
+  box-shadow: -4px -4px 14px rgb(5 11 22 / 0.12);
   transition:
     color 200ms cubic-bezier(0.22, 1, 0.36, 1),
     transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -65,11 +70,13 @@
 }
 
 .variantIcon:hover {
-  color: var(--mp-orange, #ff6b00);
+  color: var(--accent);
   transform: scale(1.05);
 }
 
-/* Cutout curves for card icon variant */
+/* Cutout curves for card icon variant — box-shadow must match the card's own
+   background exactly (the "eraser" technique): now the card's white, not
+   an arbitrary value. */
 .variantIcon::before {
   content: '';
   position: absolute;
@@ -79,7 +86,7 @@
   height: 16px;
   background: transparent;
   border-bottom-right-radius: 16px;
-  box-shadow: 6px 6px 0 6px #ffffff;
+  box-shadow: 6px 6px 0 6px var(--product-card-bg);
   pointer-events: none;
 }
 
@@ -92,20 +99,20 @@
   height: 16px;
   background: transparent;
   border-bottom-right-radius: 16px;
-  box-shadow: 6px 6px 0 6px #ffffff;
+  box-shadow: 6px 6px 0 6px var(--product-card-bg);
   pointer-events: none;
 }
 
 /* Success State Interpolation & Soft Success Glow */
 .btnSuccess.variantFull,
 .btnSuccess.variantCompact {
-  background: #10b981 !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+  background: var(--success) !important;
+  color: var(--text-on-accent) !important;
+  box-shadow: 0 6px 20px rgb(47 169 104 / 0.35) !important;
 }
 
 .btnSuccess.variantIcon {
-  color: #10b981;
+  color: var(--success);
 }
 
 /* Icon Container & Persistent ShoppingBag */
@@ -142,14 +149,21 @@
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #10b981;
-  border: 1.5px solid #ffffff;
+  background: var(--success);
+  border: 1.5px solid var(--bg-surface);
   display: grid;
   place-items: center;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+  color: var(--text-on-accent);
+  box-shadow: 0 2px 8px rgb(47 169 104 / 0.45);
   will-change: transform, opacity;
   animation: badgeScaleFade 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Icon variant's own fill is white (--product-card-bg), so its success
+   badge ring must match that, not the dark --bg-surface used by the
+   full/compact variants elsewhere on the (dark) PDP. */
+.variantIcon .successBadge {
+  border-color: var(--product-card-bg);
 }
 
 @keyframes badgeScaleFade {

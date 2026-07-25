@@ -1,54 +1,39 @@
 /* ════════════════════════════════════════════════════════════
-   MotoPark V2 — Premium single-tier Navbar
+   MotoPark V2 — Premium single-tier Navbar (Design System V2)
    ────────────────────────────────────────────────────────────
-   Three visual scroll states on the home route:
-     1. Transparent  — hero overlay, fully see-through.
-     2. Navy glass   — scrolling through the hero.
-     3. Cream frosted— past the hero / all non-home routes.
+   Three scroll states on the home route, one constant palette:
+     1. Transparent — hero overlay, gradient scrim for legibility.
+     2. Dark glass  — transitional, scrolling through the hero.
+     3. Solid       — past the hero / all non-home routes. No
+                      glass here — docs/09 §9.4 reserves glass for
+                      the hero stat strip, not the nav chrome.
+
+   The whole site is one dark surface now, so there's no more
+   light-vs-dark navbar duality: foreground colour (text, wordmark,
+   icons) stays constant across all three states — only the
+   background's opacity/blur changes as you scroll. That collapsed
+   an entire "dark override" block this file used to carry.
 
    Technique: CSS custom properties (--_fg, --_hover, etc.) are
-   declared on .header and overridden per scroll-state class.
-   All child elements use these locals — zero hard-coded colours,
-   no specificity wars.
-
-   Transition targets: background, backdrop-filter, box-shadow,
-   border-color — all composited properties. Zero layout reflow.
+   declared once on .header. All child elements use these locals —
+   zero hard-coded colours, no specificity wars.
    ════════════════════════════════════════════════════════════ */
 
 
 /* ═══════════════════════════════════════════════════════════
-   LOCAL COLOUR TOKENS — light (cream glass) defaults
+   LOCAL COLOUR TOKENS — constant across every scroll state
 ═══════════════════════════════════════════════════════════ */
 .header {
-  /* Foreground colours */
-  --_fg:        var(--text-primary);           /* navy-700          */
-  --_fg-muted:  var(--text-secondary);          /* navy-400          */
-  /* Interactive surface */
-  --_hover:     var(--mp-cream-200);            /* warm cream hover  */
-  /* Wordmark accent */
-  --_em:        var(--mp-navy-500);             /* PARK in medium navy */
-  /* Cart badge */
-  --_badge:     var(--accent);                  /* orange-500        */
-  /* Underline on nav links */
-  --_underline: var(--text-primary);
+  --_fg:        var(--text-primary);
+  --_fg-muted:  var(--text-secondary);
+  --_hover:     var(--nav-hover, rgb(255 255 255 / 0.10));
+  --_em:        var(--accent);                  /* "PARK" emphasis */
+  --_badge:     var(--accent);                   /* cart badge */
 }
 
 
 /* ═══════════════════════════════════════════════════════════
-   DARK STATES — override locals for States 1 & 2 (on hero)
-═══════════════════════════════════════════════════════════ */
-.isHome:not(.pastHero) {
-  --_fg:        var(--text-inverse);            /* cream-50          */
-  --_fg-muted:  rgb(253 251 247 / 0.58);
-  --_hover:     rgb(253 251 247 / 0.09);
-  --_em:        var(--mp-orange-300);           /* brighter on dark  */
-  --_badge:     var(--mp-orange-400);
-  --_underline: rgb(253 251 247 / 0.50);
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   HEADER SHELL — base (all routes, cream-frosted)
+   HEADER SHELL — base (all routes, solid — State 3)
 ═══════════════════════════════════════════════════════════ */
 .header {
   /* position: fixed — out of normal flow, so the Hero's top edge reaches the
@@ -61,14 +46,12 @@
   z-index: var(--z-navbar);
   width: 100%;
 
-  background: var(--nav-bg);                   /* rgb(253 251 247 / 0.92) */
-  backdrop-filter: blur(12px) saturate(1.15);
-  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  background: var(--nav-bg);
   border-bottom: 1px solid var(--border-default);
 
   transition:
     background      var(--dur-base) var(--ease-out),
-    backdrop-filter var(--dur-base) var(--ease-out),
+    backdrop-filter  var(--dur-base) var(--ease-out),
     border-color    var(--dur-fast) var(--ease-out),
     box-shadow      var(--dur-fast) var(--ease-out);
 
@@ -78,11 +61,6 @@
      it to its own layer keeps that recompute from also invalidating/repainting
      neighbouring layers each frame. */
   transform: translateZ(0);
-}
-
-/* Progressively enhanced: if blur is unsupported, use solid page bg. */
-@supports not (backdrop-filter: blur(1px)) {
-  .header { background: var(--bg-page); }
 }
 
 /* Non-home: slight shadow when the page has scrolled. */
@@ -109,10 +87,14 @@
    backdrop-filter is zero so the hero shows through unblurred.
 */
 .isHome:not(.scrolled) {
+  --_fg: var(--mp-ink-0);
+  --_fg-muted: var(--mp-ink-100);
+  --_hover: rgb(255 255 255 / 0.10);
+
   background: linear-gradient(
     to bottom,
-    rgb(20 28 41 / 0.28) 0%,
-    rgb(20 28 41 / 0.04) 100%
+    rgb(5 11 22 / 0.35) 0%,
+    rgb(5 11 22 / 0.04) 100%
   );
   backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(0px);
@@ -121,38 +103,24 @@
 }
 
 
-/* ─── State 2: Navy glass (home, inside hero) ───────────── */
+/* ─── State 2: Dark glass (home, inside hero) ───────────── */
 /*
-   Dark navy tint + strong blur. Provides contrast for white
-   text while the hero image is still visible behind it.
-   Inset highlight adds a top-edge shimmer, subtle luxury cue.
+   Transitional only — never a resting state, so a touch of glass
+   here doesn't conflict with "nav is solid, not glass" (docs/09
+   §9.4 is about the chrome's resting look, not a mid-scroll blend).
 */
 .isHome.scrolled:not(.pastHero) {
-  background: rgb(20 28 41 / 0.58);
-  /* Was blur(24px) saturate(1.5) — this is the state active for the whole
-     first scroll pass through the hero, directly above the hero's own photo
-     track and (on eligible desktops) the WebGL canvas. 14px reads visually
-     near-identical at navbar height while costing meaningfully less to
-     resample every frame; saturate is unchanged since it's cheap relative
-     to blur radius. */
-  backdrop-filter: blur(14px) saturate(1.5);
-  -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  border-bottom-color: rgb(253 251 247 / 0.07);
-  box-shadow:
-    0 8px 40px rgb(20 28 41 / 0.30),
-    inset 0 1px 0 rgb(253 251 247 / 0.06);
+  background: rgb(5 11 22 / 0.58);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom-color: var(--border-subtle);
+  box-shadow: 0 8px 40px rgb(5 11 22 / 0.35);
 }
 
 
-/* ─── State 3: Cream frosted (home, past hero) ──────────── */
-/*
-   Returns to the standard MotoPark cream glass — matching the
-   overall storefront chrome once the hero scrolls away.
-*/
+/* ─── State 3: Solid (home, past hero) — same as base ───── */
 .isHome.pastHero {
   background: var(--nav-bg);
-  backdrop-filter: blur(12px) saturate(1.15);
-  -webkit-backdrop-filter: blur(12px) saturate(1.15);
   border-bottom-color: var(--border-default);
   box-shadow: var(--shadow-sm);
 }
@@ -173,6 +141,8 @@
 
 @media (min-width: 1024px) {
   .inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     height: 68px;
     padding-inline: var(--container-gutter);
     gap: var(--space-3);
@@ -200,8 +170,8 @@
   width: 36px;
   height: 36px;
   object-fit: contain;
-  /* Soft shadow lifts the badge off both light and dark hero backgrounds */
-  filter: drop-shadow(0 1px 6px rgb(20 28 41 / 0.22));
+  /* Soft shadow lifts the badge off the hero photo in State 1 */
+  filter: drop-shadow(0 1px 6px rgb(5 11 22 / 0.35));
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
@@ -214,7 +184,6 @@
   flex-direction: column;
   line-height: 1;
   color: var(--_fg);
-  transition: color var(--dur-base) var(--ease-out);
 }
 
 .wordmarkName {
@@ -230,7 +199,6 @@
   font-style: normal;
   font-weight: 500;
   color: var(--_em);
-  transition: color var(--dur-base) var(--ease-out);
 }
 
 .est {
@@ -240,7 +208,6 @@
   text-transform: uppercase;
   color: var(--_fg-muted);
   margin-top: 3px;
-  transition: color var(--dur-base) var(--ease-out);
 }
 
 
@@ -251,7 +218,6 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-inline: auto;                         /* centre in available space */
 }
 
 .navItem {
@@ -262,7 +228,8 @@
    Top-level nav buttons — underline-only interaction model.
    No background box on hover or active; the orange underline
    and a font-weight step are the sole visual affordances.
-   This matches premium ecommerce nav conventions (Ducati, Apple, Arc).
+   Inactive links stay full --_fg (white) per docs/09 §9.4 — colour
+   signals active state, not opacity/muting.
 */
 .navBtn {
   position: relative;
@@ -292,8 +259,8 @@
 }
 
 /* Orange underline — grows symmetrically from centre (more premium
-   than left-origin). Always orange regardless of navbar dark/light
-   state: var(--accent) is legible on both cream and navy-glass. */
+   than left-origin). Active NavLink recolors the label itself to
+   --accent too (docs/09 §9.4: active = orange, not just underlined). */
 .navBtn::after {
   content: '';
   position: absolute;
@@ -316,8 +283,9 @@
   opacity: 1;
 }
 
-/* Active NavLink — route match → persistent orange underline + bold weight. */
+/* Active NavLink — route match → orange label + persistent underline. */
 .navBtnActive {
+  color: var(--accent);
   font-weight: 700;
 }
 .navBtnActive::after {
@@ -334,6 +302,12 @@
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .utils {
+    justify-self: end;
+  }
 }
 
 .iconBtn {
@@ -377,8 +351,8 @@
   font-size: 9px;
   font-weight: 700;
   line-height: 1;
-  color: var(--text-on-accent, #ffffff);
-  background: var(--_badge, var(--mp-orange, #ff6b00));
+  color: var(--text-on-accent);
+  background: var(--_badge, var(--accent));
   border-radius: var(--radius-full, 9999px);
   will-change: transform;
   transition: background var(--dur-base) var(--ease-out);
@@ -415,11 +389,8 @@
    automatically reflects whichever scroll-state class the
    parent .header carries. No JS, no duplication.
 
-   Background has two rules:
-     · Default (all routes / pastHero): cream glass — matches
-       the navbar's own default/State 3 surface.
-     · .isHome:not(.pastHero): dark navy glass — matches the
-       navbar's State 1 + 2 surface, Hero carousel visible through.
+   Solid surface in every state (docs/09: nav chrome is solid, not
+   glass) — one treatment, no home/non-home branch needed anymore.
 
    Hover: typography only. No background, no pill, no box.
 ═══════════════════════════════════════════════════════════ */
@@ -427,25 +398,10 @@
   position: absolute;
   inset-inline: 0;
   top: 100%;
-  /* Cream glass — matches navbar default / State 3 (pastHero / non-home). */
-  background: var(--nav-bg);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  background: var(--bg-surface);
   border-bottom: 1px solid var(--border-default);
   box-shadow: var(--shadow-lg);
   animation: megaIn var(--dur-fast) var(--ease-out);
-}
-
-/* Dark glass — matches navbar State 1 (transparent/at-rest) and
-   State 2 (scrolled inside hero). Hero carousel shows through. */
-.isHome:not(.pastHero) .mega {
-  background: rgb(20 28 41 / 0.72);
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
-  border-bottom: 1px solid rgb(253 251 247 / 0.08);
-  box-shadow:
-    0 12px 40px rgb(20 28 41 / 0.40),
-    inset 0 1px 0 rgb(253 251 247 / 0.06);
 }
 
 @keyframes megaIn {
@@ -459,16 +415,13 @@
   padding: var(--space-6) var(--container-gutter) var(--space-8);
 }
 
-/* Inherits --_fg-muted from the parent .header — navy-400 on cream,
-   cream-58% on dark. Correct in both states automatically. */
 .megaEyebrow {
   margin: 0 0 var(--space-4);
   font-size: var(--text-caption);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--_fg-muted);
-  transition: color var(--dur-base) var(--ease-out);
+  color: var(--text-tertiary);
 }
 
 .megaGrid {
@@ -480,14 +433,12 @@
   padding: 0;
 }
 
-/* --_fg = navy-700 on cream navbar, cream-50 on dark navbar.
-   Inherits automatically — no hardcoded colour. */
 .megaLink {
   display: block;
   padding: var(--space-2) 0;
   font-size: var(--text-body-sm);
   font-weight: 500;
-  color: var(--_fg);
+  color: var(--text-primary);
   text-decoration: none;
   transition:
     color       var(--dur-instant) var(--ease-out),
@@ -506,7 +457,7 @@
   margin-top: var(--space-4);
   font-size: var(--text-body-sm);
   font-weight: 600;
-  color: var(--_fg-muted);
+  color: var(--text-tertiary);
   text-decoration: none;
   transition:
     color       var(--dur-instant) var(--ease-out),
@@ -533,7 +484,7 @@
   padding: var(--space-2) 0;
   font-size: var(--text-body-sm);
   font-weight: 700;
-  color: var(--_fg);
+  color: var(--text-primary);
   text-decoration: none;
   transition:
     color       var(--dur-instant) var(--ease-out),
@@ -548,9 +499,9 @@
   margin: 0;
   padding: 0;
 }
-/* Model links: muted relative to make titles in both themes. */
+/* Model links: muted relative to make titles. */
 .megaGroupList .megaLink {
-  color: var(--_fg-muted);
+  color: var(--text-tertiary);
   font-weight: 500;
 }
 .megaGroupList .megaLink:hover {
@@ -597,6 +548,14 @@
   min-height: 0;
 }
 
+/* Once open, stop clipping — SearchPreview's live-results dropdown is an
+   absolutely-positioned descendant that needs to extend below the pill.
+   Safe: the grid-template-rows reveal above has already finished by the
+   time a dropdown could appear (that needs a focus/keystroke first). */
+.mobileSearchWrapOpen .mobileSearchInner {
+  overflow: visible;
+}
+
 .mobileSearch {
   display: flex;
   align-items: center;
@@ -607,6 +566,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-full);
+  color: var(--_fg);
   opacity: 0;
   transform: translateY(-8px);
   transition:
@@ -619,13 +579,6 @@
 .mobileSearchWrapOpen .mobileSearch {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* Dark states: translucent search bar on the hero. */
-.isHome:not(.pastHero) .mobileSearch {
-  background: rgb(253 251 247 / 0.10);
-  border-color: rgb(253 251 247 / 0.18);
-  color: var(--_fg);
 }
 
 .mobileSearch:focus-within {
@@ -643,7 +596,6 @@
 
 .mobileSearch input::placeholder {
   color: var(--_fg-muted);
-  transition: color var(--dur-base) var(--ease-out);
 }
 
 .mobileSearch input:focus { outline: none; }
@@ -651,7 +603,6 @@
 .searchIcon {
   color: var(--_fg-muted);
   flex-shrink: 0;
-  transition: color var(--dur-base) var(--ease-out);
 }
 
 @media (min-width: 1024px) {
@@ -692,13 +643,12 @@
   padding: var(--space-4);
   animation: slideIn var(--dur-base) var(--ease-out);
 
-  /* Local tokens matching .header's default (cream/light) state —
-     the drawer sits outside <header> once portaled, so it doesn't
+  /* The drawer sits outside <header> once portaled, so it doesn't
      inherit --_fg/--_em from there. Reusing {brandLockup} verbatim
      needs these defined here for identical logo/wordmark colour. */
   --_fg:       var(--text-primary);
   --_fg-muted: var(--text-secondary);
-  --_em:       var(--mp-navy-500);
+  --_em:       var(--accent);
 }
 
 @keyframes slideIn {
@@ -732,7 +682,7 @@
 }
 
 .drawerClose:hover {
-  background: var(--mp-cream-200);
+  background: var(--bg-surface-warm);
   color: var(--accent);
 }
 

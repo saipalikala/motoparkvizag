@@ -1,22 +1,16 @@
 import { useState } from 'react';
-import { SlidersHorizontal, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { SlidersHorizontal, X, ChevronDown, ChevronUp, Flame, Award, Sparkles } from 'lucide-react';
 import { formatINR } from '@/lib/format.js';
 import PriceSlider from '@/components/ui/PriceSlider.jsx';
 import ToggleSwitch from '@/components/ui/ToggleSwitch.jsx';
 import styles from './FilterPanel.module.css';
 
+// Ids match the real, admin-curated boolean flags the backend filters on
+// (productController.js `flags` param) — no decorative-only chips.
 const QUICK_FILTERS = [
-  { id: 'trending', label: '🔥 Trending' },
-  { id: 'bestseller', label: '⭐ Best Seller' },
-  { id: 'fast_delivery', label: '⚡ Fast Delivery' },
-  { id: 'new_arrival', label: '✨ New Arrival' },
-  { id: 'premium', label: '👑 Premium' },
-];
-
-const RATINGS = [
-  { id: '5star', label: '★★★★★ 5.0' },
-  { id: '4star', label: '★★★★+ 4.0+' },
-  { id: '3star', label: '★★★+ 3.0+' },
+  { id: 'trending', label: 'Trending', Icon: Flame },
+  { id: 'featured', label: 'Best Seller', Icon: Award },
+  { id: 'newArrival', label: 'New Arrival', Icon: Sparkles },
 ];
 
 export default function FilterPanel({
@@ -24,6 +18,10 @@ export default function FilterPanel({
   selectedBrands = [],
   lockedBrand = null,
   toggleBrand,
+  activeFlags = [],
+  toggleFlag,
+  inStockOnly = false,
+  toggleInStock,
   draftMin,
   setDraftMin,
   draftMax,
@@ -36,23 +34,12 @@ export default function FilterPanel({
   isMobile = false,
 }) {
   const [showAllBrands, setShowAllBrands] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [quickActive, setQuickActive] = useState([]);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [fastDeliveryOnly, setFastDeliveryOnly] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(null);
 
   const maxPriceRange = facets.priceRange?.max || 50000;
   const minPriceRange = facets.priceRange?.min || 0;
 
   const currentMin = draftMin !== '' ? Number(draftMin) : minPriceRange;
   const currentMax = draftMax !== '' ? Number(draftMax) : maxPriceRange;
-
-  const toggleQuickFilter = (id) => {
-    setQuickActive((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
 
   const handlePriceSliderChange = ({ min, max }) => {
     setDraftMin(String(min));
@@ -101,21 +88,22 @@ export default function FilterPanel({
         </div>
       </div>
 
-      {/* ── Quick Filters (Primary Chips) ─────────────────────────── */}
+      {/* ── Quick Filters (Primary Chips) — real admin-curated flags ── */}
       <div className={styles.section}>
         <p className={styles.helperText}>Quick curation</p>
         <div className={styles.quickChipsBar}>
-          {QUICK_FILTERS.map((q) => {
-            const active = quickActive.includes(q.id);
+          {QUICK_FILTERS.map(({ id, label, Icon }) => {
+            const active = activeFlags.includes(id);
             return (
               <button
-                key={q.id}
+                key={id}
                 type="button"
                 className={`${styles.primaryChip} ${active ? styles.primaryChipActive : ''}`}
-                onClick={() => toggleQuickFilter(q.id)}
+                onClick={() => toggleFlag(id)}
                 aria-pressed={active}
               >
-                {q.label}
+                <Icon size={14} strokeWidth={2} aria-hidden="true" />
+                {label}
               </button>
             );
           })}
@@ -134,9 +122,34 @@ export default function FilterPanel({
                 onClick={() => toggleBrand(b)}
                 title={`Remove ${b} filter`}
               >
-                {b} <X size={12} aria-hidden="true" />
+                {b} <X size={12} strokeWidth={1.8} aria-hidden="true" />
               </button>
             ))}
+            {activeFlags.map((id) => {
+              const q = QUICK_FILTERS.find((f) => f.id === id);
+              if (!q) return null;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={styles.activeChip}
+                  onClick={() => toggleFlag(id)}
+                  title={`Remove ${q.label} filter`}
+                >
+                  {q.label} <X size={12} strokeWidth={1.8} aria-hidden="true" />
+                </button>
+              );
+            })}
+            {inStockOnly && (
+              <button
+                type="button"
+                className={styles.activeChip}
+                onClick={toggleInStock}
+                title="Remove In Stock Only filter"
+              >
+                In Stock Only <X size={12} strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            )}
             {(draftMin !== '' || draftMax !== '') && (
               <button
                 type="button"
@@ -147,7 +160,7 @@ export default function FilterPanel({
                   applyPriceFilter();
                 }}
               >
-                {formatINR(currentMin)} – {formatINR(currentMax)} <X size={12} aria-hidden="true" />
+                {formatINR(currentMin)} – {formatINR(currentMax)} <X size={12} strokeWidth={1.8} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -210,68 +223,23 @@ export default function FilterPanel({
               onClick={() => setShowAllBrands(!showAllBrands)}
             >
               {showAllBrands ? (
-                <>Show less <ChevronUp size={14} aria-hidden="true" /></>
+                <>Show less <ChevronUp size={14} strokeWidth={1.8} aria-hidden="true" /></>
               ) : (
-                <>+ Show {hiddenBrandsCount} more <ChevronDown size={14} aria-hidden="true" /></>
+                <>+ Show {hiddenBrandsCount} more <ChevronDown size={14} strokeWidth={1.8} aria-hidden="true" /></>
               )}
             </button>
           )}
         </div>
       )}
 
-      {/* ── Advanced Filters Expander (Progressive Disclosure) ──────── */}
+      {/* ── Availability — real inStock filter, no fake dimensions ──── */}
       <div className={styles.section}>
-        <button
-          type="button"
-          className={styles.expanderBtn}
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          aria-expanded={showAdvanced}
-        >
-          <span>Advanced Filters (Ratings & Availability)</span>
-          {showAdvanced ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
-        </button>
-
-        {showAdvanced && (
-          <div className={styles.advancedStream}>
-            {/* Availability Toggles */}
-            <div className={styles.subGroup}>
-              <p className={styles.helperText}>Availability & Delivery</p>
-              <div className={styles.toggleStack}>
-                <ToggleSwitch
-                  label="In Stock Only"
-                  checked={inStockOnly}
-                  onChange={setInStockOnly}
-                />
-                <ToggleSwitch
-                  label="Fast Delivery"
-                  checked={fastDeliveryOnly}
-                  onChange={setFastDeliveryOnly}
-                />
-              </div>
-            </div>
-
-            {/* Ratings Utility Chips */}
-            <div className={styles.subGroup}>
-              <p className={styles.helperText}>Customer Rating</p>
-              <div className={styles.chipGrid}>
-                {RATINGS.map((r) => {
-                  const active = selectedRating === r.id;
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      className={`${styles.utilityChip} ${active ? styles.utilityChipActive : ''}`}
-                      onClick={() => setSelectedRating(active ? null : r.id)}
-                      aria-pressed={active}
-                    >
-                      {r.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+        <div className={styles.sectionHead}>
+          <h3 className={styles.groupTitle}>Availability</h3>
+        </div>
+        <div className={styles.toggleStack}>
+          <ToggleSwitch label="In Stock Only" checked={inStockOnly} onChange={toggleInStock} />
+        </div>
       </div>
 
       {/* ── Floating Control Dock (Sticky Action Footer) ───────────── */}

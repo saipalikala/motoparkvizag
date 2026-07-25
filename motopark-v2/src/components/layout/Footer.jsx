@@ -8,7 +8,9 @@ import logoBadge from '@/assets/images/logo-badge.png';
 import styles from './Footer.module.css';
 
 /**
- * Footer — global chrome (docs/09 footer spec). Navy-800 to bookend the hero.
+ * Footer — global chrome (docs/09-design-system.md V2). Sits on the same
+ * near-black page surface as everything else — no separate "dark moment"
+ * tone to bookend anymore, so the old arc-divider seam is retired here too.
  * Pure presentational layer: config + local state only (no services — layer rule).
  * Newsletter is client-only for now (no subscribe endpoint in V1); when one lands
  * it becomes a features/newsletter form injected here. Social icons render only
@@ -108,7 +110,7 @@ export default function Footer() {
             </label>
             {status === 'done' ? (
               <p className={styles.newsDone} role="status">
-                <Check size={16} strokeWidth={2.2} aria-hidden="true" />
+                <Check size={16} strokeWidth={1.8} aria-hidden="true" />
                 Thanks — we&rsquo;ll be in touch.
               </p>
             ) : (
@@ -128,7 +130,7 @@ export default function Footer() {
                     aria-describedby={status === 'error' ? 'news-err' : undefined}
                   />
                   <Button type="submit" variant="primary" aria-label="Subscribe">
-                    <Send size={16} strokeWidth={2} aria-hidden="true" />
+                    <Send size={16} strokeWidth={1.8} aria-hidden="true" />
                   </Button>
                 </div>
                 {status === 'error' && (

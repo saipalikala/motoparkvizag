@@ -14,9 +14,11 @@ import { useSmoothScroll } from '@/hooks/useSmoothScroll.js';
 import Reveal from '@/components/ui/Reveal.jsx';
 
 /**
- * HomePage — Concept C, built section by section (docs/10 §C-4 hierarchy):
- *   Hero → Categories → Cinematic video showcase → Bestsellers → Trust → Story
- *   → New arrivals → Brands → Footer.
+ * HomePage — Design System V2 (docs/09): Hero → Categories → Cinematic video
+ * showcase → Bestsellers → Trust → Story → New arrivals → Brands → Footer.
+ * Every section sits on the same near-black surface, so there's no more
+ * light/dark seam to bridge between sections (the old arc-divider device is
+ * retired along with it — see docs/09-design-system.md §0).
  * Page-level owns the ONE home-data fetch and feeds each section; sections are
  * presentational. Currently mounted: Hero. Others land as they're built.
  */
@@ -72,7 +74,7 @@ export default function HomePage() {
       <Reveal>
         <TrustBand />
       </Reveal>
-      {/* The one 400ms reveal doctrine allows — the navy story moment. */}
+      {/* The one 400ms reveal doctrine allows — the story moment. */}
       <Reveal duration={400}>
         <StoryBand />
       </Reveal>

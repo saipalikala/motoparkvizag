@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
@@ -37,11 +37,12 @@ function ctaLinkProps(url) {
 }
 
 /**
- * Homepage Hero — Concept C "Cinematic Hybrid" (docs/10 §C-5).
- * Navy-800 cinematic frame over a warm-lit photograph carousel, headline
- * bottom-left, dual CTA. The product ticker that used to live here was
- * removed — Campaigns now own promotional content on the homepage, and the
- * Hero no longer renders product cards.
+ * Homepage Hero — Design System V2 (docs/09). Near-black cinematic frame
+ * over a photo carousel, headline bottom-left, dual CTA, and a glass stat
+ * strip (the one sanctioned glassmorphism context) using real store facts.
+ * The product ticker that used to live here was removed — Campaigns now own
+ * promotional content on the homepage, and the Hero no longer renders
+ * product cards.
  *
  * Headline/subtitle/CTAs are CMS-driven from the carousel's first/primary
  * slide (the same slide the LCP/eager-image treatment already targets) —
@@ -61,7 +62,8 @@ export default function Hero() {
   // false until: eligible AND LCP observed AND the browser went idle.
   const showScene = useCinematicHero();
   const { slides } = useHeroSlides();
-  const primary = slides[0];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeSlide = slides[activeIndex] || slides[0];
 
   return (
     <section className={`${styles.hero} ${styles.heroOffset}`} aria-label="Welcome to MotoPark">
@@ -77,7 +79,7 @@ export default function Hero() {
           own .viewport, HeroScene's own canvas (already self-hiding), and
           .scrim below. */}
       <div className={styles.media}>
-        <HeroCarousel slides={slides} />
+        <HeroCarousel slides={slides} onIndexChange={setActiveIndex} />
         {/* Decorative canvas sits BETWEEN the photo and the scrim. That ordering
             is a contrast guarantee, not a stacking accident: the scrim is painted
             over whatever this renders, so the headline's AA contrast holds no
@@ -98,26 +100,28 @@ export default function Hero() {
             <ShieldCheck size={15} strokeWidth={2} aria-hidden="true" />
             Genuine gear · Est. 2020 · Vizag → Pan-India
           </p>
-          {primary?.headline && (
-            <h1 className={`display ${styles.headline}`}>{primary.headline}</h1>
+          {activeSlide?.headline && (
+            <h1 className={`display ${styles.headline}`}>{activeSlide.headline}</h1>
           )}
-          {primary?.subtitle && <p className={styles.subline}>{primary.subtitle}</p>}
-          {(primary?.primaryCta?.label && primary?.primaryCta?.url) ||
-          (primary?.secondaryCta?.label && primary?.secondaryCta?.url) ? (
+          {activeSlide?.subtitle && <p className={styles.subline}>{activeSlide.subtitle}</p>}
+          {(activeSlide?.primaryCta?.label && activeSlide?.primaryCta?.url) ||
+          (activeSlide?.secondaryCta?.label && activeSlide?.secondaryCta?.url) ? (
             <div className={styles.ctas}>
-              {primary?.primaryCta?.label && primary?.primaryCta?.url && (
-                <Button {...ctaLinkProps(primary.primaryCta.url)} variant="primary" size="lg">
-                  {primary.primaryCta.label}
+              {activeSlide?.primaryCta?.label && activeSlide?.primaryCta?.url && (
+                <Button {...ctaLinkProps(activeSlide.primaryCta.url)} variant="primary" size="lg">
+                  {activeSlide.primaryCta.label}
                   <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
                 </Button>
               )}
-              {primary?.secondaryCta?.label && primary?.secondaryCta?.url && (
-                <Button {...ctaLinkProps(primary.secondaryCta.url)} variant="outline" size="lg" onDark>
-                  {primary.secondaryCta.label}
+              {activeSlide?.secondaryCta?.label && activeSlide?.secondaryCta?.url && (
+                <Button {...ctaLinkProps(activeSlide.secondaryCta.url)} variant="outline" size="lg" onDark>
+                  {activeSlide.secondaryCta.label}
                 </Button>
               )}
             </div>
           ) : null}
+
+
         </div>
       </div>
     </section>

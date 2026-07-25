@@ -1,10 +1,11 @@
-/* Footer — navy-800 global chrome (bookends the hero). Tokens only. */
+/* Footer — near-black global chrome, same surface as the rest of the page. Tokens only. */
 
 .footer {
-  background: var(--bg-inverse-deep);
-  color: var(--mp-cream-200);
+  background: var(--bg-page);
+  color: var(--text-secondary);
   padding-block: var(--space-16) var(--space-8);
   margin-top: var(--space-16);
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* ── Top: brand/newsletter + link columns ── */
@@ -13,7 +14,7 @@
   grid-template-columns: 1fr;
   gap: var(--space-12);
   padding-bottom: var(--space-10);
-  border-bottom: 1px solid rgb(251 243 231 / 0.14);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .brandCol {
@@ -31,7 +32,7 @@
   font-size: var(--text-h4);
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--text-inverse);
+  color: var(--text-primary);
 }
 .wordmark em {
   font-style: normal;
@@ -39,7 +40,7 @@
 }
 .tagline {
   font-size: var(--text-body-sm);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   margin-bottom: var(--space-6);
 }
 
@@ -48,7 +49,7 @@
   display: block;
   font-size: var(--text-body-sm);
   font-weight: 600;
-  color: var(--text-inverse);
+  color: var(--text-primary);
   margin-bottom: var(--space-2);
 }
 .newsRow {
@@ -58,14 +59,14 @@
 .newsInput {
   flex: 1;
   height: var(--btn-height);
-  padding-inline: var(--space-3);
-  background: rgb(251 243 231 / 0.08);
-  border: 1px solid rgb(251 243 231 / 0.28);
-  border-radius: var(--btn-radius);
-  color: var(--text-inverse);
+  padding-inline: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--input-radius);
+  color: var(--text-primary);
 }
 .newsInput::placeholder {
-  color: rgb(251 243 231 / 0.5);
+  color: var(--text-tertiary);
 }
 .newsInput:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -77,7 +78,7 @@
   gap: var(--space-2);
   font-size: var(--text-body-sm);
   font-weight: 600;
-  color: var(--mp-cream-50);
+  color: var(--text-primary);
 }
 .newsDone svg {
   color: var(--success);
@@ -85,7 +86,7 @@
 .newsErr {
   margin-top: var(--space-2);
   font-size: var(--text-caption);
-  color: var(--mp-orange-300);
+  color: var(--mp-flame-300);
 }
 
 .socials {
@@ -100,12 +101,14 @@
   width: 38px;
   height: 38px;
   border-radius: var(--radius-full);
-  color: var(--mp-cream-100);
-  background: rgb(251 243 231 / 0.08);
-  transition: background-color var(--dur-fast) var(--ease-out);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .social:hover {
-  background: rgb(251 243 231 / 0.18);
+  background: var(--bg-surface-warm);
+  color: var(--text-primary);
 }
 
 /* Link columns */
@@ -119,7 +122,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-inverse);
+  color: var(--text-primary);
   margin-bottom: var(--space-4);
 }
 .col ul {
@@ -130,12 +133,12 @@
 }
 .col a {
   font-size: var(--text-body-sm);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease-out);
 }
 .col a:hover {
-  color: var(--text-inverse);
+  color: var(--accent);
 }
 
 /* ── Trust + payments row ── */
@@ -146,17 +149,17 @@
   justify-content: space-between;
   gap: var(--space-4);
   padding-block: var(--space-6);
-  border-bottom: 1px solid rgb(251 243 231 / 0.14);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .trustItem {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-body-sm);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
 }
 .trustItem svg {
-  color: var(--mp-orange-300);
+  color: var(--mp-flame-300);
 }
 .pay {
   display: flex;
@@ -166,10 +169,10 @@
 .payBadge {
   font-size: var(--text-caption);
   font-weight: 600;
-  color: var(--mp-cream-100);
+  color: var(--text-secondary);
   padding: var(--space-1) var(--space-3);
-  background: rgb(251 243 231 / 0.08);
-  border: 1px solid rgb(251 243 231 / 0.18);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
 }
 
@@ -184,7 +187,7 @@
 }
 .copy {
   font-size: var(--text-caption);
-  color: rgb(251 243 231 / 0.6);
+  color: var(--mp-ink-300);
 }
 .legal {
   list-style: none;
@@ -194,11 +197,11 @@
 }
 .legal a {
   font-size: var(--text-caption);
-  color: var(--mp-cream-200);
+  color: var(--text-secondary);
   text-decoration: none;
 }
 .legal a:hover {
-  color: var(--text-inverse);
+  color: var(--accent);
 }
 
 /* ── Desktop ── */

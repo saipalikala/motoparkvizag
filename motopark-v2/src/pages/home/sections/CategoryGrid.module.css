@@ -3,10 +3,6 @@
 .surface {
   position: relative;
   background: var(--bg-page);
-  /* Subconscious ambient shadow from the dark Hero.
-     Custom RGB value (Navy-800 equivalent) ensures the shadow is tonally authentic to the Hero casting it,
-     as global shadow tokens do not include full-bleed inset depth logic. */
-  box-shadow: inset 0 20px 40px -20px rgb(20 28 41 / 0.08);
 }
 
 .wrap {
@@ -70,7 +66,7 @@
   height: 56px;
   border-radius: var(--radius-full);
   background: var(--bg-surface-warm);
-  color: var(--mp-navy-600);
+  color: var(--text-secondary);
   transition:
     background-color var(--dur-slow) var(--ease-out),
     color var(--dur-slow) var(--ease-out);
@@ -85,19 +81,20 @@
   font-weight: 600;
 }
 
-/* "All gear" tile: warm accent treatment to close the grid */
+/* "All gear" tile: solid accent treatment to close the grid — the one
+   deliberate bold moment per docs/09 §3.4's accent-scarcity rule. */
 .allTile {
-  background: var(--bg-inverse-deep);
-  border-color: var(--bg-inverse-deep);
-  color: var(--text-inverse);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
 }
 .allTile .iconWrap {
-  background: rgb(251 243 231 / 0.12);
-  color: var(--mp-cream-100);
+  background: rgb(255 255 255 / 0.18);
+  color: var(--text-on-accent);
 }
 .allTile:hover .iconWrap {
-  background: var(--accent);
-  color: var(--text-on-accent);
+  background: var(--text-on-accent);
+  color: var(--accent);
 }
 
 .skel {

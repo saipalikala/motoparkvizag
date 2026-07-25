@@ -71,7 +71,12 @@ export default function ProductListing({
   const selectedBrands = lockedBrand ? [] : urlBrand ? urlBrand.split(',') : [];
   const minPrice   = searchParams.get('min') || '';
   const maxPrice   = searchParams.get('max') || '';
-  const hasFilters = Boolean((!lockedBrand && urlBrand) || minPrice || maxPrice);
+  const urlFlags   = searchParams.get('flags') || '';
+  const activeFlags = urlFlags ? urlFlags.split(',') : [];
+  const inStockOnly = searchParams.get('inStock') === '1';
+  const hasFilters = Boolean(
+    (!lockedBrand && urlBrand) || minPrice || maxPrice || urlFlags || inStockOnly,
+  );
 
   // ── Draft price state ──────────────────────────────────────────────────────
   // Mobile: price is committed only when "Apply Filters" is tapped.
@@ -118,12 +123,13 @@ export default function ProductListing({
       search,
       bike,
       bikeMake,
+      flags: urlFlags,
     })
       .then((d) => alive && setData(d))
       .catch(() => alive && setData({ products: [], total: 0, page: 1, pages: 0 }))
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
-  }, [page, sort, brandParam, minPrice, maxPrice, category, search, bike, bikeMake]);
+  }, [page, sort, brandParam, minPrice, maxPrice, category, search, bike, bikeMake, urlFlags]);
 
   // ── URL patch helper ───────────────────────────────────────────────────────
   /** Patch URL params; any change (except page itself) resets to page 1. */
@@ -150,6 +156,20 @@ export default function ProductListing({
     patch({ brand: [...set].join(',') });
   };
 
+  const toggleFlag = (id) => {
+    const set = new Set(activeFlags);
+    if (set.has(id)) {
+      set.delete(id);
+    } else {
+      set.add(id);
+    }
+    patch({ flags: [...set].join(',') });
+  };
+
+  const toggleInStock = () => {
+    patch({ inStock: inStockOnly ? '' : '1' });
+  };
+
   /** Apply price using the current draft values (desktop form + mobile footer). */
   const applyPriceFilter = () => {
     patch({ min: draftMin.trim(), max: draftMax.trim() });
@@ -157,7 +177,7 @@ export default function ProductListing({
 
   const clearAll = () => {
     const next = new URLSearchParams(searchParams);
-    ['brand', 'min', 'max', 'page'].forEach((k) => next.delete(k));
+    ['brand', 'min', 'max', 'page', 'flags', 'inStock'].forEach((k) => next.delete(k));
     setSearchParams(next); // keeps sort, q, and anything the page owns
     // Reset drafts immediately for instant UI feedback (URL sync via useEffect
     // arrives one render later when URL params propagate).
@@ -168,9 +188,17 @@ export default function ProductListing({
   // Count of applied filter dimensions — drives the count badge in the header
   // and the "Apply (n)" label on the mobile footer button.
   const activeFilterCount =
-    selectedBrands.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0);
+    selectedBrands.length + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) +
+    activeFlags.length + (inStockOnly ? 1 : 0);
 
-  const count = data.total;
+  // In Stock Only is a pure client-side refinement over the already-fetched
+  // page (every product already carries a resolved `inStock` boolean) rather
+  // than a server param — avoids depending on backend support that was never
+  // confirmed for this one dimension.
+  const visibleProducts = inStockOnly
+    ? data.products.filter((p) => p.inStock !== false)
+    : data.products;
+  const count = inStockOnly ? visibleProducts.length : data.total;
 
   return (
     <div className="container section">
@@ -209,6 +237,10 @@ export default function ProductListing({
             selectedBrands={selectedBrands}
             lockedBrand={lockedBrand}
             toggleBrand={toggleBrand}
+            activeFlags={activeFlags}
+            toggleFlag={toggleFlag}
+            inStockOnly={inStockOnly}
+            toggleInStock={toggleInStock}
             draftMin={draftMin}
             setDraftMin={setDraftMin}
             draftMax={draftMax}
@@ -260,7 +292,7 @@ export default function ProductListing({
               )}
             </div>
           ) : (
-            <ProductGrid products={data.products} loading={loading} count={PAGE_SIZE} />
+            <ProductGrid products={visibleProducts} loading={loading} count={PAGE_SIZE} />
           )}
 
           {data.pages > 1 && (

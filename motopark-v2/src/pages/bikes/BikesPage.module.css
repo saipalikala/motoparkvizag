@@ -54,7 +54,7 @@
   height: 56px;
   border-radius: var(--radius-full);
   background: var(--bg-surface-warm);
-  color: var(--mp-navy-600);
+  color: var(--text-secondary);
   transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 .tile:hover .iconWrap {

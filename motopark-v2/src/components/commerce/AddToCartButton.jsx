@@ -43,7 +43,7 @@ const AddToCartButton = memo(function AddToCartButton({
     >
       {/* Persistent ShoppingBag icon with micro-motion & top-right success badge */}
       <span className={`${styles.iconWrap} ${added ? styles.bagPulse : ''}`}>
-        <ShoppingBag size={iconSize} strokeWidth={2} aria-hidden="true" />
+        <ShoppingBag size={iconSize} strokeWidth={1.8} aria-hidden="true" />
         {added && (
           <span className={styles.successBadge} aria-hidden="true">
             <Check size={8} strokeWidth={3} className={styles.checkIcon} />

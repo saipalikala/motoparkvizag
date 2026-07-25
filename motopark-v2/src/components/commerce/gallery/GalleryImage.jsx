@@ -14,6 +14,7 @@ const GalleryImage = memo(function GalleryImage({
   width = '320',
   height = '400',
   className = '',
+  priority = false,
 }) {
   const rawSrc = typeof src === 'object' && src !== null ? src.url || src.src || src.path : src;
   const imageAlt = typeof src === 'object' && src !== null && src.alt ? src.alt : alt;
@@ -38,7 +39,8 @@ const GalleryImage = memo(function GalleryImage({
       key={rawSrc}
       src={url}
       alt={imageAlt}
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
       decoding="async"
       width={width}
       height={height}
