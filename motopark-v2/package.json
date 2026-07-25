@@ -17,7 +17,7 @@
     "images": "node scripts/generate-hero-images.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.2.9",
+    "@fontsource-variable/outfit": "^5.3.0",
     "axios": "^1.18.1",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.42.2",
@@ -37,6 +37,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "cross-env": "^10.1.0",
     "oxlint": "^1.71.0",
+    "playwright": "^1.62.0",
     "prettier": "^3.9.4",
     "rollup-plugin-visualizer": "^7.0.1",
     "sharp": "^0.35.3",

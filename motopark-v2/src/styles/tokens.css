@@ -1,97 +1,122 @@
 /* ════════════════════════════════════════════════════════════
-   MotoPark V2 — Design Tokens (docs/09-design-system.md §2–§8)
+   MotoPark V2 — Design Tokens (docs/09-design-system.md, V2)
    Three layers: primitive → semantic → component.
    RULE: components NEVER use raw hex — semantic/component vars only.
+   Dark-only system — there is no light theme / no [data-theme] toggle.
    ════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── PRIMITIVES ─────────────────────────────────────────── */
-  /* Sunset Orange (brand action) */
-  --mp-orange-50: #fef2ec;
-  --mp-orange-100: #fce0d2;
-  --mp-orange-200: #f8bfa6;
-  --mp-orange-300: #f39c6b;
-  --mp-orange-400: #ee7845;
-  --mp-orange-500: #e8532e;
-  --mp-orange-600: #d2431f;
-  --mp-orange-700: #b03518;
-  --mp-orange-800: #8c2a14;
-  --mp-orange-900: #6b2010;
+  /* Ink — dark-navy neutral scale, re-anchored on MotoPark V1's own footer
+     background (src/components/Footer/Footer.css, motopark-web repo):
+       background: radial-gradient(circle at center,
+         rgba(13,36,78,0.45) 0%, rgba(7,18,38,0.95) 60%, #050b16 100%);
+     No CSS variable backed it in V1 — #050b16 and #071226 are literal hexes,
+     reused identically in BrandShowcase.css, making them V1's de facto dark
+     foundation. --mp-ink-950 (bg-page) takes #050b16 (the gradient's outer/
+     base stop) and --mp-ink-900 takes #071226 (the middle stop) verbatim;
+     every other step (850 down to 0) is derived from those two real anchors
+     to build the tonal ladder V1 never needed (background → card → elevated
+     → text-on-dark). A prior pass tried a lighter, more saturated navy
+     (#212841, from the logo) here and it read as too blue/heavy across
+     large surfaces — this V1-sourced anchor is much closer to the original
+     near-black in luminance (verified) while still being genuinely
+     navy-tinted, not neutral gray. Token NAMES are unchanged from before,
+     only values — every consumer is already token-based and cascades
+     automatically. */
+  --mp-ink-0: #ffffff;
+  --mp-ink-50: #e8ecf4;
+  --mp-ink-100: #c6cfe3;
+  --mp-ink-200: #9cacce;
+  --mp-ink-300: #6e82b4;
+  --mp-ink-400: #47608c;
+  --mp-ink-500: #2e4a78;
+  --mp-ink-600: #1c3864;
+  --mp-ink-700: #142a4e;
+  --mp-ink-800: #0e1f3c;
+  --mp-ink-850: #0a1830;
+  --mp-ink-900: #071226;
+  --mp-ink-950: #050b16;
 
-  /* Navy Ink (trust / protection) */
-  --mp-navy-50: #f4f6f9;
-  --mp-navy-100: #e4e9f0;
-  --mp-navy-200: #c5cedc;
-  --mp-navy-300: #9aa8bd;
-  --mp-navy-400: #5c6e82;
-  --mp-navy-500: #3a4a61;
-  --mp-navy-600: #2c3a50;
-  --mp-navy-700: #243046;
-  --mp-navy-800: #1b2536;
-  --mp-navy-900: #141c29;
+  /* Flame — the single accent hue (CTAs, price, rating, active-nav, links) */
+  --mp-flame-100: #ffe1cc;
+  --mp-flame-300: #ff9d5c;
+  --mp-flame-400: #ff8347;
+  --mp-flame-500: #ff6a2e;
+  --mp-flame-600: #ec5a22;
+  --mp-flame-700: #c6431a;
+  --mp-flame-900: #6e2610;
 
-  /* Warm neutrals (cream family) */
-  --mp-cream-50: #fdfbf7;
-  --mp-cream-100: #fbf3e7;
-  --mp-cream-200: #f3e8d8;
-  --mp-cream-300: #e7d8c3;
-  --mp-neutral-0: #ffffff;
-  --mp-neutral-200: #ede9e3;
-  --mp-neutral-400: #b9b2a7;
+  /* Ember — rare cool navy-indigo, reserved for the one "clubhouse" CTA
+     surface (newsletter/riders-club card). Not a general theme color. */
+  --mp-ember-700: #242238;
+  --mp-ember-800: #1b1a2c;
+  --mp-ember-900: #14131f;
 
-  /* Semantic hues (warm-tuned) */
-  --mp-green-500: #1f7a4d;
-  --mp-green-100: #e3f2ea;
-  --mp-amber-500: #b45d0e;
-  --mp-amber-100: #fbeedc;
-  --mp-red-500: #c03530;
-  --mp-red-100: #fae4e3;
-  --mp-blue-500: #2b5f8f;
-  --mp-blue-100: #e3edf5;
+  /* Functional hues — no error/success/warning/info state appears in the
+     Figma reference; tuned to read clearly against near-black rather than
+     reusing the old cream-tuned muted values. */
+  --mp-success-500: #2fa968;
+  --mp-warning-500: #f5a623;
+  --mp-danger-500: #e5484d;
+  --mp-info-500: #4c9fe8;
 
-  /* ── SEMANTIC (light theme — launch default) ────────────── */
-  --bg-page: var(--mp-cream-50);
-  --bg-surface: var(--mp-neutral-0);
-  --bg-surface-warm: var(--mp-cream-100);
-  --bg-inverse: var(--mp-navy-700);
-  --bg-inverse-deep: var(--mp-navy-800);
+  /* ── SEMANTIC ───────────────────────────────────────────── */
+  --bg-page: var(--mp-ink-950);
+  --bg-surface: var(--mp-ink-800);        /* card/surface fill */
+  --bg-surface-warm: var(--mp-ink-700);   /* elevated / hover surface */
 
-  --text-primary: var(--mp-navy-700);
-  --text-secondary: var(--mp-navy-400);
-  --text-inverse: var(--mp-cream-50);
+  /* The rare content-adaptive light-surface exception (docs/09 §9.3) —
+     ONLY for a card whose own photography is light-toned. Not a general
+     "dark moment on a light site" token the way --bg-inverse used to be:
+     the whole site is dark now, so that duality no longer exists. Every
+     old --bg-inverse/--text-inverse consumer was migrated to either the
+     ordinary surface tokens above or --accent/--text-on-accent for
+     active/selected state, per what it actually meant in context. */
+  --bg-surface-light: var(--mp-ink-0);
+  --text-on-light: var(--mp-ink-950);
+
+  --text-primary: var(--mp-ink-0);
+  --text-secondary: var(--mp-ink-100);
+  --text-tertiary: var(--mp-ink-200);     /* meta/labels/placeholder */
   --text-on-accent: #ffffff;
 
-  --accent: var(--mp-orange-500);
-  --accent-hover: var(--mp-orange-600);
-  --accent-pressed: var(--mp-orange-700);
-  --accent-soft: var(--mp-orange-50);
+  --accent: var(--mp-flame-500);
+  --accent-hover: var(--mp-flame-600);
+  --accent-pressed: var(--mp-flame-700);
+  --accent-soft: var(--mp-flame-100);
 
   /* Semantic Accent Extensions (Surfaces, Borders, Text, Shadow) */
-  --bg-surface-accent: var(--mp-orange-50);
-  --bg-surface-accent-hover: var(--mp-orange-100);
-  --border-accent: var(--mp-orange-100);
-  --text-accent: var(--mp-orange-600);
-  --shadow-accent: 0 2px 8px rgb(210 67 31 / 0.08);
+  --bg-surface-accent: rgb(255 106 46 / 0.14);
+  --bg-surface-accent-hover: rgb(255 106 46 / 0.22);
+  --border-accent: var(--mp-flame-600);
+  --text-accent: var(--mp-flame-300);
+  --shadow-accent: 0 2px 8px rgb(255 106 46 / 0.18);
 
-  --border-default: var(--mp-neutral-200);
-  --border-strong: var(--mp-navy-200);
-  --focus-ring: var(--mp-blue-500); /* focus ≠ action: never orange */
+  --border-subtle: rgb(255 255 255 / 0.08);
+  --border-default: rgb(255 255 255 / 0.12);
+  --border-strong: rgb(255 255 255 / 0.20);
+  --focus-ring: var(--mp-info-500); /* focus ≠ action: never orange */
 
-  --success: var(--mp-green-500);
-  --success-soft: var(--mp-green-100);
-  --warning: var(--mp-amber-500);
-  --warning-soft: var(--mp-amber-100);
-  --danger: var(--mp-red-500);
-  --danger-soft: var(--mp-red-100);
-  --info: var(--mp-blue-500);
-  --info-soft: var(--mp-blue-100);
+  --success: var(--mp-success-500);
+  --success-soft: rgb(47 169 104 / 0.15);
+  --warning: var(--mp-warning-500);
+  --warning-soft: rgb(245 166 35 / 0.15);
+  --danger: var(--mp-danger-500);
+  --danger-soft: rgb(229 72 77 / 0.15);
+  --info: var(--mp-info-500);
+  --info-soft: rgb(76 159 232 / 0.15);
 
-  /* Commerce Law 2: normal price = ink; ONLY sale/discount = orange */
-  --price: var(--mp-navy-700);
-  --price-sale: var(--mp-orange-700);
-  --price-mrp: var(--mp-navy-400);
+  /* Price — overrides old "ink-only, orange-only-on-sale" rule: the Figma
+     reference shows every price in the accent color, no exceptions
+     observed. Discount state (not observed) reads via --price-mrp
+     (struck-through) sitting next to the still-orange price, not via a
+     separate price color. */
+  --price: var(--mp-flame-500);
+  --price-sale: var(--mp-flame-500);
+  --price-mrp: var(--text-tertiary);
 
-  --overlay: rgb(20 28 41 / 0.55);
+  --overlay: rgb(5 11 22 / 0.55);
 
   /* ── SPACING (4px base) ─────────────────────────────────── */
   --space-1: 4px;
@@ -103,6 +128,7 @@
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-14: 56px;
   --space-16: 64px;
   --space-20: 80px;
   --space-24: 96px;
@@ -119,19 +145,33 @@
   --checkout-max: 560px;
 
   /* ── RADIUS ─────────────────────────────────────────────── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 999px;
 
-  /* ── SHADOWS (navy-tinted, never black) ─────────────────── */
-  --shadow-xs: 0 1px 2px rgb(36 48 70 / 0.06);
-  --shadow-sm: 0 2px 8px rgb(36 48 70 / 0.08);
-  --shadow-md: 0 6px 20px rgb(36 48 70 / 0.12);
-  --shadow-lg: 0 16px 40px rgb(36 48 70 / 0.18);
+  /* ── SHADOWS (navy-tinted from the same V1-sourced anchor, never flat black — flat dark UI, shadows are a light touch) ── */
+  --shadow-xs: 0 1px 2px rgb(5 11 22 / 0.24);
+  --shadow-sm: 0 4px 12px rgb(5 11 22 / 0.32);
+  --shadow-md: 0 12px 32px rgb(5 11 22 / 0.40);
+  --shadow-lg: 0 20px 48px rgb(5 11 22 / 0.48);
+  --shadow-glow-flame: 0 0 48px rgb(255 106 46 / 0.25); /* decorative ambient glow only — never on ordinary buttons */
 
-  /* ── MOTION (approved doctrine, docs/10) ────────────────── */
+  /* ── GLASSMORPHISM — scoped to ONE context: content floating directly
+     over a hero photo (stat strip). NOT the general card system. ────── */
+  --glass-bg: rgb(5 11 22 / 0.55);
+  --glass-blur: blur(20px);
+  --glass-border: rgb(255 255 255 / 0.08);
+
+  /* ── GRADIENTS ──────────────────────────────────────────── */
+  /* Scrim — bottom-anchored legibility gradient on every photo card/banner */
+  --gradient-scrim: linear-gradient(to top, rgb(5 11 22 / 0.85) 0%, rgb(5 11 22 / 0) 55%);
+  /* Ambient glow — soft decorative bloom behind hero/CTA sections, never
+     attached to a specific control */
+  --gradient-glow-flame: radial-gradient(circle, rgb(255 106 46 / 0.20) 0%, transparent 70%);
+
+  /* ── MOTION (approved doctrine, docs/10 — unchanged, orthogonal to palette) */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* the MotoPark glide */
   --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-instant: 120ms;
@@ -140,50 +180,88 @@
   --dur-slow: 400ms;
   --dur-cinematic: 600ms; /* hero choreography only, once per session */
 
-  /* ── TYPOGRAPHY ─────────────────────────────────────────── */
-  --font-body: 'Geist Variable', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Sakana', 'Geist Variable', system-ui, sans-serif; /* display-only, ≥26px */
+  /* ── TYPOGRAPHY (Outfit & Sakana) ────────────────────────────── */
+  --font-body: 'Outfit Variable', 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-display: 'Sakana', 'Outfit Variable', system-ui, sans-serif; /* display-only, ≥26px */
 
   /* Fluid type scale (mobile → desktop, DS §3.2) */
-  --text-display: clamp(2.5rem, 1.6rem + 4vw, 4.5rem); /* 40→72 */
-  --text-h1: clamp(2rem, 1.55rem + 2vw, 3rem); /* 32→48 */
-  --text-h2: clamp(1.625rem, 1.35rem + 1.25vw, 2.25rem); /* 26→36 */
-  --text-h3: clamp(1.375rem, 1.2rem + 0.75vw, 1.75rem); /* 22→28 */
-  --text-h4: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem); /* 18→22 */
-  --text-h5: clamp(1rem, 0.96rem + 0.25vw, 1.125rem); /* 16→18 */
-  --text-h6: clamp(0.875rem, 0.85rem + 0.2vw, 1rem); /* 14→16, caps */
-  --text-body-lg: clamp(1.0625rem, 1.04rem + 0.15vw, 1.125rem);
-  --text-body: 1rem; /* 16px floor — Commerce Law 7 */
-  --text-body-sm: 0.875rem;
+  --text-display-xl: clamp(3.5rem, 2.5rem + 5vw, 5.5rem);
+  --text-display-l: clamp(2.5rem, 1.6rem + 4vw, 4.5rem);
+  --text-heading-xl: clamp(2rem, 1.55rem + 2vw, 3rem); /* 32→48 */
+  --text-heading-l: clamp(1.625rem, 1.35rem + 1.25vw, 2.25rem); /* 26→36 */
+  --text-heading-m: clamp(1.375rem, 1.2rem + 0.75vw, 1.75rem); /* 22→28 */
+  --text-heading-s: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem); /* 18→22 */
+  
+  --text-body-l: clamp(1.0625rem, 1.04rem + 0.15vw, 1.125rem);
+  --text-body-m: 1rem; /* 16px floor */
+  --text-body-s: 0.875rem;
   --text-caption: 0.75rem;
+  --text-overline: 0.75rem;
+  
+  /* Legacy aliases for backwards compatibility while migrating */
+  --text-display: var(--text-display-l);
+  --text-h1: var(--text-heading-xl);
+  --text-h2: var(--text-heading-l);
+  --text-h3: var(--text-heading-m);
+  --text-h4: var(--text-heading-s);
+  --text-h5: var(--text-heading-s);
+  --text-h6: var(--text-body-s);
+  --text-body-lg: var(--text-body-l);
+  --text-body: var(--text-body-m);
+  
   --text-price-lg: clamp(1.5rem, 1.35rem + 0.6vw, 1.75rem); /* 24→28 */
   --text-price: clamp(1.125rem, 1.08rem + 0.3vw, 1.25rem); /* 18→20 */
 
   /* ── COMPONENT TOKENS ───────────────────────────────────── */
-  --btn-primary-bg: var(--mp-orange-600); /* AA at 16px text */
-  --btn-primary-bg-hover: var(--mp-orange-700);
+  /* Button fill uses flame-600/700, not the flame-500 primitive: white
+     button labels on flame-500 measure ~2.9:1 contrast (fails WCAG AA);
+     flame-600 (~3.5:1) keeps the vivid read while staying defensible for
+     large/bold button text. flame-500 itself is reserved for text-on-dark
+     use (price, links, rating) where its contrast against --bg-page is
+     ~6.9:1 — excellent. */
+  --btn-primary-bg: var(--mp-flame-600);
+  --btn-primary-bg-hover: var(--mp-flame-700);
   --btn-primary-fg: var(--text-on-accent);
   --btn-height: 44px; /* touch target floor */
-  --btn-radius: var(--radius-md);
+  --btn-radius: var(--radius-full);
 
   --card-bg: var(--bg-surface);
-  --card-border: var(--border-default);
+  --card-border: var(--border-subtle);
   --card-radius: var(--radius-lg);
 
   --input-height: 48px;
   --input-border: var(--border-default);
   --input-border-focus: var(--focus-ring);
-  --input-radius: var(--radius-md);
+  --input-radius: var(--radius-full); /* single-line fields; relax to --radius-lg for textarea */
 
-  --nav-bg: rgb(253 251 247 / 0.92); /* cream glass — the ONE sanctioned glass */
+  --nav-bg: var(--mp-ink-950); /* solid — glass is reserved for the hero stat strip only */
+  --nav-bg-transparent: rgb(5 11 22 / 0); /* hero-overlay start state before scroll */
   --nav-height: 64px;
   --nav-height-mobile: 56px;
 
-  --badge-sale-bg: var(--mp-orange-700);
+  --badge-sale-bg: var(--mp-flame-700);
   --badge-sale-fg: #ffffff;
 
-  --skeleton-base: var(--mp-neutral-200);
-  --skeleton-shine: var(--mp-cream-50);
+  /* ── PRODUCT CARD — light-surface exception (2026-07-25 direction) ──
+     ProductCard alone flips to a white surface so products pop against
+     the dark storefront foundation everywhere it renders (Home, Store,
+     Category, Brand, Collections, Search, Wishlist, Related). Every
+     other surface in the app stays on the dark --bg-* scale above. */
+  --product-card-bg: var(--mp-ink-0); /* pure white */
+  --product-card-text: var(--mp-ink-950); /* title, on white */
+  --product-card-text-secondary: rgb(5 11 22 / 0.62); /* description */
+  --product-card-text-tertiary: rgb(5 11 22 / 0.42); /* struck-through MRP */
+  --product-card-border: rgb(5 11 22 / 0.08);
+  /* Price stays flame, but flame-500 on white is only ~2.9:1 (fails AA) —
+     same problem --btn-primary-bg solves for white text on flame; here it's
+     flame text on white, so we step to flame-700 (~5:1) for the same reason. */
+  --product-card-price: var(--mp-flame-700);
+  --product-card-wishlist-bg: rgb(5 11 22 / 0.05);
+
+  /* Only ever painted on ProductCard's skeleton (its sole consumer), so
+     tuned for the white --product-card-bg, not the dark --bg-surface. */
+  --skeleton-base: rgb(5 11 22 / 0.07);
+  --skeleton-shine: rgb(5 11 22 / 0.14);
 
   /* ── Z-index stack (Campaign < Navbar < Drawer) ──────────── */
   --z-campaign: 200; /* campaign overlay — above page content */
@@ -191,24 +269,32 @@
   --z-drawer:   400; /* mobile drawer — topmost surface        */
 }
 
-/* ── DARK THEME (token-complete, NOT enabled at launch) ─────
-   Future rollout = add [data-theme='dark'] on <html>. Storefront
-   launches light-only per approved refinement (DS §2.3).        */
-[data-theme='dark'] {
-  --bg-page: var(--mp-navy-900);
-  --bg-surface: var(--mp-navy-800);
-  --bg-surface-warm: var(--mp-navy-700);
-  --bg-inverse: var(--mp-cream-100);
-  --bg-inverse-deep: var(--mp-cream-50);
-  --text-primary: var(--mp-cream-50);
-  --text-secondary: var(--mp-navy-300);
-  --text-inverse: var(--mp-navy-700);
-  --border-default: var(--mp-navy-600);
-  --border-strong: var(--mp-navy-500);
-  --price: var(--mp-cream-50);
-  --price-mrp: var(--mp-navy-300);
-  --card-bg: var(--mp-navy-800);
-  --nav-bg: rgb(27 37 54 / 0.92);
-  --skeleton-base: var(--mp-navy-600);
-  --skeleton-shine: var(--mp-navy-500);
+/* ════════════════════════════════════════════════════════════
+   STOREFRONT LIGHT MODE (Overrides)
+   ════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] {
+  --bg-page: #f4f6f9;
+  --bg-surface: #ffffff;
+  --bg-surface-warm: #fdfdfd;
+
+  --text-primary: var(--mp-ink-950);
+  --text-secondary: var(--mp-ink-600);
+  --text-tertiary: rgb(5 11 22 / 0.42);
+  --text-on-accent: #ffffff;
+
+  --border-subtle: rgb(5 11 22 / 0.06);
+  --border-default: rgb(5 11 22 / 0.12);
+  --border-strong: rgb(5 11 22 / 0.20);
+  --focus-ring: var(--mp-info-500);
+
+  --skeleton-base: rgb(5 11 22 / 0.05);
+  --skeleton-shine: rgb(5 11 22 / 0.1);
+
+  --overlay: rgb(5 11 22 / 0.45);
+
+  --nav-bg: #ffffff;
+  --nav-bg-transparent: rgb(255 255 255 / 0);
+
+  --glass-bg: rgb(255 255 255 / 0.85);
+  --glass-border: rgb(5 11 22 / 0.12);
 }
