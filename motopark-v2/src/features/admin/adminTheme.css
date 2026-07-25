@@ -1,0 +1,69 @@
+/* ════════════════════════════════════════════════════════════
+   Admin Realm Theme System
+   Replaces adminLegacyTokens.css with a unified MotoPark V2
+   semantic token architecture.
+   ════════════════════════════════════════════════════════════ */
+
+.admin-theme-wrapper {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100dvh;
+  /* Smooth transition for theme switching on the main wrapper */
+  transition: background-color 300ms ease, color 300ms ease;
+  font-family: var(--font-body);
+}
+
+/* Base Dark Mode (Default) - Maps exactly to V2 Semantic Tokens */
+.admin-theme-dark {
+  --bg-page: var(--mp-ink-950);
+  --bg-surface: var(--mp-ink-800);
+  --bg-surface-warm: var(--bg-surface-warm);
+
+  --text-primary: var(--mp-ink-0);
+  --text-secondary: var(--mp-ink-100);
+  --text-tertiary: var(--border-default);
+  --text-on-accent: #ffffff;
+
+  --border-subtle: rgb(255 255 255 / 0.08);
+  --border-default: rgb(255 255 255 / 0.12);
+  --border-strong: rgb(255 255 255 / 0.20);
+  --focus-ring: var(--mp-info-500);
+
+  --skeleton-base: rgb(255 255 255 / 0.05);
+  --skeleton-shine: rgb(255 255 255 / 0.1);
+  
+  --card-bg: var(--bg-surface);
+  --card-border: var(--border-default);
+  --card-radius: var(--radius-lg);
+
+  --overlay: rgb(5 11 22 / 0.65);
+}
+
+/* Light Mode (Pro aesthetic) */
+.admin-theme-light {
+  /* Soft neutral gray page bg, white elevated surfaces */
+  --bg-page: #f4f6f9;
+  --bg-surface: #ffffff;
+  --bg-surface-warm: #fdfdfd;
+
+  /* High contrast text */
+  --text-primary: var(--mp-ink-950);
+  --text-secondary: var(--mp-ink-600);
+  --text-tertiary: var(--border-strong);
+  --text-on-accent: #ffffff;
+
+  /* Crisp borders */
+  --border-subtle: rgb(5 11 22 / 0.06);
+  --border-default: rgb(5 11 22 / 0.12);
+  --border-strong: rgb(5 11 22 / 0.20);
+  --focus-ring: var(--mp-info-500);
+
+  --skeleton-base: rgb(5 11 22 / 0.05);
+  --skeleton-shine: rgb(5 11 22 / 0.1);
+
+  --card-bg: var(--bg-surface);
+  --card-border: var(--border-default);
+  --card-radius: var(--radius-lg);
+
+  --overlay: rgb(5 11 22 / 0.45);
+}

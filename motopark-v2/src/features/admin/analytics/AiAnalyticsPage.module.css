@@ -89,7 +89,6 @@
   font-size: var(--text-body-sm);
   font-weight: 600;
   color: var(--text-primary);
-  font-family: ui-monospace, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -103,7 +102,7 @@
 .barFill {
   height: 100%;
   border-radius: 999px;
-  background: var(--mp-navy-600);
+  background: var(--mp-ink-600);
   transition: width 0.3s ease;
 }
 .barCount {
@@ -124,7 +123,6 @@
   color: var(--text-secondary);
 }
 .mono {
-  font-family: ui-monospace, monospace;
   font-size: var(--text-caption);
 }
 .ok {
@@ -151,8 +149,8 @@
   color: var(--info);
 }
 .kind_agent_turn {
-  background: var(--mp-navy-100);
-  color: var(--mp-navy-600);
+  background: var(--mp-ink-100);
+  color: var(--mp-ink-600);
 }
 .kind_embed {
   background: var(--accent-soft);

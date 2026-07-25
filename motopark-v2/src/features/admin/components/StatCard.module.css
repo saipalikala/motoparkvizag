@@ -34,8 +34,8 @@
 
 /* Accent chips — soft-tinted, never competing with price orange semantics. */
 .navy {
-  background: var(--mp-navy-100);
-  color: var(--mp-navy-600);
+  background: var(--mp-ink-100);
+  color: var(--bg-surface-warm);
 }
 .orange {
   background: var(--accent-soft);

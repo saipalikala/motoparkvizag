@@ -5,7 +5,6 @@
   background: var(--bg-page);
 }
 
-/* ── Sidebar ──────────────────────────────────────────────── */
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -13,9 +12,9 @@
   width: var(--admin-sidebar-w, 248px);
   display: flex;
   flex-direction: column;
-  background: var(--mp-navy-800);
-  color: var(--mp-navy-100);
-  border-right: 1px solid var(--mp-navy-700);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border-default);
 }
 
 .brand {
@@ -24,7 +23,7 @@
   gap: var(--space-3);
   height: 64px;
   padding-inline: var(--space-5);
-  border-bottom: 1px solid var(--mp-navy-700);
+  border-bottom: 1px solid var(--border-default);
   flex-shrink: 0;
 }
 
@@ -41,7 +40,7 @@
 .brandText {
   font-weight: 700;
   font-size: var(--text-h5);
-  color: #fff;
+  color: var(--text-primary);
   letter-spacing: 0.01em;
 }
 
@@ -50,7 +49,7 @@
   margin-left: auto;
   background: transparent;
   border: none;
-  color: var(--mp-navy-200);
+  color: var(--text-tertiary);
   cursor: pointer;
   padding: var(--space-1);
 }
@@ -69,7 +68,7 @@
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3);
   border-radius: var(--radius-md);
-  color: var(--mp-navy-200);
+  color: var(--text-secondary);
   font-size: var(--text-body-sm);
   font-weight: 500;
   text-decoration: none;
@@ -79,8 +78,8 @@
 }
 
 .navLink:hover {
-  background: var(--mp-navy-700);
-  color: #fff;
+  background: var(--bg-surface-warm);
+  color: var(--text-primary);
 }
 
 .navLinkActive,
@@ -110,7 +109,8 @@
   gap: var(--space-3);
   height: 64px;
   padding-inline: var(--space-6);
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 85%, transparent);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-default);
 }
 
@@ -125,6 +125,27 @@
 
 .topbarSpacer {
   flex: 1;
+}
+
+.themeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+}
+
+.themeToggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-warm);
+  border-color: var(--border-default);
+  transform: scale(1.05);
 }
 
 .session {
@@ -178,7 +199,7 @@
 
 .logout:hover:not(:disabled) {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-default);
 }
 
 .logout:disabled {

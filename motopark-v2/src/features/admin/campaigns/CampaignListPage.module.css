@@ -19,7 +19,7 @@
 }
 
 .statusOff {
-  background: var(--mp-neutral-200);
+  background: var(--border-default);
   color: var(--text-secondary);
 }
 
@@ -90,7 +90,7 @@
 }
 .iconBtn:hover:not(:disabled) {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 .iconBtn:disabled {
@@ -158,7 +158,7 @@
 }
 
 .emptyIcon {
-  color: var(--mp-navy-300);
+  color: var(--mp-ink-300);
 }
 
 .emptyTitle {

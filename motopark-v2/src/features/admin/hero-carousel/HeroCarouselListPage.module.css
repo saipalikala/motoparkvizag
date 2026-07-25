@@ -25,7 +25,7 @@
 }
 
 .status_off {
-  background: var(--mp-neutral-200);
+  background: var(--border-default);
   color: var(--text-secondary);
 }
 
@@ -50,13 +50,13 @@
               color            var(--dur-fast) var(--ease-out);
 }
 .filterPill:hover {
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 .filterPillActive,
 .filterPillActive:hover {
-  background: var(--mp-navy-800);
-  border-color: var(--mp-navy-800);
+  background: var(--mp-ink-800);
+  border-color: var(--mp-ink-800);
   color: var(--text-inverse);
 }
 
@@ -78,7 +78,7 @@
   object-fit: cover;
 }
 .thumbPlaceholder {
-  color: var(--mp-navy-300);
+  color: var(--mp-ink-300);
 }
 
 /* ── Name cell ────────────────────────────────────────────── */
@@ -135,7 +135,7 @@
   cursor: pointer;
 }
 .orderBtn:hover:not(:disabled) {
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 .orderBtn:disabled {
@@ -176,7 +176,7 @@
 }
 .iconBtn:hover:not(:disabled) {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 .iconBtn:disabled {
@@ -243,7 +243,7 @@
 }
 
 .emptyIcon {
-  color: var(--mp-navy-300);
+  color: var(--mp-ink-300);
 }
 
 .emptyTitle {

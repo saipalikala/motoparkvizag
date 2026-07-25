@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminAuthProvider } from './AdminAuthContext.jsx';
+import { AdminThemeProvider } from './AdminThemeContext.jsx';
 import AdminRoute from './AdminRoute.jsx';
+import './adminTheme.css';
 
 /**
  * AdminApp — the entire /admin realm. Mounted by App.jsx only for /admin paths,
@@ -39,63 +41,65 @@ function AdminLoader() {
 
 export default function AdminApp() {
   return (
-    <AdminAuthProvider>
-      <Suspense fallback={<AdminLoader />}>
-        <Routes>
-          <Route path="/admin/login" element={<AdminLoginPage />} />
+    <AdminThemeProvider>
+      <AdminAuthProvider>
+        <Suspense fallback={<AdminLoader />}>
+          <Routes>
+            <Route path="/admin/login" element={<AdminLoginPage />} />
 
-          <Route element={<AdminRoute />}>
-            {/* Packing slip — standalone, OUTSIDE AdminLayout (no sidebar/topbar). */}
-            <Route path="/admin/orders/:id/print" element={<OrderPrintPage />} />
+            <Route element={<AdminRoute />}>
+              {/* Packing slip — standalone, OUTSIDE AdminLayout (no sidebar/topbar). */}
+              <Route path="/admin/orders/:id/print" element={<OrderPrintPage />} />
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboard />} />
 
-              {/* Products (Milestone 2) */}
-              <Route path="products" element={<ProductListPage />} />
-              <Route path="products/new" element={<ProductFormPage />} />
-              <Route path="products/:id" element={<ProductFormPage />} />
+                {/* Products (Milestone 2) */}
+                <Route path="products" element={<ProductListPage />} />
+                <Route path="products/new" element={<ProductFormPage />} />
+                <Route path="products/:id" element={<ProductFormPage />} />
 
-              {/* Categories & Collections (Milestone 3) */}
-              <Route path="categories" element={<CategoryListPage />} />
-              <Route path="collections" element={<CollectionListPage />} />
+                {/* Categories & Collections (Milestone 3) */}
+                <Route path="categories" element={<CategoryListPage />} />
+                <Route path="collections" element={<CollectionListPage />} />
 
-              {/* Orders (Milestone 4) */}
-              <Route path="orders" element={<OrderListPage />} />
-              <Route path="orders/:id" element={<OrderDetailPage />} />
+                {/* Orders (Milestone 4) */}
+                <Route path="orders" element={<OrderListPage />} />
+                <Route path="orders/:id" element={<OrderDetailPage />} />
 
-              {/* Customers (Milestone 5) */}
-              <Route path="customers" element={<CustomerListPage />} />
-              <Route path="customers/:id" element={<CustomerDetailPage />} />
+                {/* Customers (Milestone 5) */}
+                <Route path="customers" element={<CustomerListPage />} />
+                <Route path="customers/:id" element={<CustomerDetailPage />} />
 
-              {/* Reconciliation — orphaned-payment detection (Phase 3) */}
-              <Route path="reconciliation" element={<StrandedPaymentsPage />} />
+                {/* Reconciliation — orphaned-payment detection (Phase 3) */}
+                <Route path="reconciliation" element={<StrandedPaymentsPage />} />
 
 
-              {/* Bikes / fitment (Milestone 8) */}
-              <Route path="bikes" element={<BikeListPage />} />
+                {/* Bikes / fitment (Milestone 8) */}
+                <Route path="bikes" element={<BikeListPage />} />
 
-              {/* Video showcase CMS (Milestone 9) */}
-              <Route path="showcase" element={<VideoShowcaseListPage />} />
+                {/* Video showcase CMS (Milestone 9) */}
+                <Route path="showcase" element={<VideoShowcaseListPage />} />
 
-              {/* Hero Carousel CMS */}
-              <Route path="hero-carousel" element={<HeroCarouselListPage />} />
-              <Route path="hero-carousel/new" element={<HeroCarouselFormPage />} />
-              <Route path="hero-carousel/:id" element={<HeroCarouselFormPage />} />
+                {/* Hero Carousel CMS */}
+                <Route path="hero-carousel" element={<HeroCarouselListPage />} />
+                <Route path="hero-carousel/new" element={<HeroCarouselFormPage />} />
+                <Route path="hero-carousel/:id" element={<HeroCarouselFormPage />} />
 
-              {/* Campaign Experience System */}
-              <Route path="campaigns" element={<CampaignListPage />} />
+                {/* Campaign Experience System */}
+                <Route path="campaigns" element={<CampaignListPage />} />
 
-              {/* Analytics & Settings (Milestone 6) */}
-              <Route path="analytics" element={<AiAnalyticsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
+                {/* Analytics & Settings (Milestone 6) */}
+                <Route path="analytics" element={<AiAnalyticsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Unknown /admin/* → dashboard (guard redirects to login if needed). */}
-          <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
-        </Routes>
-      </Suspense>
-    </AdminAuthProvider>
+            {/* Unknown /admin/* → dashboard (guard redirects to login if needed). */}
+            <Route path="/admin/*" element={<Navigate to="/admin" replace />} />
+          </Routes>
+        </Suspense>
+      </AdminAuthProvider>
+    </AdminThemeProvider>
   );
 }

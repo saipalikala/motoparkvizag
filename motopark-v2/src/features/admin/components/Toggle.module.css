@@ -35,7 +35,7 @@
   height: 26px;
   padding: 3px;
   border-radius: var(--radius-full);
-  background: var(--mp-navy-200);
+  background: var(--border-strong);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
 

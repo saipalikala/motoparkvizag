@@ -6,7 +6,7 @@
   place-items: center;
   padding: var(--space-6);
   background:
-    radial-gradient(120% 120% at 50% 0%, var(--mp-navy-700) 0%, var(--mp-navy-900) 70%);
+    radial-gradient(120% 120% at 50% 0%, var(--mp-ink-800) 0%, var(--mp-ink-950) 70%);
 }
 
 .card {
@@ -33,15 +33,17 @@
   height: 44px;
   flex-shrink: 0;
   border-radius: var(--radius-md);
-  background: var(--mp-navy-700);
-  color: var(--text-inverse);
+  background: var(--bg-surface-warm);
+  color: var(--text-on-accent);
 }
 
 .title {
-  font-size: var(--text-h4);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--text-heading-l);
+  font-weight: 400;
+  text-align: center;
   color: var(--text-primary);
-  line-height: 1.1;
+  margin-bottom: var(--space-2);
 }
 
 .subtitle {
@@ -81,11 +83,11 @@
 .input:focus-visible {
   outline: none;
   border-color: var(--input-border-focus);
-  box-shadow: 0 0 0 3px rgb(43 95 143 / 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 18%, transparent);
 }
 
 .input::placeholder {
-  color: var(--mp-navy-300);
+  color: var(--text-tertiary);
 }
 
 .error {

@@ -38,7 +38,6 @@
 }
 
 .mono {
-  font-family: ui-monospace, monospace;
   font-size: var(--text-body-sm);
   color: var(--text-primary);
   word-break: break-all;
@@ -47,7 +46,6 @@
   color: var(--text-secondary);
 }
 .monoMuted {
-  font-family: ui-monospace, monospace;
   font-size: var(--text-caption);
   color: var(--text-secondary);
   word-break: break-all;

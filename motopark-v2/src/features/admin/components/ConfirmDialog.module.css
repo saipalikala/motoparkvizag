@@ -80,6 +80,5 @@
   background: var(--danger);
 }
 .dangerBtn:hover {
-  background: var(--mp-red-500);
   filter: brightness(0.92);
 }

@@ -8,7 +8,6 @@
 }
 
 .slug {
-  font-family: ui-monospace, monospace;
   font-size: var(--text-body-sm);
   color: var(--text-secondary);
 }
@@ -36,7 +35,7 @@
 }
 .iconBtn:hover {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
 }
 .iconBtnDanger:hover {
   background: var(--danger-soft);

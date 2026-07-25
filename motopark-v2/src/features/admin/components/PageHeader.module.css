@@ -8,10 +8,11 @@
 }
 
 .title {
-  font-size: var(--text-h3);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--text-heading-l);
+  font-weight: 400; /* Sakana looks best at 400 */
   color: var(--text-primary);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .subtitle {

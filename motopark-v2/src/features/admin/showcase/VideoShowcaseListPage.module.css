@@ -42,7 +42,6 @@
   color: var(--text-secondary);
 }
 .buy code {
-  font-family: ui-monospace, monospace;
   font-size: var(--text-body-sm);
 }
 
@@ -73,7 +72,7 @@
 }
 .iconBtn:hover:not(:disabled) {
   background: var(--bg-surface-warm);
-  border-color: var(--mp-navy-400);
+  border-color: var(--border-strong);
 }
 .iconBtn:disabled {
   opacity: 0.45;

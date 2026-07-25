@@ -155,7 +155,6 @@
 .payRef {
   font-size: var(--text-caption);
   color: var(--text-secondary);
-  font-family: ui-monospace, monospace;
 }
 
 /* ── Status / workflow ────────────────────────────────────── */
@@ -193,7 +192,6 @@
   text-align: right;
 }
 .mono {
-  font-family: ui-monospace, monospace;
 }
 .editTracking {
   align-self: flex-start;
