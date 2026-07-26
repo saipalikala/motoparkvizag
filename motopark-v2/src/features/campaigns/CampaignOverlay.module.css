@@ -404,6 +404,218 @@
   margin: var(--space-3) auto var(--space-1);
 }
 
+/* ── Top Offer Bar ────────────────────────────────────────── */
+.overlayTopBar {
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+
+.offerBar {
+  position: relative;
+  width: 100%;
+  background: var(--campaign-custom-bg, var(--bg-surface));
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
+  padding: 10px 0;
+}
+
+.offerBarContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.offerBarInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.offerBarTitle {
+  font-size: var(--text-body-s);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offerBarSubtitle {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.couponSmall {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  background: var(--bg-surface-accent);
+  border: 1px dashed var(--border-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-caption);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.offerBarCta {
+  flex-shrink: 0;
+}
+
+.offerBarClose {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.offerBarClose:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-warm);
+}
+
+/* ── Centered Dialog Overlay ──────────────────────────────── */
+.overlayCenter {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: calc(var(--z-campaign) + 5);
+}
+
+.overlayCenter.entering {
+  animation: centerEnter var(--dur-slow) var(--ease-out) both;
+  pointer-events: auto;
+}
+.overlayCenter.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.overlayCenter.exiting {
+  animation: centerExit var(--dur-fast) var(--ease-inout) both;
+  pointer-events: none;
+}
+
+@keyframes centerEnter {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.95); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes centerExit {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+}
+
+/* ── Story Band Showcase ─────────────────────────────────── */
+.storyBandCard {
+  position: relative;
+  background: var(--campaign-custom-bg, var(--bg-surface));
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
+  overflow: hidden;
+  max-width: 800px;
+  width: 90vw;
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+
+.storyBandGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+}
+
+@media (max-width: 767px) {
+  .storyBandGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.storyBandImageWrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+  background: var(--bg-surface-warm);
+}
+
+/* ── Homepage Hero Banner ─────────────────────────────────── */
+.heroBannerCard {
+  position: relative;
+  background: var(--campaign-custom-bg, var(--bg-surface));
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
+  overflow: hidden;
+  max-width: 840px;
+  width: 92vw;
+  max-height: 88dvh;
+  overflow-y: auto;
+}
+
+.heroBannerImageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  background: var(--bg-surface-warm);
+}
+
+.heroBannerScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(5 11 22 / 0.2) 0%,
+    transparent 35%,
+    var(--campaign-custom-bg, var(--bg-surface)) 98%
+  );
+}
+
+.heroBannerBody {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heroBannerTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.heroBannerSubtitle {
+  font-size: var(--text-body-m);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.heroBannerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
 /* ── Reduced motion ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .overlay,

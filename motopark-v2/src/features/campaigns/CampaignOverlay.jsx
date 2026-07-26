@@ -29,13 +29,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCampaign } from './CampaignContext.jsx';
 import CampaignCard from './CampaignCard.jsx';
+import CampaignOfferBar from './CampaignOfferBar.jsx';
+import CampaignStoryBand from './CampaignStoryBand.jsx';
+import CampaignHeroBanner from './CampaignHeroBanner.jsx';
 import styles from './CampaignOverlay.module.css';
 
-/** Map presentationType → component. Extend here for future types. */
+/** Map presentationType → component. Full presentation engine support. */
 const PRESENTATION_MAP = {
   floating_card: CampaignCard,
-  // strip:         CampaignStrip,   ← future
-  // fullscreen:    CampaignSplash,  ← future
+  offer_bar:     CampaignOfferBar,
+  story_band:    CampaignStoryBand,
+  homepage_hero: CampaignHeroBanner,
 };
 
 /** Detect mobile breakpoint without a media query listener (sufficient for mount-time). */
@@ -139,9 +143,18 @@ export default function CampaignOverlay() {
   // Resolve the correct presentation component
   const PresentationComponent = PRESENTATION_MAP[campaign.presentationType] ?? CampaignCard;
 
+  const isOfferBar = campaign.presentationType === 'offer_bar';
+  const isCentered = campaign.presentationType === 'story_band' || campaign.presentationType === 'homepage_hero';
+
   const overlayClass = [
     styles.overlay,
-    isMobile ? styles.overlayMobile : styles.overlayDesktop,
+    isOfferBar
+      ? styles.overlayTopBar
+      : isCentered
+      ? styles.overlayCenter
+      : isMobile
+      ? styles.overlayMobile
+      : styles.overlayDesktop,
     phase === 'entering' ? styles.entering : '',
     phase === 'visible'  ? styles.visible  : '',
     phase === 'exiting'  ? styles.exiting  : '',
