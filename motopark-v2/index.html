@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://motoparkvizag.in/" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#050b16" />
     <title>MotoPark — Premium Motorcycle Gear, Pan-India</title>
@@ -30,6 +34,79 @@
     <meta name="twitter:title" content="MotoPark — Genuine Motorcycle Gear, Pan-India" />
     <meta name="twitter:description" content="Genuine motorcycle helmets, riding gear, luggage and parts — shipped across India from Visakhapatnam." />
     <meta name="twitter:image" content="https://motoparkvizag.in/og-image.jpg" />
+
+    <!-- Structured Data (JSON-LD Organization & Store) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://motoparkvizag.in/#organization",
+            "name": "MotoPark",
+            "alternateName": "MotoPark Vizag",
+            "url": "https://motoparkvizag.in/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://motoparkvizag.in/favicon.png",
+              "caption": "MotoPark Crest Logo"
+            },
+            "image": "https://motoparkvizag.in/og-image.jpg",
+            "description": "Genuine motorcycle helmets, riding gear, luggage and parts — shipped across India from Visakhapatnam.",
+            "sameAs": [
+              "https://www.instagram.com/motopark_official",
+              "https://youtube.com/@motoparkvizag"
+            ],
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "telephone": "+91-8328031179",
+                "contactType": "customer service",
+                "email": "support.motoparkvizag@gmail.com",
+                "areaServed": "IN",
+                "availableLanguage": ["en", "te", "hi"]
+              }
+            ]
+          },
+          {
+            "@type": ["Store", "AutoPartsStore"],
+            "@id": "https://motoparkvizag.in/#store",
+            "name": "MotoPark Visakhapatnam",
+            "url": "https://motoparkvizag.in/",
+            "telephone": "+91-8328031179",
+            "email": "support.motoparkvizag@gmail.com",
+            "priceRange": "₹₹",
+            "image": "https://motoparkvizag.in/og-image.jpg",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Seethammapeta Main Rd, near Swagath Grand Hotel",
+              "addressLocality": "Visakhapatnam",
+              "addressRegion": "Andhra Pradesh",
+              "postalCode": "530016",
+              "addressCountry": "IN"
+            },
+            "hasMap": "https://maps.app.goo.gl/YSRdTuZ4wKAbdG2P9",
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": [
+                  "Monday",
+                  "Tuesday",
+                  "Wednesday",
+                  "Thursday",
+                  "Friday",
+                  "Saturday"
+                ],
+                "opens": "10:00",
+                "closes": "21:00"
+              }
+            ],
+            "currenciesAccepted": "INR",
+            "paymentAccepted": "Cash, Credit Card, Debit Card, UPI, Netbanking"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

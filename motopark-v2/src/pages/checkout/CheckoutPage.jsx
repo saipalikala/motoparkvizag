@@ -223,10 +223,12 @@ export default function CheckoutPage() {
         order_id: rp.orderId,
         prefill: { name: form.name, email: form.email, contact: form.phone },
         theme: { color: '#FF6A2E' }, // must match --accent (tokens.css) — Razorpay's own modal can't read CSS vars
-        // Polling deliberately CONTINUES after a dismiss: closing the modal after
-        // paying is one of the ways people end up paid-but-not-shown-success, and
-        // the poll is what recovers it. It expires on its own timer.
-        modal: { ondismiss: () => setPaying(false) },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            setConfirming(false);
+          },
+        },
         handler: async (response) => {
           // The money is already taken by the time this runs, so the only
           // question is whether the order saved. Scope the try to the save

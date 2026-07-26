@@ -1,0 +1,23 @@
+{
+  "name": "MotoPark — Premium Motorcycle Gear",
+  "short_name": "MotoPark",
+  "description": "Genuine motorcycle helmets, riding gear, luggage and parts — shipped across India from Visakhapatnam.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050b16",
+  "theme_color": "#050b16",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
