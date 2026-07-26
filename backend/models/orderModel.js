@@ -40,6 +40,15 @@ const orderSchema = new mongoose.Schema(
         // Razorpay payment reference (set on paid checkout). Was previously
         // dropped by strict mode — now persisted so the admin can show it.
         paymentId:     { type: String, default: null },
+
+        // Coupon snapshot — immutable historical record of applied promo code
+        coupon: {
+            code:          { type: String, default: null },
+            discountType:  { type: String, default: null },
+            discountValue: { type: Number, default: null },
+            discountINR:   { type: Number, default: 0 },
+        },
+
         total:         { type: Number, required: true },
 
         status: {

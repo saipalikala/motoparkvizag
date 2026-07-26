@@ -34,6 +34,7 @@ import webhookRoutes       from "./routes/webhookRoutes.js";
 import checkoutRoutes      from "./routes/checkoutRoutes.js";
 import campaignRoutes      from "./routes/campaignRoutes.js";
 import adminCampaignRoutes from "./routes/adminCampaignRoutes.js";
+import couponRoutes        from "./routes/couponRoutes.js";
 import connectDB           from "./config/db.js";
 import { hasJwtSecret }    from "./config/jwt.js";
 
@@ -259,6 +260,7 @@ app.use("/api/users/otp",  otpLimiter);
 app.use("/api/users",      userRoutes);
 app.use("/api/cart",       cartRoutes);
 app.use("/api/wishlist",   wishlistRouter);
+app.use("/api/coupons",    couponRoutes);
 app.use("/api/ai",         aiRoutes);
 
 app.use((req, res) => {

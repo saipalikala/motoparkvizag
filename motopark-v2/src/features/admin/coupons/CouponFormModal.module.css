@@ -1,0 +1,119 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.error {
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--admin-border, #e5e7eb);
+}
+
+.section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted, #6b7280);
+  margin: 0;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.fieldToggle {
+  display: flex;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--admin-text, #111827);
+}
+
+.req {
+  color: #ef4444;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: var(--admin-text-muted, #9ca3af);
+  pointer-events: none;
+}
+
+.input,
+.inputUpper,
+.select {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--admin-border, #d1d5db);
+  border-radius: 0.5rem;
+  background-color: var(--admin-bg-surface, #ffffff);
+  color: var(--admin-text, #111827);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputUpper {
+  padding-left: 2.375rem;
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+
+}
+
+.input:focus,
+.inputUpper:focus,
+.select:focus {
+  outline: none;
+  border-color: #ff5500;
+  box-shadow: 0 0 0 3px rgba(255, 85, 0, 0.15);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}

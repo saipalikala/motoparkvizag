@@ -16,7 +16,7 @@ import { api } from '@/lib/api.js';
  * saving anything. Delivery is derived server-side and is not sent.
  * Returns the created order (or, on a duplicate, a 409 with { orderId }).
  */
-export async function createOrder({ items, shippingAddress, payment }) {
+export async function createOrder({ items, shippingAddress, payment, coupon = null }) {
   const { data } = await api.post('/orders', {
     items,
     shippingAddress,
@@ -24,6 +24,7 @@ export async function createOrder({ items, shippingAddress, payment }) {
     razorpay_order_id: payment.razorpay_order_id,
     razorpay_payment_id: payment.razorpay_payment_id,
     razorpay_signature: payment.razorpay_signature,
+    coupon,
   });
   return data;
 }

@@ -1,5 +1,6 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
+import { redeemCouponAtomic } from "../controllers/couponController.js";
 
 /**
  * services/placeOrder.js — take the stock and write the order, idempotently.
@@ -74,7 +75,7 @@ const restoreStock = async (taken) => {
  * @param {string}  args.paymentId      Razorpay payment id, already known captured
  * @param {string}  args.paymentMethod
  */
-export const placeOrder = async ({ items, shippingAddress, user, total, paymentId, paymentMethod }) => {
+export const placeOrder = async ({ items, shippingAddress, user, total, paymentId, paymentMethod, coupon = null }) => {
     // Replay: one captured payment must buy exactly one order. Covers guests
     // and logged-in users alike, keyed on the payment rather than the account.
     //
@@ -148,12 +149,28 @@ export const placeOrder = async ({ items, shippingAddress, user, total, paymentI
 
     // ── All stock decremented successfully — now save the order ──────────────
     try {
+        // If a coupon code was provided, attempt concurrency-safe atomic redemption
+        let couponSnapshot = null;
+        if (coupon && coupon.code) {
+            const redeemed = await redeemCouponAtomic(coupon.code);
+            couponSnapshot = {
+                code:          coupon.code,
+                discountType:  coupon.discountType || "percentage",
+                discountValue: coupon.discountValue || 0,
+                discountINR:   Number(coupon.discountINR) || 0,
+            };
+            if (!redeemed) {
+                console.warn(`⚠️ Coupon '${coupon.code}' redemption failed or limit reached during order creation`);
+            }
+        }
+
         const order = await Order.create({
             user: user || null,
             items,
             shippingAddress,
             paymentMethod,
             paymentId,            // verified as captured, for this amount
+            coupon: couponSnapshot,
             total,                // ✅ from DB, not frontend
         });
         return { order, alreadyExisted: false };

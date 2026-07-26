@@ -27,7 +27,7 @@ export const createOrder = async (req, res) => {
         // deliveryCharge is NOT read from the body — it is derived from the
         // server-computed subtotal (config/store.js). paymentId is likewise
         // ignored in favour of the Razorpay payment we verify below.
-        const { items, shippingAddress, paymentMethod } = req.body;
+        const { items, shippingAddress, paymentMethod, coupon } = req.body;
         // optionalAuth (routes/orderRoutes.js) sets req.userId — NOT req.user.
         // Reading req.user?._id here silently yielded undefined for every
         // request, so orders never linked to accounts and the idempotency
@@ -82,8 +82,10 @@ export const createOrder = async (req, res) => {
         });
 
         const subtotal       = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-        const deliveryCharge = deliveryChargeFor(subtotal);
-        const expectedTotal  = subtotal + deliveryCharge;
+        const discountINR    = Number(coupon?.discountINR) || 0;
+        const netSubtotal    = Math.max(0, subtotal - discountINR);
+        const deliveryCharge = deliveryChargeFor(netSubtotal);
+        const expectedTotal  = netSubtotal + deliveryCharge;
 
         // ── Payment enforcement ───────────────────────────────────────────────
         // Previously this endpoint took the client's word that payment had
@@ -161,6 +163,7 @@ export const createOrder = async (req, res) => {
                 total: expectedTotal,            // ✅ from DB, not frontend
                 paymentId: razorpay_payment_id,  // verified as captured, for this amount
                 paymentMethod,
+                coupon,
             }));
         } catch (err) {
             if (err instanceof OutOfStockError) {

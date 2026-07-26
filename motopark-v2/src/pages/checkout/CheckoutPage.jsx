@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Check, Lock, Truck, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Check, Lock, Truck, ShoppingBag, ChevronRight, Tag, X } from 'lucide-react';
 import Button from '@/components/ui/Button.jsx';
 import Field from '@/components/ui/Field.jsx';
 import { useCart } from '@/contexts/CartContext.jsx';
@@ -12,6 +12,7 @@ import { STORE } from '@/config/store.js';
 import { loadRazorpay, RAZORPAY_KEY_ID } from '@/lib/razorpay.js';
 import { createRazorpayOrder, verifyPayment, getCheckoutStatus } from '@/services/checkout.js';
 import { createOrder } from '@/services/orders.js';
+import { validateCoupon } from '@/services/coupons.js';
 import { INDIAN_STATES } from '@/config/geo.js';
 import styles from './CheckoutPage.module.css';
 
@@ -31,10 +32,40 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [placed, setPlaced] = useState(null); // { id, paymentId }
   const [errors, setErrors] = useState({});
-  // True once the modal is open and we are watching for the order to land —
-  // drives the "Confirming your payment…" copy, so a stalled Razorpay modal
-  // reads as work in progress rather than a dead screen.
   const [confirming, setConfirming] = useState(false);
+
+  /* Coupon State */
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, discountType, discountValue, discountINR }
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [couponSuccess, setCouponSuccess] = useState('');
+
+  const handleApplyCoupon = async (e) => {
+    e?.preventDefault();
+    if (!couponInput.trim()) return;
+    setCouponValidating(true);
+    setCouponError('');
+    setCouponSuccess('');
+
+    const res = await validateCoupon(couponInput.trim(), subtotalINR);
+    setCouponValidating(false);
+
+    if (res.valid && res.coupon) {
+      setAppliedCoupon(res.coupon);
+      setCouponSuccess(res.message || `Coupon '${res.coupon.code}' applied!`);
+    } else {
+      setAppliedCoupon(null);
+      setCouponError(res.message || 'Invalid coupon code');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+    setCouponSuccess('');
+  };
 
   /* Poll timer + the Razorpay instance, so both can be torn down from anywhere
      (handler fired, order spotted, page unmounted). Refs, not state: changing
@@ -111,8 +142,10 @@ export default function CheckoutPage() {
     setErrors({});
   };
 
-  const delivery = subtotalINR >= STORE.freeShipThreshold ? 0 : STORE.shippingFlat;
-  const total = subtotalINR + delivery;
+  const discountINR = appliedCoupon?.discountINR || 0;
+  const netSubtotal = Math.max(0, subtotalINR - discountINR);
+  const delivery = netSubtotal >= STORE.freeShipThreshold ? 0 : STORE.shippingFlat;
+  const total = netSubtotal + delivery;
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -192,6 +225,7 @@ export default function CheckoutPage() {
               })),
               shippingAddress: form,
               payment: response,
+              coupon: appliedCoupon,
             });
             orderId = order._id;
           } catch (err) {
@@ -453,8 +487,54 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+          {/* Coupon Code Section */}
+          <div className={styles.couponSection}>
+            {appliedCoupon ? (
+              <div className={styles.appliedCouponTag}>
+                <div className={styles.appliedCouponInfo}>
+                  <Tag size={16} className={styles.appliedIcon} />
+                  <span>Coupon <strong>{appliedCoupon.code}</strong></span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.removeCouponBtn}
+                  onClick={handleRemoveCoupon}
+                  title="Remove coupon"
+                >
+                  <X size={14} /> Remove
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyCoupon} className={styles.couponForm}>
+                <input
+                  type="text"
+                  className={styles.couponInput}
+                  placeholder="Promo code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                />
+                <button
+                  type="submit"
+                  className={styles.applyCouponBtn}
+                  disabled={couponValidating || !couponInput.trim()}
+                >
+                  {couponValidating ? 'Validating…' : 'Apply'}
+                </button>
+              </form>
+            )}
+
+            {couponError && <p className={styles.couponErr}>{couponError}</p>}
+            {couponSuccess && <p className={styles.couponSuccess}>{couponSuccess}</p>}
+          </div>
+
           <dl className={styles.sumRows}>
             <div><dt>Subtotal</dt><dd className="price">{formatINR(subtotalINR)}</dd></div>
+            {discountINR > 0 && (
+              <div className={styles.discountRow}>
+                <dt>Discount ({appliedCoupon?.code})</dt>
+                <dd className={styles.discountAmt}>−{formatINR(discountINR)}</dd>
+              </div>
+            )}
             <div><dt>Delivery</dt><dd>{delivery === 0 ? <span className={styles.free}>Free</span> : formatINR(delivery)}</dd></div>
           </dl>
           <div className={styles.sumTotal}><span>Total</span><span className="price price--lg">{formatINR(total)}</span></div>

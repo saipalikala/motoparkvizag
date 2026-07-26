@@ -32,6 +32,7 @@ const VideoShowcaseListPage = lazy(() => import('./showcase/VideoShowcaseListPag
 const HeroCarouselListPage  = lazy(() => import('./hero-carousel/HeroCarouselListPage.jsx'));
 const HeroCarouselFormPage  = lazy(() => import('./hero-carousel/HeroCarouselFormPage.jsx'));
 const CampaignListPage      = lazy(() => import('./campaigns/CampaignListPage.jsx'));
+const CouponListPage        = lazy(() => import('./coupons/CouponListPage.jsx'));
 const AiAnalyticsPage = lazy(() => import('./analytics/AiAnalyticsPage.jsx'));
 const SettingsPage = lazy(() => import('./settings/SettingsPage.jsx'));
 
@@ -88,6 +89,9 @@ export default function AdminApp() {
 
                 {/* Campaign Experience System */}
                 <Route path="campaigns" element={<CampaignListPage />} />
+
+                {/* Coupon Management System */}
+                <Route path="coupons" element={<CouponListPage />} />
 
                 {/* Analytics & Settings (Milestone 6) */}
                 <Route path="analytics" element={<AiAnalyticsPage />} />
