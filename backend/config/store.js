@@ -11,9 +11,28 @@
  * (`cartTotal >= 2000 ? 0 : 150`); all three must agree or the amount shown at
  * checkout will not match the amount charged.
  */
+import StoreConfig from "../models/storeConfigModel.js";
+
 export const FREE_SHIP_THRESHOLD = 2000;
 export const SHIPPING_FLAT = 150;
 
-/** Delivery charge in rupees for a given cart subtotal (rupees). */
-export const deliveryChargeFor = (subtotal) =>
-  subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
+/** Delivery charge in rupees for a given cart subtotal (rupees). Reads dynamic Admin Settings. */
+export const deliveryChargeFor = async (subtotal) => {
+  try {
+    const config = await StoreConfig.findOne().lean();
+    const shipping = config?.settings?.shipping;
+    if (shipping) {
+      const flatRate = typeof shipping.flatRate === "number" ? shipping.flatRate : SHIPPING_FLAT;
+      const freeThreshold = typeof shipping.freeThreshold === "number" ? shipping.freeThreshold : FREE_SHIP_THRESHOLD;
+      const freeShippingEnabled = shipping.freeShippingEnabled !== false;
+
+      if (freeShippingEnabled && subtotal >= freeThreshold) {
+        return 0;
+      }
+      return flatRate;
+    }
+  } catch (err) {
+    console.warn("Failed to read StoreConfig for shipping calculation, using default fallback:", err.message);
+  }
+  return subtotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FLAT;
+};

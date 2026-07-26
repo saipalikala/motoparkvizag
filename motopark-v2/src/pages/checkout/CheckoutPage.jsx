@@ -14,6 +14,7 @@ import { createRazorpayOrder, verifyPayment, getCheckoutStatus } from '@/service
 import { createOrder } from '@/services/orders.js';
 import { validateCoupon } from '@/services/coupons.js';
 import { INDIAN_STATES } from '@/config/geo.js';
+import { api } from '@/lib/api.js';
 import styles from './CheckoutPage.module.css';
 
 const STEPS = ['Delivery', 'Payment', 'Review'];
@@ -33,6 +34,21 @@ export default function CheckoutPage() {
   const [placed, setPlaced] = useState(null); // { id, paymentId }
   const [errors, setErrors] = useState({});
   const [confirming, setConfirming] = useState(false);
+
+  /* Shipping Config State */
+  const [shippingConfig, setShippingConfig] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    api.get('/store-config')
+      .then(({ data }) => {
+        if (alive && data?.settings?.shipping) {
+          setShippingConfig(data.settings.shipping);
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   /* Coupon State */
   const [couponInput, setCouponInput] = useState('');
@@ -142,9 +158,13 @@ export default function CheckoutPage() {
     setErrors({});
   };
 
+  const flatRate = typeof shippingConfig?.flatRate === 'number' ? shippingConfig.flatRate : STORE.shippingFlat;
+  const freeThreshold = typeof shippingConfig?.freeThreshold === 'number' ? shippingConfig.freeThreshold : STORE.freeShipThreshold;
+  const freeShippingEnabled = shippingConfig?.freeShippingEnabled !== false;
+
   const discountINR = appliedCoupon?.discountINR || 0;
   const netSubtotal = Math.max(0, subtotalINR - discountINR);
-  const delivery = netSubtotal >= STORE.freeShipThreshold ? 0 : STORE.shippingFlat;
+  const delivery = (freeShippingEnabled && netSubtotal >= freeThreshold) ? 0 : flatRate;
   const total = netSubtotal + delivery;
 
   const set = (k, v) => {
@@ -191,6 +211,7 @@ export default function CheckoutPage() {
           selectedSize: i.size,
         })),
         shippingAddress: form,
+        coupon: appliedCoupon,
       });
 
       const options = {

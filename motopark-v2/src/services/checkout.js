@@ -18,8 +18,8 @@ import { api } from '@/lib/api.js';
  *
  * Returns { orderId, amount, currency } — `amount` is in paise.
  */
-export async function createRazorpayOrder({ items, shippingAddress }) {
-  const { data } = await api.post('/payment/create-order', { items, shippingAddress });
+export async function createRazorpayOrder({ items, shippingAddress, coupon = null }) {
+  const { data } = await api.post('/payment/create-order', { items, shippingAddress, coupon });
   return data;
 }
 

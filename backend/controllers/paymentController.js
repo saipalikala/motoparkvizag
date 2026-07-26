@@ -26,7 +26,7 @@ export const createOrder = async (req, res) => {
 
         // items: [{ productId, quantity, selectedColor?, selectedSize? }]
         // shippingAddress is optional — see the V1 note above.
-        const { items, shippingAddress } = req.body;
+        const { items, shippingAddress, coupon } = req.body;
 
         // Quantity is client-supplied and multiplies the price below: a negative
         // or fractional value would produce a nonsense amount to charge, and an
@@ -68,13 +68,15 @@ export const createOrder = async (req, res) => {
             };
         });
 
-        const subtotal = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+        const subtotal       = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+        const discountINR    = Number(coupon?.discountINR) || 0;
+        const netSubtotal    = Math.max(0, subtotal - discountINR);
 
         // Derived server-side (config/store.js) — a client-supplied charge could
         // be negative, shrinking the amount to pay. /orders derives it the same
         // way, so the amount charged always matches the amount it will demand.
-        const deliveryCharge = deliveryChargeFor(subtotal);
-        const amountPaise    = Math.round((subtotal + deliveryCharge) * 100);
+        const deliveryCharge = await deliveryChargeFor(netSubtotal);
+        const amountPaise    = Math.round((netSubtotal + deliveryCharge) * 100);
 
         const order = await razorpay.orders.create({
             amount: amountPaise, // paise — from DB ✅

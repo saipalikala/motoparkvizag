@@ -84,7 +84,7 @@ export const createOrder = async (req, res) => {
         const subtotal       = verifiedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
         const discountINR    = Number(coupon?.discountINR) || 0;
         const netSubtotal    = Math.max(0, subtotal - discountINR);
-        const deliveryCharge = deliveryChargeFor(netSubtotal);
+        const deliveryCharge = await deliveryChargeFor(netSubtotal);
         const expectedTotal  = netSubtotal + deliveryCharge;
 
         // ── Payment enforcement ───────────────────────────────────────────────
