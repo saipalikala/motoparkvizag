@@ -10,6 +10,10 @@ import './styles/base.css';
 
 import App from './app/App.jsx';
 import { initWebVitals } from './lib/webVitals.js';
+import { purgeV1LegacyServiceWorker } from './lib/v1Migration.js';
+
+// One-time targeted cleanup of legacy V1 Service Worker & Workbox caches
+purgeV1LegacyServiceWorker();
 
 // Real-user CWV → GA4. No-op without VITE_GA_MEASUREMENT_ID; the web-vitals
 // library itself is dynamically imported at idle, so this costs nothing on load.

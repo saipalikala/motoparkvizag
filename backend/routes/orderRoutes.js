@@ -97,6 +97,42 @@ const requireUserAuth = (req, res, next) => {
 /* ── CREATE ORDER (guest + user) ── */
 router.post("/", optionalAuth, createOrder);
 
+/* ── GUEST ORDER TRACKING (Order ID + Email/Phone verification) ── */
+router.post("/track-guest", async (req, res) => {
+  try {
+    const { orderId, lookup } = req.body;
+
+    if (!orderId || !lookup) {
+      return res.status(400).json({ message: "Order ID and email or phone number are required." });
+    }
+
+    const cleanOrderId = String(orderId).trim();
+    const cleanLookup = String(lookup).trim().toLowerCase();
+    const cleanPhone = String(lookup).replace(/\D/g, "");
+
+    if (!mongoose.Types.ObjectId.isValid(cleanOrderId)) {
+      return res.status(400).json({ message: "Invalid Order ID format." });
+    }
+
+    const order = await Order.findById(cleanOrderId).lean();
+    if (!order) {
+      return res.status(404).json({ message: "No order found matching those details." });
+    }
+
+    // Verify ownership: shipping email OR phone must match lookup
+    const emailMatch = order.shippingAddress?.email?.toLowerCase() === cleanLookup;
+    const phoneMatch = cleanPhone.length === 10 && order.shippingAddress?.phone?.replace(/\D/g, "") === cleanPhone;
+
+    if (!emailMatch && !phoneMatch) {
+      return res.status(404).json({ message: "No order found matching those details." });
+    }
+
+    res.json({ order });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 /* ── GET ORDERS ── */
 router.get("/", requireUserAuth, async (req, res) => { // [F1] + [F2]
   try {

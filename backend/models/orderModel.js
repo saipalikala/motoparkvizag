@@ -97,6 +97,9 @@ const orderSchema = new mongoose.Schema(
 // User-facing: order history
 orderSchema.index({ user: 1, createdAt: -1 });
 
+// Guest lookup & order claiming by email
+orderSchema.index({ "shippingAddress.email": 1, user: 1 });
+
 // Guest lookup by phone
 orderSchema.index({ "shippingAddress.phone": 1 });
 

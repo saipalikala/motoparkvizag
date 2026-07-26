@@ -4,6 +4,7 @@ import Product from "../models/productModel.js";
 import PaymentIntent from "../models/paymentIntentModel.js";
 import { deliveryChargeFor } from "../config/store.js";
 import { isValidPaymentSignature, razorpayClient } from "../utils/razorpay.js";
+import User from "../models/userModel.js";
 import { placeOrder, OutOfStockError } from "../services/placeOrder.js";
 
 /* Stock decrement, rollback and the replay guard now live in
@@ -27,12 +28,24 @@ export const createOrder = async (req, res) => {
         // deliveryCharge is NOT read from the body — it is derived from the
         // server-computed subtotal (config/store.js). paymentId is likewise
         // ignored in favour of the Razorpay payment we verify below.
-        const { items, shippingAddress, paymentMethod, coupon } = req.body;
-        // optionalAuth (routes/orderRoutes.js) sets req.userId — NOT req.user.
-        // Reading req.user?._id here silently yielded undefined for every
-        // request, so orders never linked to accounts and the idempotency
-        // guard below never ran.
-        const userId = req.userId;
+        let { items, shippingAddress, paymentMethod, coupon } = req.body;
+        let userId = req.userId;
+
+        // Normalize email on shippingAddress for consistent matching & storage
+        if (shippingAddress?.email) {
+            shippingAddress = {
+                ...shippingAddress,
+                email: String(shippingAddress.email).trim().toLowerCase(),
+            };
+        }
+
+        // If guest checkout (no auth token), check if a user account exists with this email
+        if (!userId && shippingAddress?.email) {
+            const existingUser = await User.findOne({ email: shippingAddress.email }).select("_id").lean();
+            if (existingUser) {
+                userId = existingUser._id;
+            }
+        }
 
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ message: "Order must contain at least one item." });

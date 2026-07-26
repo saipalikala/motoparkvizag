@@ -164,10 +164,14 @@ export const placeOrder = async ({ items, shippingAddress, user, total, paymentI
             }
         }
 
+        const normalizedAddress = shippingAddress?.email
+            ? { ...shippingAddress, email: String(shippingAddress.email).trim().toLowerCase() }
+            : shippingAddress;
+
         const order = await Order.create({
             user: user || null,
             items,
-            shippingAddress,
+            shippingAddress: normalizedAddress,
             paymentMethod,
             paymentId,            // verified as captured, for this amount
             coupon: couponSnapshot,

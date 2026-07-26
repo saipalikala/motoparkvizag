@@ -40,3 +40,9 @@ export async function getMyOrders({ page = 1, limit = 20 } = {}) {
   const { data } = await api.get('/orders', { params: { page, limit } });
   return data;
 }
+
+/** Track a guest order using Order ID and email/phone lookup. Returns the order doc. */
+export async function trackGuestOrder({ orderId, lookup }) {
+  const { data } = await api.post('/orders/track-guest', { orderId, lookup });
+  return data.order;
+}

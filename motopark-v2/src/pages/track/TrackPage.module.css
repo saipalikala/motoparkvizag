@@ -4,12 +4,200 @@
 .title { font-size: var(--text-h1); margin-bottom: var(--space-2); }
 .sub { font-size: var(--text-body-sm); color: var(--text-secondary); }
 
+.guestContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.lookupCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.lookupHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.lookupIcon {
+  color: var(--accent);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.lookupTitle {
+  font-size: var(--text-h3);
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.lookupSub {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.lookupForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.trackBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lookupErr {
+  font-size: var(--text-body-sm);
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+/* Result Card */
+.resultCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--card-radius);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: flex-col;
+  gap: var(--space-5);
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  padding: 0;
+}
+
+.backLink:hover {
+  color: var(--accent);
+}
+
+.resultHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.resultTitle {
+  font-size: var(--text-h3);
+  font-weight: 700;
+}
+
+.resultMeta {
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+}
+
+.badge {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+}
+
+.pending { background: #fef3c7; color: #92400e; }
+.confirmed { background: #dbeafe; color: #1e40af; }
+.packed { background: #e0e7ff; color: #3730a3; }
+.dispatched { background: #f3e8ff; color: #6b21a8; }
+.shipped { background: #f3e8ff; color: #6b21a8; }
+.delivered { background: #dcfce7; color: #166534; }
+.cancelled { background: #fee2e2; color: #991b1b; }
+.returned { background: #f3f4f6; color: #374151; }
+
+.courierBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-surface-warm);
+  border: 1px solid var(--border-default);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+}
+
+.itemsHeader {
+  font-size: var(--text-body);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+.orderItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--border-default);
+}
+
+.itemName {
+  font-weight: 500;
+  font-size: var(--text-body-sm);
+}
+
+.itemMeta {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.itemRight {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  font-size: var(--text-body-sm);
+}
+
+.resultFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-4);
+  font-weight: 600;
+  font-size: var(--text-body);
+}
+
 .prompt {
   display: grid;
   place-items: center;
   gap: var(--space-3);
   text-align: center;
-  padding: var(--space-16) var(--space-4);
+  padding: var(--space-12) var(--space-4);
   border: 1px dashed var(--border-default);
   border-radius: var(--card-radius);
 }

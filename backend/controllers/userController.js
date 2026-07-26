@@ -6,6 +6,7 @@ import { Resend } from "resend";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/userModel.js";
 import { jwtSecret } from "../config/jwt.js";
+import { claimGuestOrdersForUser } from "../services/orderClaimService.js";
 
 const getResend = () => new Resend(process.env.RESEND_API_KEY);
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -148,6 +149,11 @@ export const verifyOtp = async (req, res) => {
         user.isVerified = true;
         await user.save();
 
+        /* Non-blocking claim of guest orders matching verified email */
+        claimGuestOrdersForUser(user._id, user.email).catch((err) =>
+            console.warn("Async guest order claim error (verifyOtp):", err?.message)
+        );
+
         res.json({
             message: "Login successful",
             token: generateToken(user._id),
@@ -185,6 +191,11 @@ export const register = async (req, res) => {
 
         const user = await User.create({ name, email: email.toLowerCase(), password });
 
+        /* Non-blocking claim of guest orders matching registered email */
+        claimGuestOrdersForUser(user._id, user.email).catch((err) =>
+            console.warn("Async guest order claim error (register):", err?.message)
+        );
+
         res.status(201).json({
             token: generateToken(user._id),
             user: { _id: user._id, name: user.name, email: user.email },
@@ -212,6 +223,11 @@ export const loginEmail = async (req, res) => {
         if (!user || !(await user.matchPassword(password))) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
+
+        /* Non-blocking claim of guest orders matching logged-in email */
+        claimGuestOrdersForUser(user._id, user.email).catch((err) =>
+            console.warn("Async guest order claim error (loginEmail):", err?.message)
+        );
 
         res.json({
             token: generateToken(user._id),
@@ -264,6 +280,11 @@ export const googleAuth = async (req, res) => {
             user.isVerified = true;
             await user.save();
         }
+
+        /* Non-blocking claim of guest orders matching Google-verified email */
+        claimGuestOrdersForUser(user._id, user.email).catch((err) =>
+            console.warn("Async guest order claim error (googleAuth):", err?.message)
+        );
 
         res.json({
             token: generateToken(user._id),
