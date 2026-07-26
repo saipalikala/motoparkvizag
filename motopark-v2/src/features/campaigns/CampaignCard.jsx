@@ -63,12 +63,19 @@ export default function CampaignCard({ campaign, onDismiss, isMobile = false, cl
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Custom background override — must be inline as it's data-driven
-  const cardStyle = campaign.bgColor ? { '--campaign-bg': campaign.bgColor } : undefined;
+  // Custom background override — only apply if non-default dark/light custom color provided
+  const hasCustomBg = Boolean(
+    campaign.bgColor &&
+    campaign.bgColor !== '#ffffff' &&
+    campaign.bgColor !== '#fff' &&
+    campaign.bgColor !== 'white' &&
+    campaign.bgColor !== 'transparent'
+  );
+  const cardStyle = hasCustomBg ? { '--campaign-custom-bg': campaign.bgColor } : undefined;
 
   return (
     <div
-      className={`${styles.card} ${isMobile ? styles.cardMobile : styles.cardDesktop}`}
+      className={`${styles.card} ${isMobile ? styles.cardMobile : styles.cardDesktop} ${hasCustomBg ? styles.cardCustomBg : ''}`}
       style={cardStyle}
       role="dialog"
       aria-modal="true"
@@ -82,7 +89,7 @@ export default function CampaignCard({ campaign, onDismiss, isMobile = false, cl
         onClick={onDismiss}
         aria-label="Dismiss campaign"
       >
-        <X size={18} strokeWidth={1.8} aria-hidden="true" />
+        <X size={16} strokeWidth={2.2} aria-hidden="true" />
       </button>
 
       {/* ── Hero image ────────────────────────────────────── */}
@@ -149,11 +156,10 @@ export default function CampaignCard({ campaign, onDismiss, isMobile = false, cl
             to={campaign.ctaUrl}
             variant="primary"
             size={isMobile ? 'md' : 'sm'}
-            onDark
             className={styles.ctaBtn}
             onClick={onDismiss}
           >
-            {campaign.ctaLabel}
+            {campaign.ctaLabel || 'Shop Now'}
           </Button>
           <button
             type="button"
@@ -173,7 +179,7 @@ export default function CampaignCard({ campaign, onDismiss, isMobile = false, cl
         )}
       </div>
 
-      {/* ── Brand accent line (Sunset gradient — brand signature) ─── */}
+      {/* ── Brand accent line (Flame gradient — brand signature) ─── */}
       <div className={styles.accentLine} aria-hidden="true" />
     </div>
   );

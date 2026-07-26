@@ -9,11 +9,16 @@
 /* Campaign sits above page content, below the navbar (var(--z-navbar) = 300)
    and below the mobile drawer (var(--z-drawer) = 400). */
 
+/* ── Z-index layer ────────────────────────────────────────── */
+/* Campaign sits above page content, below the assistant drawer panel */
+
 /* ── Backdrop ─────────────────────────────────────────────── */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgb(5 11 22 / 0.45); /* same as --overlay but lighter */
+  background: var(--overlay, rgb(5 11 22 / 0.55));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: var(--z-campaign);
   animation: backdropIn var(--dur-slow) var(--ease-out) both;
   will-change: opacity;
@@ -30,26 +35,25 @@
 .overlay {
   position: fixed;
   z-index: calc(var(--z-campaign) + 1);
-  /* GPU acceleration — no paint, no layout */
   will-change: transform, opacity;
-  /* Initial hidden state — JS adds .entering then .visible */
   opacity: 0;
   pointer-events: none;
 }
 
-/* ── Desktop: bottom-right corner ────────────────────────── */
+/* ── Desktop: bottom-right floating card above AI Chat button ── */
 .overlayDesktop {
-  bottom: var(--space-8);
-  right: var(--space-8);
-  width: clamp(340px, 28vw, 440px);
+  bottom: 92px; /* Elevate above the 56px AI Assistant launcher (bottom: 20px) */
+  right: var(--space-6, 24px);
+  width: clamp(340px, 28vw, 420px);
 }
 
-/* ── Mobile: bottom sheet ─────────────────────────────────── */
+/* ── Mobile: bottom sheet with safe-area spacing ───────────── */
 .overlayMobile {
   bottom: 0;
   left: 0;
   right: 0;
   width: 100%;
+  z-index: 9998; /* Elevate on mobile to present clear dialog */
 }
 
 /* ── Animation phases ─────────────────────────────────────── */
@@ -127,64 +131,73 @@
   }
 }
 
-/* ── Card shell ───────────────────────────────────────────── */
+/* ── Card shell (Theme adaptive: dark & light theme aware) ── */
 .card {
   position: relative;
-  background: var(--campaign-bg, var(--mp-ember-900)); /* the "clubhouse" ember tone by default — a genuine promotional moment */
+  background: var(--campaign-custom-bg, var(--bg-surface));
   color: var(--text-primary);
+  border: 1px solid var(--border-default);
   overflow: hidden;
+  transition: background-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out);
 }
 
 /* Desktop card */
 .cardDesktop {
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / 0.06);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--border-subtle);
 }
 
 /* Mobile bottom sheet */
 .cardMobile {
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  box-shadow: 0 -8px 40px rgb(5 11 22 / 0.4);
+  box-shadow: 0 -12px 48px rgb(5 11 22 / 0.5);
   max-height: 88dvh;
   overflow-y: auto;
-  /* Scrollbar invisible but functional */
+  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 24px));
   scrollbar-width: none;
 }
 .cardMobile::-webkit-scrollbar { display: none; }
 
-/* ── Close button ─────────────────────────────────────────── */
+/* ── Glassmorphism Close button (always crisp over images) ── */
 .closeBtn {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
-  z-index: 2;
+  z-index: 10;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  background: rgb(255 255 255 / 0.08);
-  border: 1px solid rgb(255 255 255 / 0.10);
+  width: 32px;
+  height: 32px;
+  background: rgb(5 11 22 / 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgb(255 255 255 / 0.22);
   border-radius: var(--radius-full);
-  color: var(--text-secondary);
+  color: #ffffff;
   cursor: pointer;
-  transition: background var(--dur-instant) var(--ease-out),
-              color    var(--dur-instant) var(--ease-out);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  transition: transform var(--dur-instant) var(--ease-out),
+              background var(--dur-instant) var(--ease-out);
 }
 .closeBtn:hover {
-  background: rgb(255 255 255 / 0.14);
-  color: var(--text-primary);
+  background: rgb(5 11 22 / 0.8);
+  transform: scale(1.08);
+  color: #ffffff;
 }
 
 /* ── Hero image ───────────────────────────────────────────── */
 .imageWrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 16 / 8;
   overflow: hidden;
+  background: var(--bg-surface-warm);
 }
 
 .cardMobile .imageWrap {
-  aspect-ratio: 16 / 6;
+  aspect-ratio: 16 / 7;
 }
 
 .image {
@@ -195,27 +208,28 @@
   display: block;
 }
 
-/* Gradient scrim over the image so text below remains readable */
+/* Gradient scrim smoothly blending image into card body surface */
 .imageScrim {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
+    rgb(5 11 22 / 0.2) 0%,
     transparent 40%,
-    var(--campaign-bg, var(--mp-ember-900)) 100%
+    var(--campaign-custom-bg, var(--bg-surface)) 100%
   );
 }
 
 /* ── Content body ─────────────────────────────────────────── */
 .body {
-  padding: var(--space-5) var(--space-6) var(--space-6);
+  padding: var(--space-4) var(--space-6) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
 .cardMobile .body {
-  padding: var(--space-5) var(--space-5) var(--space-8);
+  padding: var(--space-4) var(--space-5) var(--space-6);
   gap: var(--space-4);
 }
 
@@ -232,7 +246,7 @@
   align-items: center;
   gap: 5px;
   padding: 3px var(--space-2);
-  background: var(--badge-sale-bg);   /* orange-700 */
+  background: var(--badge-sale-bg);   /* flame accent */
   color: var(--badge-sale-fg);        /* white */
   font-size: 0.6875rem;               /* 11px */
   font-weight: 700;
@@ -244,30 +258,29 @@
 
 .eyebrow {
   font-size: var(--text-caption);
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-accent);
 }
 
 /* ── Headline (Sakana display) ────────────────────────────── */
 .title {
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem); /* 24–32px — below campaign-only limit */
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--text-primary);
-  /* Override global h2 sizing — this is a display moment */
   margin: 0;
 }
 
 .cardMobile .title {
-  font-size: clamp(1.625rem, 4vw, 2rem);
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
 }
 
 /* ── Subtitle ─────────────────────────────────────────────── */
 .subtitle {
-  font-size: var(--text-body-sm);
+  font-size: var(--text-body-s);
   line-height: 1.5;
   color: var(--text-secondary);
   margin: 0;
@@ -279,17 +292,18 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: rgb(255 255 255 / 0.06);
-  border: 1px dashed rgb(255 255 255 / 0.20);
+  background: var(--bg-surface-accent);
+  border: 1px dashed var(--border-accent);
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: var(--text-body-sm);
   color: var(--text-primary);
-  transition: background var(--dur-instant) var(--ease-out);
+  transition: background var(--dur-instant) var(--ease-out),
+              border-color var(--dur-instant) var(--ease-out);
   align-self: flex-start;
 }
 .coupon:hover {
-  background: rgb(255 255 255 / 0.10);
+  background: var(--bg-surface-accent-hover);
 }
 
 .couponLabel {
@@ -302,7 +316,7 @@
 
 .couponCode {
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--text-primary);
 }
@@ -310,7 +324,7 @@
 .couponAction {
   display: grid;
   place-items: center;
-  color: var(--text-secondary);
+  color: var(--text-accent);
   flex-shrink: 0;
 }
 
@@ -336,12 +350,13 @@
 .dismissBtn {
   background: none;
   border: none;
-  padding: 0 var(--space-1);
-  font-size: var(--text-body-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-body-s);
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
   transition: color var(--dur-instant) var(--ease-out);
 }
 .dismissBtn:hover {
@@ -363,21 +378,18 @@
   margin-top: var(--space-1);
 }
 
-/* ── Brand accent line (Sunset gradient) ──────────────────── */
-/* The MotoPark signature accent — carried over from the OfferBar into this
-   new premium surface. It lives at the BOTTOM of the card and is the ONE
-   sanctioned use of the orange gradient on a deal surface (Commerce Law 2). */
+/* ── Brand accent line (Flame gradient) ──────────────────── */
 .accentLine {
   position: absolute;
   bottom: 0;
   inset-inline: 0;
-  height: 2px;
+  height: 3px;
   background: linear-gradient(
     90deg,
     var(--mp-flame-700),
-    var(--mp-flame-400) 45%,
-    var(--mp-flame-300) 70%,
-    var(--mp-ink-0)
+    var(--mp-flame-500) 45%,
+    var(--mp-flame-300) 75%,
+    transparent
   );
 }
 
@@ -385,16 +397,14 @@
 .cardMobile::before {
   content: '';
   display: block;
-  width: 40px;
+  width: 36px;
   height: 4px;
-  background: rgb(255 255 255 / 0.16);
+  background: var(--border-strong);
   border-radius: var(--radius-full);
   margin: var(--space-3) auto var(--space-1);
 }
 
 /* ── Reduced motion ───────────────────────────────────────── */
-/* Global base.css already strips all animations for prefers-reduced-motion.
-   Extra safety: ensure the card is immediately visible without transforms. */
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .overlayDesktop.entering,
