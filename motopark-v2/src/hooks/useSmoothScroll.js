@@ -49,9 +49,22 @@ export function useSmoothScroll() {
       teardown = stop;
     };
 
-    // Fire-and-forget: a failed chunk load must degrade to native scrolling,
-    // never to a broken homepage. Nothing on this page depends on Lenis.
-    sync().catch(() => {});
+    // Fire-and-forget deferred initialization: a failed chunk load degrades to
+    // native scrolling. Deferring until requestIdleCallback ensures Lenis does
+    // not contend for CPU time during LCP, hydration, or initial paint.
+    const schedule = () => {
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+          if (!cancelled) sync().catch(() => {});
+        }, { timeout: 1000 });
+      } else {
+        setTimeout(() => {
+          if (!cancelled) sync().catch(() => {});
+        }, 200);
+      }
+    };
+
+    schedule();
 
     // Eligibility can flip mid-session — resize across 1024px, dock a tablet,
     // toggle the OS reduced-motion setting. Re-run rather than latch.
