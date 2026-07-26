@@ -151,6 +151,7 @@ export const handleRazorpayWebhook = async (req, res) => {
       total:           intent.total,
       paymentId:       entity.id,
       paymentMethod:   "razorpay",
+      coupon:          intent.coupon || null,
     }));
   } catch (err) {
     if (err instanceof OutOfStockError) {

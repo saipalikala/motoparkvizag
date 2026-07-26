@@ -67,6 +67,13 @@ const paymentIntentSchema = new mongoose.Schema(
     deliveryCharge: { type: Number, required: true },
     total:          { type: Number, required: true },
 
+    coupon: {
+      code:          { type: String, default: null },
+      discountType:  { type: String, default: null },
+      discountValue: { type: Number, default: null },
+      discountINR:   { type: Number, default: 0 },
+    },
+
     /* PAISE, and deliberately separate from `total`: this is the integer handed
        to Razorpay. The webhook compares entity.amount against this byte-for-byte,
        so it must be stored exactly as sent, not recomputed from rupees later. */

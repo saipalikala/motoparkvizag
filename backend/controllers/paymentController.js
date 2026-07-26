@@ -98,8 +98,9 @@ export const createOrder = async (req, res) => {
                     shippingAddress,
                     subtotal,
                     deliveryCharge,
-                    total:           subtotal + deliveryCharge,
+                    total:           netSubtotal + deliveryCharge,
                     amountPaise,
+                    coupon:          coupon || null,
                 });
             } catch (err) {
                 console.error(
