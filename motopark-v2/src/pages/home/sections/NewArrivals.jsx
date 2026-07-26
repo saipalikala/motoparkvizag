@@ -13,7 +13,7 @@ export default function NewArrivals({ products = [], loading = false }) {
       <SectionHeader
         id="new-title"
         eyebrow="Just landed"
-        title="New arrivals"
+        title="Fresh off the truck"
         action={{ label: 'Shop all', href: '/store' }}
       />
       <ProductGrid products={products} loading={loading} count={8} />
