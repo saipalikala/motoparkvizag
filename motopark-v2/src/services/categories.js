@@ -4,15 +4,18 @@
  * Emits a UI-ready shape; the grid maps name → icon and links to /c/:slug (IA §).
  */
 import { api } from '@/lib/api.js';
+import { cached } from '@/lib/apiCache.js';
 
 export async function getCategories() {
-  const { data } = await api.get('/categories');
-  if (!Array.isArray(data)) return [];
-  return data.map((c) => ({
-    id: String(c._id),
-    name: c.name,
-    slug: c.slug,
-    image: c.image || null, // null → grid uses an icon tile (no live category photos yet)
-    url: `/c/${c.slug}`,
-  }));
+  return cached('categories:all', async () => {
+    const { data } = await api.get('/categories');
+    if (!Array.isArray(data)) return [];
+    return data.map((c) => ({
+      id: String(c._id),
+      name: c.name,
+      slug: c.slug,
+      image: c.image || null, // null → grid uses an icon tile (no live category photos yet)
+      url: `/c/${c.slug}`,
+    }));
+  });
 }

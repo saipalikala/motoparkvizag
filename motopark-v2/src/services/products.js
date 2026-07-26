@@ -11,6 +11,7 @@
  *   { id, name, brand, category, priceINR, image, url, inStock }
  */
 import { api } from '@/lib/api.js';
+import { cached } from '@/lib/apiCache.js';
 
 /** First usable image across a product's variants (V1 nests images per variant). */
 function primaryImage(variants) {
@@ -147,12 +148,14 @@ const mapList = (arr) => (Array.isArray(arr) ? arr.map(toProductCard).filter(Boo
  * Returns UI-ready lists: { featured, trending, newArrivals }.
  */
 export async function getHomepage() {
-  const { data } = await api.get('/home-data');
-  return {
-    featured: mapList(data?.featured),
-    trending: mapList(data?.trending),
-    newArrivals: mapList(data?.newArrivals),
-  };
+  return cached('homepage:data', async () => {
+    const { data } = await api.get('/home-data');
+    return {
+      featured: mapList(data?.featured),
+      trending: mapList(data?.trending),
+      newArrivals: mapList(data?.newArrivals),
+    };
+  });
 }
 
 /**

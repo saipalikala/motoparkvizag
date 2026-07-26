@@ -10,6 +10,7 @@ import NewArrivals from './sections/NewArrivals.jsx';
 import BrandRow from './sections/BrandRow.jsx';
 import { getHomepage } from '@/services/products.js';
 import { getCategories } from '@/services/categories.js';
+import { getHeroSlides } from '@/services/heroCarousel.js';
 import { useSmoothScroll } from '@/hooks/useSmoothScroll.js';
 import Reveal from '@/components/ui/Reveal.jsx';
 
@@ -32,7 +33,9 @@ export default function HomePage() {
 
   useEffect(() => {
     let alive = true;
-    Promise.allSettled([getHomepage(), getCategories()]).then(([home, cats]) => {
+    // Fire all homepage network requests (homepage data, categories, hero slides)
+    // concurrently in a single parallel batch at initial mount.
+    Promise.allSettled([getHomepage(), getCategories(), getHeroSlides()]).then(([home, cats]) => {
       if (!alive) return;
       setData(home.status === 'fulfilled' ? home.value : { featured: [], trending: [], newArrivals: [] });
       setCategories(cats.status === 'fulfilled' ? cats.value : []);
