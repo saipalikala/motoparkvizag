@@ -55,6 +55,7 @@ import Product   from "../models/productModel.js";
 import mongoose  from "mongoose";
 import Category from "../models/categoryModel.js";
 import Bike     from "../models/bikeModel.js";
+import { clearHomeCache } from "./homeController.js";
 
 // ─── REGEX ESCAPE ─────────────────────────────────────────────────────────────
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -480,6 +481,7 @@ const product = new Product({
 
         await product.save();
         filterCache.clear();
+        clearHomeCache();
         res.status(201).json(product);
 
     } catch (err) {
@@ -586,6 +588,7 @@ export const updateProduct = async (req, res) => {
         if (!product) return res.status(404).json({ message: "Product not found" });
 
         filterCache.clear();
+        clearHomeCache();
         res.json(product);
 
     } catch (error) {
@@ -602,6 +605,7 @@ export const deleteProduct = async (req, res) => {
         const product = await Product.findByIdAndDelete(req.params.id);
         if (!product) return res.status(404).json({ message: "Product not found" });
         filterCache.clear();
+        clearHomeCache();
         res.json({ message: "Product deleted" });
     } catch (error) {
         console.error("❌ DELETE PRODUCT ERROR:", error.message);
@@ -676,6 +680,7 @@ export const bulkCreateProducts = async (req, res) => {
         session.endSession();
 
         filterCache.clear();
+        clearHomeCache();
         res.status(201).json({
             message:  `${created.length} products created successfully. Add images via the Edit panel.`,
             count:    created.length,

@@ -21,6 +21,7 @@
  *    multipart has no array type. Backend parses + validates it (Milestone 10).
  */
 import { adminApi } from '../lib/adminApi.js';
+import { invalidate } from '@/lib/apiCache.js';
 
 /* ── UI-facing shapes ─────────────────────────────────────────────────────── */
 
@@ -191,16 +192,19 @@ function buildFormData(model, { includeKeepImages }) {
 export async function createProduct(model) {
   const fd = buildFormData(model, { includeKeepImages: false });
   const { data } = await adminApi.post('/products', fd);
+  invalidate('homepage:data');
   return data;
 }
 
 export async function updateProduct(id, model) {
   const fd = buildFormData(model, { includeKeepImages: true });
   const { data } = await adminApi.put(`/products/${id}`, fd);
+  invalidate('homepage:data');
   return data;
 }
 
 export async function deleteProduct(id) {
   const { data } = await adminApi.delete(`/products/${id}`);
+  invalidate('homepage:data');
   return data;
 }
