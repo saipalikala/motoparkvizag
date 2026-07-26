@@ -34,10 +34,21 @@ const BLANK = {
 };
 
 const FLAGS = [
-  { key: 'featured', label: 'Featured', hint: 'Highlighted on the homepage' },
-  { key: 'trending', label: 'Trending', hint: 'Shown in “Riders’ favourites”' },
-  { key: 'newArrival', label: 'New arrival', hint: 'Appears in New Arrivals' },
-  { key: 'isShowcase', label: 'Showcase', hint: 'Eligible for showcase modules' },
+  {
+    key: 'trending',
+    label: "Riders' favourites",
+    hint: "Shows in Homepage Riders’ favourites grid.",
+  },
+  {
+    key: 'newArrival',
+    label: 'Fresh off the truck',
+    hint: "Shows in Homepage Fresh off the truck grid.",
+  },
+  {
+    key: 'featured',
+    label: 'Best Seller',
+    hint: 'Shows Best Seller badge & enables Store filter.',
+  },
 ];
 
 export default function ProductFormPage() {
@@ -419,7 +430,10 @@ export default function ProductFormPage() {
           </section>
 
           <section className={styles.panel}>
-            <h2 className={styles.panelTitle}>Visibility flags</h2>
+            <h2 className={styles.panelTitle}>Merchandising &amp; Placement</h2>
+            <p className={styles.hint}>
+              Controls where this product is promoted across the MotoPark storefront.
+            </p>
             <div className={styles.flags}>
               {FLAGS.map((f) => (
                 <Toggle
@@ -427,7 +441,7 @@ export default function ProductFormPage() {
                   id={`flag-${f.key}`}
                   label={f.label}
                   hint={f.hint}
-                  checked={model[f.key]}
+                  checked={Boolean(model[f.key])}
                   onChange={(v) => set({ [f.key]: v })}
                 />
               ))}
