@@ -6,7 +6,6 @@ import ErrorBoundary from './ErrorBoundary.jsx';
 import Navbar from '@/components/layout/Navbar.jsx';
 import MobileBottomNav from '@/components/layout/MobileBottomNav.jsx';
 import Footer from '@/components/layout/Footer.jsx';
-import AssistantWidget from '@/features/assistant/AssistantWidget.jsx';
 import { CampaignProvider } from '@/features/campaigns/CampaignContext.jsx';
 
 /** Admin is lazy so its shell + AdminAuthContext + AdminRoute stay OUT of the
@@ -18,6 +17,10 @@ const AdminApp = lazy(() => import('@/features/admin/AdminApp.jsx'));
  *  nothing (null) — the homepage renders fully without it. */
 const CampaignOverlay = lazy(() =>
   import('@/features/campaigns/CampaignOverlay.jsx').catch(() => ({ default: () => null })),
+);
+
+const AssistantWidget = lazy(() =>
+  import('@/features/assistant/AssistantWidget.jsx').catch(() => ({ default: () => null })),
 );
 
 import { AuthProvider } from '@/contexts/AuthContext.jsx';
@@ -66,7 +69,9 @@ export default function App() {
             </main>
             <Footer />
             <MobileBottomNav />
-            <AssistantWidget />
+            <Suspense fallback={null}>
+              <AssistantWidget />
+            </Suspense>
             {/* Campaign Experience System — portaled overlay, homepage only.
                 Lazy-loaded so it never blocks initial render or LCP. */}
             <Suspense fallback={null}>
