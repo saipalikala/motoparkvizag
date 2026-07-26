@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { BIKE_MENU, BRAND_MENU, CATEGORY_MENU } from '@/config/nav.js';
 import { getNavCategories, getNavBrands, getNavBikes } from '@/services/navigation.js';
 
@@ -55,8 +55,10 @@ export function NavProvider({ children }) {
     };
   }, []);
 
+  const value = useMemo(() => ({ categories, brands, bikes }), [categories, brands, bikes]);
+
   return (
-    <NavContext.Provider value={{ categories, brands, bikes }}>{children}</NavContext.Provider>
+    <NavContext.Provider value={value}>{children}</NavContext.Provider>
   );
 }
 

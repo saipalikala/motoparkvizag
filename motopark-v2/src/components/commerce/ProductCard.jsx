@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '@/contexts/WishlistContext.jsx';
@@ -11,8 +11,9 @@ import styles from './ProductCard.module.css';
 /**
  * ProductCard — Premium luxury ecommerce aesthetic.
  * Full-bleed image background, content floated on top with gradient overlay.
+ * Wrapped in React.memo to prevent unnecessary re-renders during list filtering/state updates.
  */
-export default function ProductCard({ product, onAddToCart }) {
+const ProductCard = memo(function ProductCard({ product, onAddToCart }) {
   const { has, toggle } = useWishlist();
   const { addItem } = useCart();
   const { showToast } = useToast();
@@ -163,7 +164,7 @@ export default function ProductCard({ product, onAddToCart }) {
       </div>
     </Link>
   );
-}
+});
 
 /**
  * ProductCard.Skeleton — Full bleed placeholder
@@ -190,3 +191,5 @@ export function ProductCardSkeleton() {
 }
 
 ProductCard.Skeleton = ProductCardSkeleton;
+
+export default ProductCard;
