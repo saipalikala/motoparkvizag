@@ -74,7 +74,7 @@ export default function HeroCarouselSlide({ slide, isPrimary = false, photoRef }
           className={styles.photo}
           fetchPriority={isPrimary ? 'high' : undefined}
           loading={isPrimary ? undefined : 'lazy'}
-          decoding="async"
+          decoding={isPrimary ? 'sync' : 'async'}
           width="1600"
           height="900"
         />
